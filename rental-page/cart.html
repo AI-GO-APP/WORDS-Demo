@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>購物車｜沃茲新創空間</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
 </head>
 <body>
 
@@ -218,8 +222,119 @@
       }
     }
 
-    function checkout() {
-      alert('（demo）即將前往結帳頁面。\n\n實際串接後會：\n1. 寫入訂單表\n2. 跳轉付款頁面\n3. 付款成功後從購物車移除');
+    // ============================================================
+    // Supabase 結帳：把購物車寫入 orders 表
+    // ============================================================
+    async function checkout() {
+      const items = CartStore.getAll();
+      if (items.length === 0) { alert('購物車是空的'); return; }
+
+      // Step 1: 檢查是否已登入
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        if (confirm('結帳需要先登入。要前往登入頁面嗎？')) {
+          // 記住結帳意圖，登入後可回來
+          sessionStorage.setItem('postLoginRedirect', 'cart.html');
+          window.location.href = 'login.html';
+        }
+        return;
+      }
+
+      // Step 2: 取得當前用戶的 customer row
+      const { data: customer, error: custError } = await supabaseClient
+        .from('customers')
+        .select('id, name, email')
+        .eq('auth_user_id', session.user.id)
+        .maybeSingle();
+
+      if (custError || !customer) {
+        alert('找不到您的會員資料，請聯絡客服');
+        console.error('customer 查詢失敗:', custError);
+        return;
+      }
+
+      // Step 3: 把每筆購物車項目 → 轉成 order row
+      const PLAN_MAP = { hourly: 'hourly', halfDay: 'half_day', fullDay: 'full_day' };
+      const orderRows = items.map(it => {
+        // 拆 addons：人數費、清潔費、配置服務分開計
+        let headcount_fee = 0, cleanup_fee = 0, service_fee = 0;
+        let headcount_label = null, cleanup_label = null;
+        (it.addons || []).forEach(a => {
+          if (a.type === 'headcount') { headcount_fee += a.price; headcount_label = a.label; }
+          else if (a.type === 'cleanup') { cleanup_fee += a.price; cleanup_label = a.label; }
+          else { service_fee += a.price; }
+        });
+
+        const base_amount = (it.subtotal || 0) - headcount_fee - cleanup_fee - service_fee;
+
+        return {
+          customer_id: customer.id,
+          space_id: it.spaceId,
+          booking_date: it.date,
+          start_time: it.startTime + (it.startTime.length === 5 ? ':00' : ''),  // HH:MM → HH:MM:SS
+          end_time: it.endTime + (it.endTime.length === 5 ? ':00' : ''),
+          duration_hours: it.hours || null,
+          is_holiday: !!it.isHoliday,
+          plan_type: PLAN_MAP[it.planId] || 'hourly',
+          plan_label: it.planName || null,
+          headcount: headcount_label,
+          cleanup_choice: cleanup_label,
+          base_amount,
+          headcount_fee,
+          cleanup_fee,
+          service_fee,
+          discount_amount: 0,
+          subtotal: it.subtotal || 0,
+          deposit: it.deposit || 0,
+          total_amount: it.total || (it.subtotal + (it.deposit || 0)),
+          status: 'pending',
+          payment_status: 'unpaid',
+          // order_number / payment_account_last5 / queue_position 由 DB trigger 產生
+        };
+      });
+
+      // Step 4: 批次插入 orders
+      const btn = document.querySelector('.cart-checkout-btn');
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = '處理中...';
+
+      const { data: newOrders, error: insertError } = await supabaseClient
+        .from('orders')
+        .insert(orderRows)
+        .select('id, order_number, payment_account_last5, total_amount, queue_position, queue_status, payment_due_at');
+
+      if (insertError) {
+        alert('結帳失敗：' + insertError.message);
+        console.error(insertError);
+        btn.disabled = false; btn.textContent = orig;
+        return;
+      }
+
+      // Step 5: 成功 → 清空購物車 + 顯示訂單資訊
+      CartStore.clear();
+
+      // 組訊息
+      let msgHtml = '<div style="max-width:600px">';
+      msgHtml += '<h2 style="color:#16a34a;margin-bottom:16px">✅ 訂單建立成功</h2>';
+      newOrders.forEach((o, idx) => {
+        const qStatus = o.queue_status === 'waiting'
+          ? `<span style="color:#f59e0b">候補第 ${o.queue_position} 順位</span>`
+          : `<span style="color:#16a34a">第 1 順位（請於 3 天內付款）</span>`;
+        msgHtml += `
+          <div style="background:#f9fafb;padding:16px;border-radius:8px;margin-bottom:12px;border-left:4px solid #3b82f6">
+            <p style="margin:4px 0"><strong>訂單編號：</strong>${o.order_number}</p>
+            <p style="margin:4px 0"><strong>應付金額：</strong>NT$ ${Number(o.total_amount).toLocaleString()}</p>
+            <p style="margin:4px 0"><strong>付款帳號末五碼：</strong><span style="font-family:monospace;background:#fef3c7;padding:2px 8px;border-radius:4px">${o.payment_account_last5}</span></p>
+            <p style="margin:4px 0"><strong>狀態：</strong>${qStatus}</p>
+          </div>
+        `;
+      });
+      msgHtml += '<p style="color:#6b7280;font-size:14px">⚠️ 請以「分行代碼 700」匯款到指定帳號，並在帳號末五碼填入上方數字，以便系統自動比對。</p>';
+      msgHtml += '<p style="margin-top:20px"><a href="account.html" style="display:inline-block;padding:10px 24px;background:#1a1f36;color:#fff;border-radius:6px;text-decoration:none">前往我的訂單</a></p>';
+      msgHtml += '</div>';
+
+      document.getElementById('cartContainer').innerHTML = msgHtml;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     renderCart();

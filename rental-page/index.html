@@ -461,16 +461,46 @@
   <script>
     // SPACE_IMAGES 已在 data.js 定義，這裡直接使用
 
-    // === 從 DataStore 載入場館 + 空間，渲染卡片 ===
-    function renderVenueCards() {
-      const venues = DataStore.getVenues().filter(v => v.status === 'active');
+    // === 從 Supabase 載入場館 + 空間 + 價格，渲染卡片 ===
+    async function renderVenueCards() {
+      // 一次撈 venues → spaces → prices（embedded relations）
+      const { data: venues, error } = await supabaseClient
+        .from('venues')
+        .select(`
+          id, name, code, district, status,
+          spaces ( id, name, capacity, status, prices(*) )
+        `)
+        .eq('status', 'active');
+
+      if (error) {
+        console.error('❌ 讀取場館失敗:', error);
+        document.getElementById('venueGrid').innerHTML =
+          '<p style="grid-column:1/-1;text-align:center;color:#dc2626;padding:40px">資料讀取失敗：' + error.message + '</p>';
+        return;
+      }
+
+      // 攤平 spaces，並轉換欄位名稱（snake_case → camelCase）
       const allSpaces = [];
       venues.forEach(v => {
-        const spaces = DataStore.getSpacesByVenue(v.id).filter(s => s.status === 'active');
-        spaces.forEach(s => {
-          allSpaces.push({ ...s, venue: v, price: DataStore.getPrice(s.id) });
+        (v.spaces || []).filter(s => s.status === 'active').forEach(s => {
+          const p = (s.prices && s.prices[0]) || null;
+          const price = p ? {
+            weekday: Number(p.weekday_hourly),
+            weekend: Number(p.weekend_hourly),
+            weekdayHalf: Number(p.weekday_half),
+            weekendHalf: Number(p.weekend_half),
+            weekdayFull: Number(p.weekday_full),
+            weekendFull: Number(p.weekend_full),
+            headcount: p.headcount_tiers || [],
+            cleanup: p.cleanup_tiers || [],
+            deposit: Number(p.deposit),
+            halfSetup: Number(p.half_setup),
+            fullSetup: Number(p.full_setup),
+          } : null;
+          allSpaces.push({ ...s, venue: v, price });
         });
       });
+      console.log('[index] 從 Supabase 撈到', venues.length, '個場館，', allSpaces.length, '個空間');
 
       // 渲染篩選清單（依目前的場館動態算出）
       const districtCounts = {};
@@ -579,7 +609,8 @@
       });
     }
 
-    renderVenueCards();
+    // 啟動：async 函式不需要 await（在 script 頂層）
+    renderVenueCards().catch(err => console.error('renderVenueCards 失敗:', err));
   </script>
 
 </body>

@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>註冊 / 登入｜沃茲新創空間</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
 </head>
 <body>
 
@@ -52,7 +56,7 @@
 
         <div class="auth-divider"><span>或</span></div>
 
-        <form class="auth-form">
+        <form class="auth-form" id="loginForm">
           <label class="auth-field">
             <span class="auth-label">電子郵件 <span class="required">*</span></span>
             <input type="email" name="email" required>
@@ -66,6 +70,8 @@
           <button type="submit" class="auth-submit-btn">登入</button>
 
           <a href="#" class="auth-forgot-link">忘記您的密碼？</a>
+
+          <div id="loginMsg" class="auth-msg" style="display:none;margin-top:12px;padding:10px;border-radius:6px;font-size:14px;"></div>
         </form>
       </div>
 
@@ -79,7 +85,7 @@
 
         <div class="auth-divider"><span>或</span></div>
 
-        <form class="auth-form">
+        <form class="auth-form" id="registerForm">
           <label class="auth-field">
             <span class="auth-label">電子郵件 <span class="required">*</span></span>
             <input type="email" name="email" required>
@@ -96,6 +102,8 @@
           </label>
 
           <button type="submit" class="auth-submit-btn">註冊</button>
+
+          <div id="registerMsg" class="auth-msg" style="display:none;margin-top:12px;padding:10px;border-radius:6px;font-size:14px;"></div>
         </form>
       </div>
 
@@ -161,21 +169,115 @@
       if (btn) btn.click();
     }
 
-    // 表單送出（demo：登入按鈕跳轉到我的帳戶頁）
-    document.querySelectorAll('.auth-form').forEach(form => {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        // demo：直接跳到帳戶頁
-        window.location.href = 'account.html';
+    // ============================================================
+    // Supabase Auth 整合
+    // ============================================================
+
+    function showMsg(el, type, text) {
+      el.style.display = 'block';
+      if (type === 'error') {
+        el.style.background = '#fee2e2'; el.style.color = '#991b1b'; el.style.border = '1px solid #fca5a5';
+      } else if (type === 'success') {
+        el.style.background = '#dcfce7'; el.style.color = '#166534'; el.style.border = '1px solid #86efac';
+      } else {
+        el.style.background = '#dbeafe'; el.style.color = '#1e40af'; el.style.border = '1px solid #93c5fd';
+      }
+      el.textContent = text;
+    }
+
+    // ============ 登入 ============
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = e.target.email.value.trim();
+      const password = e.target.password.value;
+      const msgEl = document.getElementById('loginMsg');
+      const btn = e.target.querySelector('.auth-submit-btn');
+
+      btn.disabled = true; btn.textContent = '登入中...';
+      showMsg(msgEl, 'info', '正在驗證...');
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        showMsg(msgEl, 'error', '登入失敗：' + (error.message === 'Invalid login credentials' ? '帳號或密碼錯誤' : error.message));
+        btn.disabled = false; btn.textContent = '登入';
+        return;
+      }
+
+      showMsg(msgEl, 'success', '登入成功，正在跳轉...');
+      console.log('[login] 登入成功 user:', data.user.email);
+      setTimeout(() => { window.location.href = 'account.html'; }, 500);
+    });
+
+    // ============ 註冊 ============
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = e.target.email.value.trim();
+      const password = e.target.password.value;
+      const name = e.target.name.value.trim();
+      const msgEl = document.getElementById('registerMsg');
+      const btn = e.target.querySelector('.auth-submit-btn');
+
+      btn.disabled = true; btn.textContent = '註冊中...';
+      showMsg(msgEl, 'info', '建立帳號中...');
+
+      // Step 1: 建立 Auth user
+      const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name },  // 存到 auth.users.user_metadata
+        },
+      });
+
+      if (signUpError) {
+        showMsg(msgEl, 'error', '註冊失敗：' + signUpError.message);
+        btn.disabled = false; btn.textContent = '註冊';
+        return;
+      }
+
+      // Step 2: 建立 customers row（如果 trigger 沒幫忙的話，手動建）
+      // 註：理想做法是用 DB trigger 自動建，但這裡保險也做一次
+      if (signUpData.user) {
+        const { error: customerError } = await supabaseClient
+          .from('customers')
+          .insert({
+            auth_user_id: signUpData.user.id,
+            email,
+            name,
+            status: 'active',
+          });
+
+        if (customerError && customerError.code !== '23505') {  // 23505 = unique violation (trigger 已建)
+          console.warn('customer row 建立失敗（可能 trigger 已處理）:', customerError);
+        }
+      }
+
+      // 註冊後 Supabase 可能需要 email 確認；判斷 session 是否回傳
+      if (signUpData.session) {
+        showMsg(msgEl, 'success', '註冊成功！正在跳轉到帳戶頁...');
+        setTimeout(() => { window.location.href = 'account.html'; }, 800);
+      } else {
+        showMsg(msgEl, 'success', '註冊成功！請查收 email 確認信，或直接到「登入」分頁登入');
+        btn.disabled = false; btn.textContent = '註冊';
+      }
+    });
+
+    // ============ LINE 按鈕（明天 demo 先用 mock 跳轉）============
+    document.querySelectorAll('.line-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        alert('LINE 登入功能將在 Phase 3 整合（明天 demo 先用 Email 登入）');
       });
     });
 
-    // LINE 按鈕也跳到 account
-    document.querySelectorAll('.line-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
+    // ============ 已登入則自動跳轉 ============
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        console.log('[login] 已有 session，跳轉 account.html');
         window.location.href = 'account.html';
-      });
-    });
+      }
+    })();
   </script>
 
 </body>

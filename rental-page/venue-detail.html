@@ -6,6 +6,10 @@
   <title>場館詳細｜沃茲新創空間</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="venue-detail.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
 </head>
 <body>
 
@@ -587,7 +591,7 @@
     })();
 
     // === 4. 預約查詢系統（動態載入該空間價格）===
-    (function() {
+    (async function() {
       // 前台空間名稱 → 後台 (venue, space) 對應表
       const FRONTEND_TO_SPACE = {
         '勤美館': { venue: '勤美館', space: '勤美館' },
@@ -612,39 +616,67 @@
         '站前館-藝文展間 + 靜態階梯空間': { venue: '站前館', space: '階梯+展間' }
       };
 
-      // 從 URL 取得 spaceId（新版）或 name（舊版相容）
+      // 從 URL 取得 spaceId（UUID 字串）或 name（舊版相容）
       const urlParams = new URLSearchParams(location.search);
-      const urlSpaceId = parseInt(urlParams.get('spaceId'));
+      const urlSpaceId = urlParams.get('spaceId');  // UUID 字串，不再 parseInt
       const urlVenueName = decodeURIComponent(urlParams.get('name') || '');
       let spacePrice = null;
       let spaceObj = null;
       let venueObj = null;
 
-      if (typeof DataStore !== 'undefined') {
-        if (urlSpaceId) {
-          // 新版：直接用 spaceId 查
-          spaceObj = DataStore.getSpace(urlSpaceId);
-          if (spaceObj) {
-            venueObj = DataStore.getVenue(spaceObj.venue_id);
-            spacePrice = DataStore.getPrice(urlSpaceId);
-            // 更新頁面標題
-            const displayName = spaceObj.name === venueObj.name ? spaceObj.name : `${venueObj.name}-${spaceObj.name}`;
-            document.title = displayName + '｜沃茲新創空間';
-            const titleEl = document.getElementById('venueTitle');
-            if (titleEl) titleEl.textContent = displayName;
-            const breadcrumbEl = document.getElementById('breadcrumbVenue');
-            if (breadcrumbEl) breadcrumbEl.textContent = displayName;
-          }
-        } else if (urlVenueName) {
-          // 舊版：用名稱對照表
-          const mapping = FRONTEND_TO_SPACE[urlVenueName];
-          if (mapping) {
-            venueObj = DataStore.getVenues().find(v => v.name === mapping.venue);
-            if (venueObj) {
-              spaceObj = DataStore.getSpacesByVenue(venueObj.id).find(s => s.name === mapping.space);
-              if (spaceObj) {
-                spacePrice = DataStore.getPrice(spaceObj.id);
-              }
+      // 把 prices 行轉成前端期待的 camelCase 結構
+      function normalizePrice(p) {
+        if (!p) return null;
+        return {
+          weekday: Number(p.weekday_hourly),
+          weekend: Number(p.weekend_hourly),
+          weekdayHalf: Number(p.weekday_half),
+          weekendHalf: Number(p.weekend_half),
+          weekdayFull: Number(p.weekday_full),
+          weekendFull: Number(p.weekend_full),
+          headcount: p.headcount_tiers || [],
+          cleanup: p.cleanup_tiers || [],
+          deposit: Number(p.deposit),
+          halfSetup: Number(p.half_setup),
+          fullSetup: Number(p.full_setup),
+        };
+      }
+
+      if (urlSpaceId) {
+        // 新版：用 UUID 直接查 Supabase
+        const { data, error } = await supabaseClient
+          .from('spaces')
+          .select(`*, venues(*), prices(*)`)
+          .eq('id', urlSpaceId)
+          .maybeSingle();
+
+        if (error) console.error('讀取 space 失敗:', error);
+        if (data) {
+          spaceObj = data;
+          venueObj = data.venues;
+          spacePrice = normalizePrice((data.prices && data.prices[0]) || null);
+
+          const displayName = spaceObj.name === venueObj.name ? spaceObj.name : `${venueObj.name}-${spaceObj.name}`;
+          document.title = displayName + '｜沃茲新創空間';
+          const titleEl = document.getElementById('venueTitle');
+          if (titleEl) titleEl.textContent = displayName;
+          const breadcrumbEl = document.getElementById('breadcrumbVenue');
+          if (breadcrumbEl) breadcrumbEl.textContent = displayName;
+        }
+      } else if (urlVenueName) {
+        // 舊版：用名稱對照表
+        const mapping = FRONTEND_TO_SPACE[urlVenueName];
+        if (mapping) {
+          const { data: vData } = await supabaseClient
+            .from('venues')
+            .select(`*, spaces(*, prices(*))`)
+            .eq('name', mapping.venue)
+            .maybeSingle();
+          if (vData) {
+            venueObj = vData;
+            spaceObj = (vData.spaces || []).find(s => s.name === mapping.space);
+            if (spaceObj) {
+              spacePrice = normalizePrice((spaceObj.prices && spaceObj.prices[0]) || null);
             }
           }
         }

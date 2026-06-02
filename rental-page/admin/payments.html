@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>匯款比對｜沃茲後台</title>
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    /* ===== 表頭內篩選器（複用） ===== */
+    .filter-row th {
+      background: #f9fafb;
+      padding: 6px 8px;
+      border-top: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: normal;
+    }
+    .filter-input {
+      width: 100%;
+      padding: 5px 8px;
+      font-size: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    .filter-input:focus {
+      outline: none;
+      border-color: #1a1f36;
+      box-shadow: 0 0 0 2px rgba(26,31,54,0.1);
+    }
+    .filter-date-range {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .filter-date-range input {
+      flex: 1;
+      padding: 4px;
+      font-size: 11px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+    .sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    .sortable:hover { background: #f3f4f6; }
+    .sort-icon {
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 10px;
+      color: #9ca3af;
+    }
+    .sortable.is-asc .sort-icon::before  { content: '▲'; color: #1a1f36; }
+    .sortable.is-desc .sort-icon::before { content: '▼'; color: #1a1f36; }
+    .sortable:not(.is-asc):not(.is-desc) .sort-icon::before { content: '⇅'; }
+    .multi-select { position: relative; width: 100%; }
+    .multi-select-trigger {
+      width: 100%; padding: 5px 8px; font-size: 12px;
+      border: 1px solid #d1d5db; border-radius: 4px;
+      background: #fff; cursor: pointer; text-align: left;
+      box-sizing: border-box; display: flex; justify-content: space-between; align-items: center;
+    }
+    .multi-select-trigger:hover { border-color: #1a1f36; }
+    .multi-select-panel {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: #fff; border: 1px solid #d1d5db; border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 20;
+      margin-top: 2px; max-height: 220px; overflow-y: auto;
+      display: none; min-width: 160px;
+    }
+    .multi-select.open .multi-select-panel { display: block; }
+    .multi-select-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px; font-size: 12px; cursor: pointer; white-space: nowrap;
+    }
+    .multi-select-item:hover { background: #f9fafb; }
+    .multi-select-item input { margin: 0; }
+    .filter-count {
+      background: #1a1f36; color: #fff; font-size: 10px;
+      padding: 1px 6px; border-radius: 8px; margin-left: 4px;
+    }
+    .clear-filters-btn {
+      padding: 5px 10px; font-size: 12px;
+      background: #fff; border: 1px solid #d1d5db; border-radius: 4px;
+      cursor: pointer; color: #6b7280;
+    }
+    .clear-filters-btn:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+    /* ===== 匯款比對專用 ===== */
+    .action-btn-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      justify-content: flex-end;
+    }
+    .gradient-btn {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #3b82f6, #1a1f36);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(26,31,54,0.2);
+    }
+    .gradient-btn:hover { opacity: .9; }
+    .gradient-btn.is-secondary {
+      background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    }
+    .gradient-btn.is-tertiary {
+      background: linear-gradient(135deg, #34d399, #10b981);
+    }
+
+    /* 金額正/負顏色 */
+    .amount-positive { color: #10b981; font-weight: 700; }
+    .amount-negative { color: #dc2626; font-weight: 700; }
+
+    /* 對應訂單 chip */
+    .order-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #eff6ff;
+      color: #1e40af;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: monospace;
+      margin: 1px 2px 1px 0;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .order-chip:hover { background: #dbeafe; }
+    .order-chip-multi {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    /* 匯款摘要圖示 */
+    .tx-summary { font-size: 12px; color: #4b5563; }
+    .tx-bank-info { font-size: 11px; line-height: 1.6; }
+    .tx-bank-info .bank-name { color: #1f2937; font-weight: 600; }
+    .tx-bank-info .acc-num { color: #6b7280; font-family: monospace; font-size: 10px; }
+    .tx-bank-info .last5 { color: #1a1f36; font-weight: 700; }
+
+    /* 比對狀態 badge */
+    .match-success { background: #D1FAE5; color: #065F46; }
+    .match-pending { background: #FEF3C7; color: #92400E; }
+    .match-manual  { background: #FEE2E2; color: #991B1B; }
+    .match-failed  { background: #F3F4F6; color: #4B5563; }
+  </style>
+</head>
+<body>
+
+  <script>
+    if (localStorage.getItem('admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <div class="admin-layout">
+
+    <!-- ===== 左側 Sidebar ===== -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-logo">
+        <img src="../images/LOGO.png" alt="WORDS LIVE" class="admin-sidebar-logo-img">
+        <p>後台管理系統</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">總覽</div>
+          <a href="index.html" class="admin-nav-item">
+            <span class="admin-nav-icon">📊</span><span>Dashboard</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">場館設定</div>
+          <a href="venues.html" class="admin-nav-item">
+            <span class="admin-nav-icon">🏛️</span><span>場館管理</span>
+          </a>
+          <a href="plans.html" class="admin-nav-item">
+            <span class="admin-nav-icon">📦</span><span>方案管理</span>
+          </a>
+          <a href="pricing.html" class="admin-nav-item">
+            <span class="admin-nav-icon">💰</span><span>價格管理</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">營運管理</div>
+          <a href="orders.html" class="admin-nav-item">
+            <span class="admin-nav-icon">🛍️</span><span>訂單管理</span>
+          </a>
+          <a href="customers.html" class="admin-nav-item">
+            <span class="admin-nav-icon">👥</span><span>客戶管理</span>
+          </a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">🎟️</span><span>優惠券</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">帳款管理</div>
+          <a href="payments.html" class="admin-nav-item active">
+            <span class="admin-nav-icon">💸</span><span>匯款比對</span>
+          </a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">📄</span><span>發票管理</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">系統</div>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">👤</span><span>員工管理</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="admin-sidebar-footer">v0.6 Demo</div>
+    </aside>
+
+    <!-- ===== 右側 Main ===== -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="admin-header-title">💸 匯款比對 — 帳務清單</div>
+        <div class="admin-header-user">
+          <span class="admin-header-user-name">👤 <span id="adminName">admin</span></span>
+          <button class="admin-header-logout" id="logoutBtn">登出</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+
+        <!-- 統計卡 -->
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <div class="admin-stat-card-label">本月總筆數</div>
+            <div class="admin-stat-card-value" id="statTotal">0</div>
+            <div class="admin-stat-card-trend" style="color:#9ca3af;">含所有狀態</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-card-label">自動比對成功</div>
+            <div class="admin-stat-card-value" id="statSuccess" style="color:#10b981;">0</div>
+            <div class="admin-stat-card-trend" id="statSuccessRate" style="color:#9ca3af;">— 成功率</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-card-label">待人工處理</div>
+            <div class="admin-stat-card-value" id="statManual" style="color:#dc2626;">0</div>
+            <div class="admin-stat-card-trend" style="color:#9ca3af;">需追蹤</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-card-label">已比對金額</div>
+            <div class="admin-stat-card-value" id="statAmount">$ 0</div>
+            <div class="admin-stat-card-trend">本月</div>
+          </div>
+        </div>
+
+        <!-- 3 個動作按鈕（沃茲樣式） -->
+        <div class="action-btn-group">
+          <button class="gradient-btn is-secondary" onclick="rerunMatch()">🔄 重新比對</button>
+          <button class="gradient-btn" onclick="importStatement()">📥 匯入帳務單</button>
+          <button class="gradient-btn is-tertiary" onclick="addTransaction()">＋ 新增帳務</button>
+        </div>
+
+        <!-- 工具列：結果計數 + 清除 -->
+        <div class="admin-toolbar">
+          <span id="resultCount" style="font-size:13px; color:#6b7280;">顯示 0 / 0 筆</span>
+          <button class="clear-filters-btn" onclick="clearAllFilters()">清除全部篩選</button>
+          <div class="admin-toolbar-right">
+            <button class="admin-btn admin-btn-secondary" onclick="exportCSV()">匯出 CSV</button>
+          </div>
+        </div>
+
+        <!-- 表格 -->
+        <div class="admin-table-wrapper" style="overflow-x:auto;">
+          <table class="admin-table" style="min-width:1400px;">
+            <thead>
+              <!-- Row 1: 欄位名 + 排序 -->
+              <tr>
+                <th style="width:60px;">操作</th>
+                <th class="sortable" onclick="toggleSort('id')">
+                  ID <span class="sort-icon" id="sort_id"></span>
+                </th>
+                <th class="sortable" onclick="toggleSort('transaction_date')">
+                  帳務日期 <span class="sort-icon" id="sort_transaction_date"></span>
+                </th>
+                <th>摘要</th>
+                <th>銀行資訊</th>
+                <th class="sortable" style="text-align:right;" onclick="toggleSort('amount')">
+                  交易金額 <span class="sort-icon" id="sort_amount"></span>
+                </th>
+                <th>比對狀態</th>
+                <th>比對原因</th>
+                <th>對應訂單</th>
+                <th>匯入批次</th>
+                <th class="sortable" onclick="toggleSort('created_at')">
+                  建立時間 <span class="sort-icon" id="sort_created_at"></span>
+                </th>
+                <th>更新時間</th>
+              </tr>
+
+              <!-- Row 2: 篩選器 -->
+              <tr class="filter-row">
+                <th></th>
+                <th><input type="text" class="filter-input" id="f_id" placeholder="搜尋 ID"></th>
+                <th>
+                  <div class="filter-date-range">
+                    <input type="date" id="f_tx_date_from">
+                    <span style="font-size:10px; color:#9ca3af;">~</span>
+                    <input type="date" id="f_tx_date_to">
+                  </div>
+                </th>
+                <th>
+                  <div class="multi-select" id="summaryMultiSelect">
+                    <button class="multi-select-trigger" type="button" onclick="toggleMultiPanel(event, 'summaryMultiSelect')">
+                      <span id="summaryTriggerLabel">全部摘要</span>
+                      <span>▾</span>
+                    </button>
+                    <div class="multi-select-panel" id="summaryPanel"></div>
+                  </div>
+                </th>
+                <th><input type="text" class="filter-input" id="f_last5" placeholder="末五碼 / 銀行名"></th>
+                <th></th>
+                <th>
+                  <div class="multi-select" id="statusMultiSelect">
+                    <button class="multi-select-trigger" type="button" onclick="toggleMultiPanel(event, 'statusMultiSelect')">
+                      <span id="statusTriggerLabel">全部狀態</span>
+                      <span>▾</span>
+                    </button>
+                    <div class="multi-select-panel" id="statusPanel"></div>
+                  </div>
+                </th>
+                <th><input type="text" class="filter-input" id="f_reason" placeholder="搜尋原因"></th>
+                <th><input type="text" class="filter-input" id="f_order" placeholder="訂單編號"></th>
+                <th><input type="text" class="filter-input" id="f_batch" placeholder="批次編號"></th>
+                <th>
+                  <div class="filter-date-range">
+                    <input type="date" id="f_created_from">
+                    <span style="font-size:10px; color:#9ca3af;">~</span>
+                    <input type="date" id="f_created_to">
+                  </div>
+                </th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="paymentsTable"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== 匯入帳務單 Modal ===== -->
+  <div class="admin-modal-overlay" id="importModal">
+    <div class="admin-modal" style="max-width:600px;">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title">📥 匯入帳務單</div>
+        <button class="admin-modal-close" onclick="document.getElementById('importModal').classList.remove('show')">×</button>
+      </div>
+      <div class="admin-modal-body">
+        <p style="font-size:13px; color:#6b7280; margin-bottom:14px;">
+          請選擇從銀行下載的對帳單檔案（支援 .xls / .xlsx / .csv）
+        </p>
+        <div style="border:2px dashed #d1d5db; border-radius:8px; padding:30px; text-align:center; background:#f9fafb;">
+          <div style="font-size:48px; margin-bottom:10px;">📂</div>
+          <p style="font-size:13px; color:#6b7280; margin-bottom:12px;">
+            拖曳檔案到此處<br>或 <a href="#" style="color:#1a1f36; text-decoration:underline;" onclick="alert('（demo）選擇檔案')">選擇檔案</a>
+          </p>
+          <p style="font-size:11px; color:#9ca3af;">
+            目前支援：國泰世華（CTWDATXQU 格式）、中信、台中銀行
+          </p>
+        </div>
+        <div style="margin-top:14px; padding:10px; background:#fef3c7; border-radius:6px; font-size:12px; color:#92400e;">
+          💡 匯入後系統會自動執行「末五碼 + 金額」比對，失敗的留在待人工清單。
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('importModal').classList.remove('show')">取消</button>
+        <button class="admin-btn admin-btn-primary" onclick="alert('（demo）匯入並開始比對')">匯入並比對</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 帳務詳情 Modal ===== -->
+  <div class="admin-modal-overlay" id="detailModal">
+    <div class="admin-modal" style="max-width:680px;">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title" id="detailModalTitle">帳務詳情</div>
+        <button class="admin-modal-close" onclick="document.getElementById('detailModal').classList.remove('show')">×</button>
+      </div>
+      <div class="admin-modal-body" id="detailModalBody"></div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="document.getElementById('detailModal').classList.remove('show')">關閉</button>
+        <button class="admin-btn admin-btn-primary" onclick="alert('（demo）手動指派訂單')">手動指派訂單</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('adminName').textContent = localStorage.getItem('admin_username') || 'admin';
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (confirm('確定要登出嗎？')) {
+        localStorage.removeItem('admin_logged_in');
+        localStorage.removeItem('admin_username');
+        window.location.href = 'login.html';
+      }
+    });
+
+    // ===== Mock 帳務資料（仿沃茲畫面）=====
+    const TRANSACTIONS = [
+      { id: 1254, transaction_date: '2026-06-01 16:30:54', summary: 'ATM 跨行轉', bank_code: '013', bank_name: '國泰世華銀行', account: '0000030501225343', last5: '25343', amount: 6874,  match_status: 'success', match_reason: '自動比對成功', orders: ['WL26002001'], batch: 'BATCH_20260602104703', source_file: 'CTWDATXQU_20260602103537.xls', created_at: '2026-06-02 10:47', updated_at: '2026-06-02 10:47' },
+      { id: 1253, transaction_date: '2026-06-01 15:56:20', summary: 'ATM 跨行轉', bank_code: '822', bank_name: '中國信託商銀', account: '0000082540957576', last5: '57576', amount: 20800, match_status: 'success', match_reason: '自動比對成功', orders: ['WL26002004'], batch: 'BATCH_20260602104703', source_file: 'CTWDATXQU_20260602103537.xls', created_at: '2026-06-02 10:47', updated_at: '2026-06-02 10:47' },
+      { id: 1252, transaction_date: '2026-06-01 15:37:29', summary: '匯款存入',   bank_code: '053', bank_name: '台中銀行',     account: '0000000000000000', last5: '00000', amount: 36750, match_status: 'success', match_reason: '配對三筆訂單 合計 36750', orders: ['WL26002005','WL26002006','WL26002007'], batch: 'BATCH_20260602104703', source_file: 'CTWDATXQU_20260602103537.xls', created_at: '2026-06-02 10:47', updated_at: '2026-06-02 10:56' },
+      { id: 1251, transaction_date: '2026-06-01 12:55:03', summary: 'ATM 跨行轉', bank_code: '004', bank_name: '台灣銀行',     account: '0000091004612114', last5: '12114', amount: 14630, match_status: 'success', match_reason: '自動比對成功', orders: ['WL26002008'], batch: 'BATCH_20260602104703', source_file: 'CTWDATXQU_20260602103537.xls', created_at: '2026-06-02 10:47', updated_at: '2026-06-02 10:47' },
+      { id: 1250, transaction_date: '2026-06-01 11:12:08', summary: 'ATM 跨行轉', bank_code: '012', bank_name: '台北富邦銀行', account: '0000027845512033', last5: '12033', amount: 5200,  match_status: 'success', match_reason: '補比對成功',   orders: ['WL26001236'], batch: 'BATCH_20260602104703', source_file: 'CTWDATXQU_20260602103537.xls', created_at: '2026-06-02 10:47', updated_at: '2026-06-02 15:15' },
+      { id: 1249, transaction_date: '2026-06-01 10:33:41', summary: '匯款存入',   bank_code: '700', bank_name: '中華郵政',     account: '0000031244850912', last5: '50912', amount: 3300,  match_status: 'pending', match_reason: '金額相符但末五碼無對應訂單', orders: [], batch: 'BATCH_20260602104703', source_file: 'CTWDATXQU_20260602103537.xls', created_at: '2026-06-02 10:47', updated_at: '2026-06-02 10:47' },
+      { id: 1248, transaction_date: '2026-06-01 09:48:22', summary: 'ATM 跨行轉', bank_code: '013', bank_name: '國泰世華銀行', account: '0000030502347789', last5: '47789', amount: 1500,  match_status: 'manual',  match_reason: '金額不符 / 無末五碼匹配',  orders: [], batch: 'BATCH_20260602104703', source_file: 'CTWDATXQU_20260602103537.xls', created_at: '2026-06-02 10:47', updated_at: '2026-06-02 10:47' },
+      { id: 1247, transaction_date: '2026-05-31 17:22:10', summary: 'ATM 跨行轉', bank_code: '822', bank_name: '中國信託商銀', account: '0000082541188821', last5: '88821', amount: 9450,  match_status: 'success', match_reason: '自動比對成功', orders: ['WL26002013'], batch: 'BATCH_20260601094501', source_file: 'CTWDATXQU_20260601093012.xls', created_at: '2026-06-01 09:45', updated_at: '2026-06-01 09:45' },
+      { id: 1246, transaction_date: '2026-05-31 14:05:33', summary: '匯款存入',   bank_code: '004', bank_name: '台灣銀行',     account: '0000091005524876', last5: '24876', amount: 11460, match_status: 'success', match_reason: '自動比對成功', orders: ['WL26001240'], batch: 'BATCH_20260601094501', source_file: 'CTWDATXQU_20260601093012.xls', created_at: '2026-06-01 09:45', updated_at: '2026-06-01 09:45' },
+      { id: 1245, transaction_date: '2026-05-31 11:33:47', summary: 'ATM 跨行轉', bank_code: '013', bank_name: '國泰世華銀行', account: '0000030503311100', last5: '11100', amount: 2080,  match_status: 'success', match_reason: '自動比對成功', orders: ['WL26001238'], batch: 'BATCH_20260601094501', source_file: 'CTWDATXQU_20260601093012.xls', created_at: '2026-06-01 09:45', updated_at: '2026-06-01 09:45' }
+    ];
+
+    // ===== Match 狀態設定 =====
+    const MATCH_STATUS = {
+      success: { label: '自動成功', cls: 'match-success' },
+      pending: { label: '待人工確認', cls: 'match-pending' },
+      manual:  { label: '待人工處理', cls: 'match-manual' },
+      failed:  { label: '比對失敗', cls: 'match-failed' }
+    };
+
+    const SUMMARY_TYPES = ['ATM 跨行轉', '匯款存入', '臨櫃匯款', 'eATM'];
+
+    // ===== Filter / Sort 狀態 =====
+    let filters = {
+      id: '', last5: '', reason: '', order: '', batch: '',
+      summaries: [],
+      statuses: [],
+      txDateFrom: '', txDateTo: '',
+      createdFrom: '', createdTo: ''
+    };
+    let sort = { column: null, direction: null };
+
+    // ===== 多選下拉初始化 =====
+    function initSummaryPanel() {
+      const panel = document.getElementById('summaryPanel');
+      panel.innerHTML = '';
+      SUMMARY_TYPES.forEach(t => {
+        const item = document.createElement('label');
+        item.className = 'multi-select-item';
+        item.innerHTML = `<input type="checkbox" value="${t}" onchange="onSummaryCheck(this)"><span>${t}</span>`;
+        panel.appendChild(item);
+      });
+    }
+
+    function initStatusPanel() {
+      const panel = document.getElementById('statusPanel');
+      panel.innerHTML = '';
+      Object.entries(MATCH_STATUS).forEach(([key, s]) => {
+        const item = document.createElement('label');
+        item.className = 'multi-select-item';
+        item.innerHTML = `<input type="checkbox" value="${key}" onchange="onStatusCheck(this)"><span class="admin-badge ${s.cls}">${s.label}</span>`;
+        panel.appendChild(item);
+      });
+    }
+
+    function toggleMultiPanel(e, id) {
+      e.stopPropagation();
+      document.querySelectorAll('.multi-select').forEach(ms => {
+        if (ms.id !== id) ms.classList.remove('open');
+      });
+      document.getElementById(id).classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      document.querySelectorAll('.multi-select').forEach(ms => {
+        if (!ms.contains(e.target)) ms.classList.remove('open');
+      });
+    });
+
+    function onSummaryCheck(cb) {
+      if (cb.checked) {
+        if (!filters.summaries.includes(cb.value)) filters.summaries.push(cb.value);
+      } else {
+        filters.summaries = filters.summaries.filter(t => t !== cb.value);
+      }
+      updateMultiLabel('summary', filters.summaries, SUMMARY_TYPES, '全部摘要', v => v);
+      renderTable();
+    }
+
+    function onStatusCheck(cb) {
+      if (cb.checked) {
+        if (!filters.statuses.includes(cb.value)) filters.statuses.push(cb.value);
+      } else {
+        filters.statuses = filters.statuses.filter(s => s !== cb.value);
+      }
+      updateMultiLabel('status', filters.statuses, Object.keys(MATCH_STATUS), '全部狀態', k => MATCH_STATUS[k].label);
+      renderTable();
+    }
+
+    function updateMultiLabel(name, selected, all, defaultLabel, formatFn) {
+      const label = document.getElementById(name + 'TriggerLabel');
+      if (selected.length === 0 || selected.length === all.length) {
+        label.innerHTML = defaultLabel;
+      } else if (selected.length === 1) {
+        label.innerHTML = formatFn(selected[0]);
+      } else {
+        label.innerHTML = `已選 <span class="filter-count">${selected.length}</span>`;
+      }
+    }
+
+    // ===== 排序 =====
+    function toggleSort(column) {
+      if (sort.column !== column) {
+        sort.column = column;
+        sort.direction = 'desc';
+      } else if (sort.direction === 'desc') {
+        sort.direction = 'asc';
+      } else {
+        sort.column = null; sort.direction = null;
+      }
+      updateSortIndicators();
+      renderTable();
+    }
+
+    function updateSortIndicators() {
+      ['id','transaction_date','amount','created_at'].forEach(col => {
+        const icon = document.getElementById('sort_' + col);
+        if (!icon) return;
+        const th = icon.parentElement;
+        th.classList.remove('is-asc','is-desc');
+        if (sort.column === col) {
+          th.classList.add(sort.direction === 'asc' ? 'is-asc' : 'is-desc');
+        }
+      });
+    }
+
+    // ===== 文字輸入篩選 =====
+    function bindFilterInputs() {
+      document.getElementById('f_id').addEventListener('input',  e => { filters.id = e.target.value; renderTable(); });
+      document.getElementById('f_last5').addEventListener('input',e => { filters.last5 = e.target.value.toLowerCase(); renderTable(); });
+      document.getElementById('f_reason').addEventListener('input',e=> { filters.reason = e.target.value; renderTable(); });
+      document.getElementById('f_order').addEventListener('input',e => { filters.order = e.target.value.toLowerCase(); renderTable(); });
+      document.getElementById('f_batch').addEventListener('input',e => { filters.batch = e.target.value; renderTable(); });
+      document.getElementById('f_tx_date_from').addEventListener('change', e => { filters.txDateFrom = e.target.value; renderTable(); });
+      document.getElementById('f_tx_date_to').addEventListener('change', e => { filters.txDateTo = e.target.value; renderTable(); });
+      document.getElementById('f_created_from').addEventListener('change', e => { filters.createdFrom = e.target.value; renderTable(); });
+      document.getElementById('f_created_to').addEventListener('change', e => { filters.createdTo = e.target.value; renderTable(); });
+    }
+
+    function clearAllFilters() {
+      filters = { id:'', last5:'', reason:'', order:'', batch:'', summaries:[], statuses:[], txDateFrom:'', txDateTo:'', createdFrom:'', createdTo:'' };
+      sort = { column: null, direction: null };
+      ['f_id','f_last5','f_reason','f_order','f_batch','f_tx_date_from','f_tx_date_to','f_created_from','f_created_to'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      document.querySelectorAll('.multi-select-panel input').forEach(cb => cb.checked = false);
+      updateMultiLabel('summary', [], SUMMARY_TYPES, '全部摘要', v => v);
+      updateMultiLabel('status', [], Object.keys(MATCH_STATUS), '全部狀態', k => MATCH_STATUS[k].label);
+      updateSortIndicators();
+      renderTable();
+    }
+
+    // ===== 統計 =====
+    function updateStats() {
+      const total = TRANSACTIONS.length;
+      const success = TRANSACTIONS.filter(t => t.match_status === 'success').length;
+      const manual = TRANSACTIONS.filter(t => ['pending','manual'].includes(t.match_status)).length;
+      const matchedAmount = TRANSACTIONS.filter(t => t.match_status === 'success').reduce((s,t) => s + t.amount, 0);
+
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statSuccess').textContent = success;
+      document.getElementById('statSuccessRate').textContent = total > 0 ? `${(success/total*100).toFixed(0)} % 成功率` : '—';
+      document.getElementById('statManual').textContent = manual;
+      document.getElementById('statAmount').textContent = '$ ' + matchedAmount.toLocaleString();
+    }
+
+    // ===== 渲染表格 =====
+    function renderTable() {
+      let filtered = TRANSACTIONS.filter(t => {
+        if (filters.id     && !String(t.id).includes(filters.id))                  return false;
+        if (filters.last5  && !(t.last5.includes(filters.last5) || t.bank_name.toLowerCase().includes(filters.last5))) return false;
+        if (filters.reason && !t.match_reason.includes(filters.reason))            return false;
+        if (filters.order  && !t.orders.some(o => o.toLowerCase().includes(filters.order))) return false;
+        if (filters.batch  && !t.batch.includes(filters.batch) && !t.source_file.includes(filters.batch)) return false;
+        if (filters.summaries.length > 0 && !filters.summaries.includes(t.summary)) return false;
+        if (filters.statuses.length > 0 && !filters.statuses.includes(t.match_status)) return false;
+        const txDate = t.transaction_date.slice(0,10);
+        if (filters.txDateFrom && txDate < filters.txDateFrom) return false;
+        if (filters.txDateTo   && txDate > filters.txDateTo)   return false;
+        const createdDate = t.created_at.slice(0,10);
+        if (filters.createdFrom && createdDate < filters.createdFrom) return false;
+        if (filters.createdTo   && createdDate > filters.createdTo)   return false;
+        return true;
+      });
+
+      if (sort.column && sort.direction) {
+        filtered.sort((a,b) => {
+          let va = a[sort.column], vb = b[sort.column];
+          if (sort.column === 'amount' || sort.column === 'id') {
+            return sort.direction === 'asc' ? va - vb : vb - va;
+          }
+          if (va < vb) return sort.direction === 'asc' ? -1 : 1;
+          if (va > vb) return sort.direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+
+      document.getElementById('resultCount').textContent = `顯示 ${filtered.length} / ${TRANSACTIONS.length} 筆`;
+
+      const tbody = document.getElementById('paymentsTable');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12"><div class="admin-empty"><div class="admin-empty-icon">📭</div>找不到符合條件的帳務</div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(t => {
+        const s = MATCH_STATUS[t.match_status];
+        const ordersHtml = t.orders.length === 0
+          ? '<span style="color:#9ca3af;">—</span>'
+          : t.orders.map(o => {
+              const cls = t.orders.length > 1 ? 'order-chip order-chip-multi' : 'order-chip';
+              return `<a class="${cls}" href="orders.html?id=${o}" onclick="event.stopPropagation();">${o}</a>`;
+            }).join('');
+
+        return `
+          <tr style="cursor:pointer;" onclick="viewDetail(${t.id})">
+            <td onclick="event.stopPropagation();">
+              <button class="admin-btn admin-btn-secondary admin-btn-sm" style="padding:3px 6px; font-size:11px;" onclick="alert('（demo）編輯')">✏️</button>
+              <button class="admin-btn admin-btn-danger admin-btn-sm" style="padding:3px 6px; font-size:11px;" onclick="alert('（demo）刪除')">🗑️</button>
+            </td>
+            <td><strong>${t.id}</strong></td>
+            <td>
+              <div style="font-size:12px;">📅 ${t.transaction_date.slice(0,10)}</div>
+              <div style="font-size:11px; color:#9ca3af;">⏰ ${t.transaction_date.slice(11)}</div>
+            </td>
+            <td class="tx-summary">${t.summary}</td>
+            <td class="tx-bank-info">
+              <div><span class="bank-name">${t.bank_code} - ${t.bank_name}</span></div>
+              <div class="acc-num">${t.account}</div>
+              <div># 末五碼: <span class="last5">${t.last5}</span></div>
+            </td>
+            <td style="text-align:right;">
+              <span class="amount-positive">+NT$ ${t.amount.toLocaleString()}</span>
+            </td>
+            <td><span class="admin-badge ${s.cls}">${s.label}</span></td>
+            <td style="font-size:12px; color:#4b5563;">${t.match_reason}</td>
+            <td>${ordersHtml}</td>
+            <td style="font-size:11px;">
+              <div style="color:#1f2937; font-family:monospace;">${t.batch}</div>
+              <div style="color:#9ca3af; font-size:10px;">${t.source_file}</div>
+            </td>
+            <td style="font-size:11px; color:#6b7280;">${t.created_at}</td>
+            <td style="font-size:11px; color:#6b7280;">${t.updated_at}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ===== 詳情 Modal =====
+    function viewDetail(id) {
+      const t = TRANSACTIONS.find(x => x.id === id);
+      if (!t) return;
+      const s = MATCH_STATUS[t.match_status];
+
+      document.getElementById('detailModalTitle').textContent = `帳務詳情 #${t.id}`;
+      const ordersHtml = t.orders.length === 0
+        ? '<span style="color:#9ca3af;">尚未對應任何訂單</span>'
+        : t.orders.map(o => `<a class="order-chip ${t.orders.length>1?'order-chip-multi':''}" href="orders.html?id=${o}">${o}</a>`).join(' ');
+
+      document.getElementById('detailModalBody').innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <div>
+            <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">💵 交易資訊</h4>
+            <div style="font-size:13px; line-height:2;">
+              <div><strong>帳務 ID：</strong>${t.id}</div>
+              <div><strong>交易時間：</strong>${t.transaction_date}</div>
+              <div><strong>摘要：</strong>${t.summary}</div>
+              <div><strong>交易金額：</strong><span class="amount-positive">+NT$ ${t.amount.toLocaleString()}</span></div>
+            </div>
+          </div>
+          <div>
+            <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">🏦 銀行資訊</h4>
+            <div style="font-size:13px; line-height:2;">
+              <div><strong>銀行：</strong>${t.bank_code} - ${t.bank_name}</div>
+              <div><strong>帳號：</strong><span style="font-family:monospace;">${t.account}</span></div>
+              <div><strong>末五碼：</strong><strong style="color:#1a1f36;">${t.last5}</strong></div>
+            </div>
+          </div>
+          <div style="grid-column:1/-1;">
+            <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">🔗 比對結果</h4>
+            <div style="background:#f9fafb; padding:14px; border-radius:6px;">
+              <div style="margin-bottom:10px;">
+                <span class="admin-badge ${s.cls}" style="font-size:13px;">${s.label}</span>
+                <span style="margin-left:8px; font-size:13px; color:#4b5563;">${t.match_reason}</span>
+              </div>
+              <div style="font-size:13px;">
+                <strong>對應訂單：</strong>${ordersHtml}
+              </div>
+            </div>
+          </div>
+          <div style="grid-column:1/-1;">
+            <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">📥 匯入紀錄</h4>
+            <div style="font-size:12px; line-height:1.8;">
+              <div><strong>批次編號：</strong><span style="font-family:monospace;">${t.batch}</span></div>
+              <div><strong>來源檔案：</strong><span style="font-family:monospace;">${t.source_file}</span></div>
+              <div><strong>建立：</strong>${t.created_at}</div>
+              <div><strong>更新：</strong>${t.updated_at}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('detailModal').classList.add('show');
+    }
+
+    // ===== Action buttons =====
+    function rerunMatch() {
+      if (confirm('要對所有「待人工」狀態的帳務重新執行比對嗎？')) {
+        alert('（demo）重新比對完成：成功 0 筆、仍待人工 2 筆');
+      }
+    }
+    function importStatement() {
+      document.getElementById('importModal').classList.add('show');
+    }
+    function addTransaction() { alert('（demo）開啟新增帳務表單'); }
+    function exportCSV() { alert('（demo）匯出 CSV'); }
+
+    // ===== 初始化 =====
+    initSummaryPanel();
+    initStatusPanel();
+    bindFilterInputs();
+    updateStats();
+    renderTable();
+  </script>
+
+</body>
+</html>

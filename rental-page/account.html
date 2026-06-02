@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的帳戶｜沃茲新創空間</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ========== Navbar ========== -->
+  <header class="navbar">
+    <div class="navbar-container">
+      <a href="index.html" class="logo">
+        <img src="images/LOGO.png" alt="沃茲新創空間 WORDS" class="logo-img">
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">場地租借</a></li>
+          <li class="has-dropdown">
+            <a href="member.html">會員優惠 ▾</a>
+            <ul class="dropdown">
+              <li><a href="member.html?tab=tier">會員分級優惠</a></li>
+              <li><a href="member.html?tab=stored-value">儲值方案優惠</a></li>
+              <li><a href="member.html?tab=points">消費紅利折抵</a></li>
+            </ul>
+          </li>
+          <li><a href="cart.html">購物車</a></li>
+          <li><a href="account.html">Joanna ▾</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== Breadcrumb ========== -->
+  <div class="breadcrumb-container">
+    <div class="breadcrumb">
+      <a href="index.html">首頁</a>
+      <span class="separator">›</span>
+      <span>我的帳戶</span>
+    </div>
+  </div>
+
+  <!-- ========== Main ========== -->
+  <main class="account-container">
+
+    <!-- 左側：個人資料 + 選單 -->
+    <aside class="account-sidebar">
+      <div class="account-profile">
+        <div class="account-avatar">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="80" height="80">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </div>
+        <h3 class="account-name">Joanna</h3>
+        <p class="account-email">joanna@urfit.com.tw</p>
+      </div>
+
+      <nav class="account-nav">
+        <a href="#" class="account-nav-item active" data-tab="orders">
+          <span class="account-nav-icon">🛍️</span>
+          <span>我的訂單</span>
+        </a>
+        <a href="#" class="account-nav-item" data-tab="bookings">
+          <span class="account-nav-icon">📅</span>
+          <span>預約管理</span>
+        </a>
+        <a href="#" class="account-nav-item" data-tab="coupons">
+          <span class="account-nav-icon">🎟️</span>
+          <span>優惠券</span>
+        </a>
+        <a href="#" class="account-nav-item" data-tab="points">
+          <span class="account-nav-icon">⭐</span>
+          <span>我的點數</span>
+        </a>
+        <a href="#" class="account-nav-item" data-tab="membership">
+          <span class="account-nav-icon">💎</span>
+          <span>會員籍</span>
+        </a>
+        <a href="#" class="account-nav-item" data-tab="profile">
+          <span class="account-nav-icon">👤</span>
+          <span>帳戶管理</span>
+        </a>
+        <a href="#" class="account-nav-item" data-tab="address">
+          <span class="account-nav-icon">🏠</span>
+          <span>編輯地址</span>
+        </a>
+        <a href="login.html" class="account-nav-item account-nav-logout">
+          <span class="account-nav-icon">🚪</span>
+          <span>登出</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- 右側：內容區 -->
+    <section class="account-content">
+
+      <style>
+        /* ===== 我的帳戶 - sub pages 樣式 ===== */
+        .acc-card {
+          background: #fff;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          padding: 20px;
+          margin-bottom: 16px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .acc-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 14px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid #f3f4f6;
+        }
+        .acc-card-title {
+          font-size: 18px;
+          font-weight: 700;
+          color: #1f2937;
+        }
+        .acc-status {
+          display: inline-block;
+          padding: 3px 10px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        .s-pending   { background: #FEF3C7; color: #92400E; }
+        .s-paid      { background: #DBEAFE; color: #1E40AF; }
+        .s-confirmed { background: #D1FAE5; color: #065F46; }
+        .s-completed { background: #E5E7EB; color: #4B5563; }
+        .s-cancelled { background: #FEE2E2; color: #991B1B; }
+        .acc-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 10px 0;
+          border-bottom: 1px solid #f3f4f6;
+          font-size: 14px;
+        }
+        .acc-row:last-child { border-bottom: none; }
+        .acc-row .label { color: #6b7280; }
+        .acc-row .value { color: #1f2937; font-weight: 500; }
+
+        /* sub tabs (優惠券、點數明細用) */
+        .sub-tabs {
+          display: flex;
+          gap: 0;
+          border-bottom: 2px solid #e5e7eb;
+          margin-bottom: 16px;
+        }
+        .sub-tab {
+          padding: 8px 18px;
+          background: transparent;
+          border: none;
+          border-bottom: 3px solid transparent;
+          margin-bottom: -2px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #6b7280;
+          cursor: pointer;
+        }
+        .sub-tab.active { color: #ea580c; border-bottom-color: #ea580c; }
+        .sub-pane { display: none; }
+        .sub-pane.active { display: block; }
+
+        /* 訂單卡 */
+        .order-item {
+          display: grid;
+          grid-template-columns: 90px 1fr auto;
+          gap: 14px;
+          padding: 14px;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          margin-bottom: 10px;
+          align-items: center;
+          background: #fff;
+          transition: all .15s;
+        }
+        .order-item:hover {
+          border-color: #f97316;
+          box-shadow: 0 2px 8px rgba(249,115,22,0.1);
+        }
+        .order-thumb {
+          width: 90px; height: 70px;
+          border-radius: 6px;
+          background: #f3f4f6;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 36px;
+        }
+        .order-info-main { font-size: 14px; }
+        .order-info-main .o-id { font-family: monospace; font-size: 12px; color: #9ca3af; }
+        .order-info-main .o-venue { font-weight: 700; font-size: 16px; color: #1f2937; }
+        .order-info-main .o-meta { font-size: 12px; color: #6b7280; margin-top: 4px; }
+        .order-info-side { text-align: right; }
+        .order-info-side .o-amount { font-size: 18px; font-weight: 700; color: #ea580c; margin-bottom: 6px; }
+        .order-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
+        .btn-small {
+          padding: 4px 10px;
+          font-size: 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          border: 1px solid #d1d5db;
+          background: #fff;
+          color: #4b5563;
+        }
+        .btn-small:hover { background: #f9fafb; }
+        .btn-small.primary { background: #f97316; color: #fff; border-color: #f97316; }
+        .btn-small.primary:hover { background: #ea580c; }
+        .btn-small.danger { color: #dc2626; border-color: #fecaca; }
+        .btn-small.danger:hover { background: #fef2f2; }
+
+        /* 點數 / 儲值 大卡 */
+        .balance-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+          margin-bottom: 18px;
+        }
+        .balance-card {
+          padding: 24px;
+          border-radius: 12px;
+          color: #fff;
+          position: relative;
+          overflow: hidden;
+        }
+        .balance-card.points { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .balance-card.stored { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .balance-label { font-size: 13px; opacity: .9; }
+        .balance-value { font-size: 36px; font-weight: 800; margin-top: 4px; }
+        .balance-unit { font-size: 14px; opacity: .85; margin-top: 2px; }
+        .balance-action {
+          margin-top: 14px;
+          padding: 6px 14px;
+          background: rgba(255,255,255,0.25);
+          border: 1px solid rgba(255,255,255,0.4);
+          color: #fff;
+          border-radius: 6px;
+          font-size: 12px;
+          cursor: pointer;
+        }
+        .balance-action:hover { background: rgba(255,255,255,0.35); }
+
+        /* 交易明細 table */
+        .tx-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .tx-table th { background: #f9fafb; padding: 10px; text-align: left; font-size: 12px; color: #6b7280; font-weight: 600; }
+        .tx-table td { padding: 10px; border-top: 1px solid #f3f4f6; }
+        .tx-amount-add { color: #10b981; font-weight: 700; }
+        .tx-amount-sub { color: #dc2626; font-weight: 700; }
+
+        /* 會員等級 */
+        .tier-card-big {
+          padding: 28px;
+          background: linear-gradient(135deg, #FEF3C7, #FBBF24);
+          border-radius: 14px;
+          color: #92400e;
+          position: relative;
+          overflow: hidden;
+        }
+        .tier-card-big::after {
+          content: '💎';
+          position: absolute;
+          right: -10px;
+          top: -10px;
+          font-size: 120px;
+          opacity: .15;
+        }
+        .tier-current { font-size: 14px; opacity: .85; }
+        .tier-name { font-size: 32px; font-weight: 800; margin: 6px 0; }
+        .tier-discount { display: inline-block; padding: 4px 12px; background: rgba(255,255,255,0.4); border-radius: 12px; font-size: 13px; font-weight: 700; }
+        .tier-progress {
+          margin-top: 18px;
+          background: rgba(255,255,255,0.4);
+          height: 10px;
+          border-radius: 5px;
+          overflow: hidden;
+        }
+        .tier-progress-fill {
+          height: 100%;
+          background: #92400e;
+          border-radius: 5px;
+        }
+        .tier-progress-label {
+          margin-top: 6px;
+          font-size: 13px;
+          display: flex;
+          justify-content: space-between;
+        }
+
+        /* 4 等級對照 */
+        .tier-compare {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 8px;
+          margin-top: 20px;
+        }
+        .tier-mini {
+          padding: 14px 10px;
+          background: #fff;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          text-align: center;
+          font-size: 12px;
+        }
+        .tier-mini.current {
+          border-color: #f59e0b;
+          background: #FEF3C7;
+        }
+        .tier-mini-name { font-weight: 700; font-size: 13px; margin-bottom: 4px; color: #1f2937; }
+        .tier-mini-threshold { color: #6b7280; font-size: 11px; }
+        .tier-mini-discount { color: #ea580c; font-weight: 700; margin-top: 6px; }
+
+        /* 優惠券 */
+        .coupon-card {
+          display: grid;
+          grid-template-columns: 100px 1fr auto;
+          gap: 16px;
+          padding: 16px;
+          background: #fff;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          margin-bottom: 10px;
+          position: relative;
+          overflow: hidden;
+        }
+        .coupon-card::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 100px;
+          width: 0; height: 0;
+          border-top: 8px solid transparent;
+          border-bottom: 8px solid transparent;
+          border-left: 8px solid #fff;
+          transform: translateY(-50%);
+          z-index: 2;
+        }
+        .coupon-card.used   { opacity: .5; filter: grayscale(.4); }
+        .coupon-card.expired{ opacity: .4; }
+        .coupon-discount-area {
+          background: linear-gradient(135deg, #f97316, #ea580c);
+          color: #fff;
+          border-radius: 6px;
+          padding: 12px;
+          text-align: center;
+        }
+        .coupon-discount-value { font-size: 24px; font-weight: 800; line-height: 1; }
+        .coupon-discount-label { font-size: 11px; opacity: .9; margin-top: 4px; }
+        .coupon-info { display: flex; flex-direction: column; justify-content: center; }
+        .coupon-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+        .coupon-meta { font-size: 12px; color: #6b7280; line-height: 1.6; }
+        .coupon-action {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 6px;
+        }
+
+        /* 地址卡 */
+        .address-card {
+          padding: 16px;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          margin-bottom: 10px;
+          background: #fff;
+        }
+        .address-card .addr-label-tag {
+          display: inline-block;
+          padding: 2px 8px;
+          background: #FEF3C7;
+          color: #92400E;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+          margin-right: 8px;
+        }
+        .address-card.is-default { border-color: #f97316; background: #fffbeb; }
+        .addr-name { font-weight: 700; font-size: 15px; }
+        .addr-detail { font-size: 13px; color: #4b5563; margin-top: 6px; }
+        .addr-actions { margin-top: 10px; display: flex; gap: 8px; }
+
+        /* 表單 */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-field { margin-bottom: 14px; }
+        .form-field label { display: block; font-size: 13px; color: #4b5563; margin-bottom: 4px; font-weight: 600; }
+        .form-field input, .form-field select {
+          width: 100%;
+          padding: 9px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 14px;
+          box-sizing: border-box;
+        }
+        .form-field input:focus { outline: none; border-color: #ea580c; }
+        .form-field input:disabled { background: #f9fafb; color: #6b7280; }
+        .form-section-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1f2937;
+          margin-top: 24px;
+          margin-bottom: 12px;
+          padding-bottom: 8px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .form-section-title:first-child { margin-top: 0; }
+        .danger-zone {
+          margin-top: 24px;
+          padding: 16px;
+          border: 1px solid #fecaca;
+          border-radius: 8px;
+          background: #fef2f2;
+        }
+        .danger-zone h4 { color: #991b1b; font-size: 14px; margin-bottom: 8px; }
+        .danger-zone p { font-size: 12px; color: #7f1d1d; margin-bottom: 10px; }
+      </style>
+
+      <!-- ============================== -->
+      <!-- 我的訂單                        -->
+      <!-- ============================== -->
+      <div class="account-tab-content active" data-content="orders">
+        <div class="acc-card-header" style="border:none; margin-bottom:0;">
+          <div class="acc-card-title">🛍️ 我的訂單</div>
+          <div style="font-size:13px; color:#6b7280;">共 <strong style="color:#ea580c;">8</strong> 筆訂單</div>
+        </div>
+
+        <!-- 訂單篩選 -->
+        <div class="sub-tabs">
+          <button class="sub-tab active" data-order-filter="all">全部</button>
+          <button class="sub-tab" data-order-filter="pending">待付款</button>
+          <button class="sub-tab" data-order-filter="confirmed">已確認</button>
+          <button class="sub-tab" data-order-filter="completed">已完成</button>
+          <button class="sub-tab" data-order-filter="cancelled">已取消</button>
+        </div>
+
+        <!-- 訂單列表 -->
+        <div id="ordersList">
+          <!-- 待付款 -->
+          <div class="order-item" data-status="pending">
+            <div class="order-thumb">🏛️</div>
+            <div class="order-info-main">
+              <span class="o-id">#WL26002001</span>
+              <div class="o-venue">勤美館</div>
+              <div class="o-meta">📅 2026/06/02 · 10:00 ~ 13:00 · 3 小時</div>
+              <div style="margin-top:6px;"><span class="acc-status s-pending">待付款</span></div>
+            </div>
+            <div class="order-info-side">
+              <div class="o-amount">$ 5,840</div>
+              <div class="order-actions">
+                <button class="btn-small primary" onclick="payOrder('WL26002001')">立即付款</button>
+                <button class="btn-small danger" onclick="cancelOrder('WL26002001')">取消</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 已付款 -->
+          <div class="order-item" data-status="confirmed">
+            <div class="order-thumb">🏛️</div>
+            <div class="order-info-main">
+              <span class="o-id">#WL26001245</span>
+              <div class="o-venue">勤美館</div>
+              <div class="o-meta">📅 2026/06/15 · 14:00 ~ 17:00 · 3 小時</div>
+              <div style="margin-top:6px;"><span class="acc-status s-confirmed">已確認</span> <span style="font-size:11px; color:#10b981;">💸 已匯款 #1254</span></div>
+            </div>
+            <div class="order-info-side">
+              <div class="o-amount">$ 6,300</div>
+              <div class="order-actions">
+                <button class="btn-small" onclick="viewOrder('WL26001245')">查看明細</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 已完成 -->
+          <div class="order-item" data-status="completed">
+            <div class="order-thumb">🏛️</div>
+            <div class="order-info-main">
+              <span class="o-id">#WL26001235</span>
+              <div class="o-venue">站前館 - 洽談室</div>
+              <div class="o-meta">📅 2026/05/27 · 15:00 ~ 18:00 · 3 小時</div>
+              <div style="margin-top:6px;"><span class="acc-status s-completed">已完成</span></div>
+            </div>
+            <div class="order-info-side">
+              <div class="o-amount">$ 1,680</div>
+              <div class="order-actions">
+                <button class="btn-small primary" onclick="reorder('WL26001235')">再次預訂</button>
+                <button class="btn-small" onclick="viewOrder('WL26001235')">查看</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="order-item" data-status="completed">
+            <div class="order-thumb">🏛️</div>
+            <div class="order-info-main">
+              <span class="o-id">#WL26001210</span>
+              <div class="o-venue">勤美館</div>
+              <div class="o-meta">📅 2026/04/20 · 13:00 ~ 17:00 · 4 小時</div>
+              <div style="margin-top:6px;"><span class="acc-status s-completed">已完成</span></div>
+            </div>
+            <div class="order-info-side">
+              <div class="o-amount">$ 5,200</div>
+              <div class="order-actions">
+                <button class="btn-small primary" onclick="reorder('WL26001210')">再次預訂</button>
+                <button class="btn-small" onclick="viewOrder('WL26001210')">查看</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="order-item" data-status="completed">
+            <div class="order-thumb">🏛️</div>
+            <div class="order-info-main">
+              <span class="o-id">#WL26001102</span>
+              <div class="o-venue">站前館 - 多功能 1 館</div>
+              <div class="o-meta">📅 2026/03/15 · 09:00 ~ 18:00 · 9 小時（全日）</div>
+              <div style="margin-top:6px;"><span class="acc-status s-completed">已完成</span></div>
+            </div>
+            <div class="order-info-side">
+              <div class="o-amount">$ 9,250</div>
+              <div class="order-actions">
+                <button class="btn-small" onclick="viewOrder('WL26001102')">查看</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="order-item" data-status="cancelled">
+            <div class="order-thumb">🏛️</div>
+            <div class="order-info-main">
+              <span class="o-id">#WL26001098</span>
+              <div class="o-venue">勤美館</div>
+              <div class="o-meta">📅 2026/03/10 · 14:00 ~ 16:00 · 2 小時</div>
+              <div style="margin-top:6px;"><span class="acc-status s-cancelled">已取消</span></div>
+            </div>
+            <div class="order-info-side">
+              <div class="o-amount" style="text-decoration:line-through; color:#9ca3af;">$ 1,360</div>
+              <div class="order-actions">
+                <button class="btn-small primary" onclick="reorder('WL26001098')">再次預訂</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- 預約管理                        -->
+      <!-- ============================== -->
+      <div class="account-tab-content" data-content="bookings">
+        <div class="acc-card-header" style="border:none; margin-bottom:14px;">
+          <div class="acc-card-title">📅 預約管理</div>
+        </div>
+
+        <!-- 即將到來 -->
+        <h3 style="font-size:15px; color:#1f2937; margin:14px 0 10px;">🔜 即將到來（2 筆）</h3>
+
+        <div class="order-item" style="border-left:4px solid #f97316;">
+          <div class="order-thumb">🏛️</div>
+          <div class="order-info-main">
+            <span class="o-id">#WL26001245</span>
+            <div class="o-venue">勤美館</div>
+            <div class="o-meta">📅 2026/06/15（六）· 14:00 ~ 17:00 · 3 小時</div>
+            <div style="margin-top:6px; font-size:12px; color:#ea580c;">📌 還有 14 天</div>
+          </div>
+          <div class="order-info-side">
+            <div class="order-actions">
+              <button class="btn-small primary" onclick="alert('（demo）改期：選新時段')">📅 改期</button>
+              <button class="btn-small danger" onclick="cancelOrder('WL26001245')">取消預約</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-item" style="border-left:4px solid #f97316;">
+          <div class="order-thumb">🏛️</div>
+          <div class="order-info-main">
+            <span class="o-id">#WL26002001</span>
+            <div class="o-venue">勤美館</div>
+            <div class="o-meta">📅 2026/06/02（一）· 10:00 ~ 13:00 · 3 小時</div>
+            <div style="margin-top:6px; font-size:12px; color:#ea580c;">📌 1 天後（請盡快付款）</div>
+          </div>
+          <div class="order-info-side">
+            <div class="order-actions">
+              <button class="btn-small primary" onclick="payOrder('WL26002001')">立即付款</button>
+              <button class="btn-small danger" onclick="cancelOrder('WL26002001')">取消</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已完成 -->
+        <h3 style="font-size:15px; color:#1f2937; margin:24px 0 10px;">✓ 已完成（5 筆）</h3>
+
+        <div class="order-item" style="opacity:.85;">
+          <div class="order-thumb">🏛️</div>
+          <div class="order-info-main">
+            <span class="o-id">#WL26001235</span>
+            <div class="o-venue">站前館 - 洽談室</div>
+            <div class="o-meta">📅 2026/05/27 · 15:00 ~ 18:00</div>
+          </div>
+          <div class="order-info-side">
+            <div class="order-actions">
+              <button class="btn-small primary" onclick="reorder('WL26001235')">再次預訂</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-item" style="opacity:.85;">
+          <div class="order-thumb">🏛️</div>
+          <div class="order-info-main">
+            <span class="o-id">#WL26001210</span>
+            <div class="o-venue">勤美館</div>
+            <div class="o-meta">📅 2026/04/20 · 13:00 ~ 17:00</div>
+          </div>
+          <div class="order-info-side">
+            <div class="order-actions">
+              <button class="btn-small primary" onclick="reorder('WL26001210')">再次預訂</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center; padding:14px; color:#9ca3af; font-size:12px;">
+          <a href="#" onclick="document.querySelector('[data-tab=orders]').click(); return false;" style="color:#ea580c;">查看全部 8 筆訂單 →</a>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- 優惠券                          -->
+      <!-- ============================== -->
+      <div class="account-tab-content" data-content="coupons">
+        <div class="acc-card-header" style="border:none;">
+          <div class="acc-card-title">🎟️ 我的優惠券</div>
+          <div style="font-size:13px;">
+            <span style="color:#ea580c; font-weight:700;">3</span> 張可用 ·
+            <span style="color:#9ca3af;">1 張已用</span> ·
+            <span style="color:#9ca3af;">2 張已過期</span>
+          </div>
+        </div>
+
+        <div class="sub-tabs">
+          <button class="sub-tab active" data-coupon-filter="available">可使用 (3)</button>
+          <button class="sub-tab" data-coupon-filter="used">已使用 (1)</button>
+          <button class="sub-tab" data-coupon-filter="expired">已過期 (2)</button>
+        </div>
+
+        <div id="couponsList">
+
+          <!-- 可使用 -->
+          <div class="coupon-card" data-coupon-status="available">
+            <div class="coupon-discount-area">
+              <div class="coupon-discount-value">$300</div>
+              <div class="coupon-discount-label">折抵</div>
+            </div>
+            <div class="coupon-info">
+              <div class="coupon-name">經濟會員生日禮 NT$300</div>
+              <div class="coupon-meta">
+                · 最低消費 NT$ 1,500<br>
+                · 適用全部場館<br>
+                · 有效期：2026/05/15 ~ 2026/06/30（剩 29 天）
+              </div>
+            </div>
+            <div class="coupon-action">
+              <button class="btn-small primary" onclick="alert('（demo）下次預訂自動套用')">立即使用</button>
+              <button class="btn-small" onclick="alert('（demo）券詳細條款')">詳情</button>
+            </div>
+          </div>
+
+          <div class="coupon-card" data-coupon-status="available">
+            <div class="coupon-discount-area" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+              <div class="coupon-discount-value">85<span style="font-size:14px;">折</span></div>
+              <div class="coupon-discount-label">全館</div>
+            </div>
+            <div class="coupon-info">
+              <div class="coupon-name">夏季限定 85 折優惠</div>
+              <div class="coupon-meta">
+                · 最低消費 NT$ 3,000<br>
+                · 折扣上限 NT$ 1,500<br>
+                · 適用平日方案<br>
+                · 有效期：2026/06/01 ~ 2026/08/31（91 天）
+              </div>
+            </div>
+            <div class="coupon-action">
+              <button class="btn-small primary" onclick="alert('（demo）下次預訂自動套用')">立即使用</button>
+              <button class="btn-small" onclick="alert('（demo）券詳細條款')">詳情</button>
+            </div>
+          </div>
+
+          <div class="coupon-card" data-coupon-status="available">
+            <div class="coupon-discount-area" style="background:linear-gradient(135deg,#10b981,#059669);">
+              <div class="coupon-discount-value">$500</div>
+              <div class="coupon-discount-label">折抵</div>
+            </div>
+            <div class="coupon-info">
+              <div class="coupon-name">推薦好友獎勵 NT$500</div>
+              <div class="coupon-meta">
+                · 最低消費 NT$ 2,000<br>
+                · 適用全部場館<br>
+                · 有效期：2026/05/20 ~ 2026/07/20（48 天）
+              </div>
+            </div>
+            <div class="coupon-action">
+              <button class="btn-small primary" onclick="alert('（demo）下次預訂自動套用')">立即使用</button>
+              <button class="btn-small" onclick="alert('（demo）券詳細條款')">詳情</button>
+            </div>
+          </div>
+
+          <!-- 已使用 -->
+          <div class="coupon-card used" data-coupon-status="used" style="display:none;">
+            <div class="coupon-discount-area" style="background:#9ca3af;">
+              <div class="coupon-discount-value">$200</div>
+              <div class="coupon-discount-label">折抵</div>
+            </div>
+            <div class="coupon-info">
+              <div class="coupon-name">新會員迎賓 NT$200</div>
+              <div class="coupon-meta">
+                · 已用於訂單 #WL26001210<br>
+                · 使用時間：2026/04/20
+              </div>
+            </div>
+            <div class="coupon-action">
+              <span style="font-size:12px; color:#9ca3af;">✓ 已使用</span>
+            </div>
+          </div>
+
+          <!-- 已過期 -->
+          <div class="coupon-card expired" data-coupon-status="expired" style="display:none;">
+            <div class="coupon-discount-area" style="background:#9ca3af;">
+              <div class="coupon-discount-value">$100</div>
+              <div class="coupon-discount-label">折抵</div>
+            </div>
+            <div class="coupon-info">
+              <div class="coupon-name">註冊滿月小禮</div>
+              <div class="coupon-meta">
+                · 過期日：2025/12/31<br>
+                · 未使用
+              </div>
+            </div>
+            <div class="coupon-action">
+              <span style="font-size:12px; color:#9ca3af;">⚠️ 已過期</span>
+            </div>
+          </div>
+
+          <div class="coupon-card expired" data-coupon-status="expired" style="display:none;">
+            <div class="coupon-discount-area" style="background:#9ca3af;">
+              <div class="coupon-discount-value">9<span style="font-size:14px;">折</span></div>
+              <div class="coupon-discount-label">全館</div>
+            </div>
+            <div class="coupon-info">
+              <div class="coupon-name">2025 春季限定</div>
+              <div class="coupon-meta">
+                · 過期日：2025/05/31<br>
+                · 未使用
+              </div>
+            </div>
+            <div class="coupon-action">
+              <span style="font-size:12px; color:#9ca3af;">⚠️ 已過期</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:14px; padding:14px; background:#fef3c7; border-radius:8px; font-size:13px; color:#92400e;">
+          💡 想要更多優惠券？升級到「商務會員」可享月月專屬好禮！
+          <a href="#" onclick="document.querySelector('[data-tab=membership]').click(); return false;" style="color:#92400e; text-decoration:underline;">看升等說明 →</a>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- 我的點數                        -->
+      <!-- ============================== -->
+      <div class="account-tab-content" data-content="points">
+        <div class="acc-card-header" style="border:none;">
+          <div class="acc-card-title">⭐ 我的點數 & 儲值</div>
+        </div>
+
+        <!-- 餘額大卡 -->
+        <div class="balance-grid">
+          <div class="balance-card points">
+            <div class="balance-label">⭐ 紅利點數餘額</div>
+            <div class="balance-value">312</div>
+            <div class="balance-unit">點（1 點 = NT$ 1）</div>
+            <button class="balance-action" onclick="alert('（demo）使用點數：下次結帳時自動帶入折抵')">使用點數結帳</button>
+          </div>
+          <div class="balance-card stored">
+            <div class="balance-label">💳 儲值金額餘額</div>
+            <div class="balance-value">$ 2,000</div>
+            <div class="balance-unit">可於下次預訂直接扣抵</div>
+            <button class="balance-action" onclick="alert('（demo）儲值方案：3000/5000/10000 三種')">儲值加值</button>
+          </div>
+        </div>
+
+        <!-- 異動明細 sub tabs -->
+        <div class="sub-tabs">
+          <button class="sub-tab active" data-tx-tab="points">紅利點數異動</button>
+          <button class="sub-tab" data-tx-tab="stored">儲值異動</button>
+        </div>
+
+        <div class="sub-pane active" data-tx-pane="points">
+          <table class="tx-table">
+            <thead>
+              <tr><th>日期</th><th>類型</th><th>說明</th><th>對應訂單</th><th style="text-align:right;">點數</th><th style="text-align:right;">餘額</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>2026/05/27</td><td>消費獲得</td><td>消費滿 NT$ 1,680，1% 回饋</td><td>#WL26001235</td><td style="text-align:right;" class="tx-amount-add">+ 17</td><td style="text-align:right;">312</td></tr>
+              <tr><td>2026/04/20</td><td>消費獲得</td><td>消費滿 NT$ 5,200</td><td>#WL26001210</td><td style="text-align:right;" class="tx-amount-add">+ 52</td><td style="text-align:right;">295</td></tr>
+              <tr><td>2026/03/15</td><td>消費獲得</td><td>消費滿 NT$ 9,250</td><td>#WL26001102</td><td style="text-align:right;" class="tx-amount-add">+ 93</td><td style="text-align:right;">243</td></tr>
+              <tr><td>2026/02/14</td><td>生日禮</td><td>會員生日專屬點數</td><td>—</td><td style="text-align:right;" class="tx-amount-add">+ 100</td><td style="text-align:right;">150</td></tr>
+              <tr><td>2026/01/20</td><td>消費獲得</td><td>消費滿 NT$ 3,300</td><td>#WL26000891</td><td style="text-align:right;" class="tx-amount-add">+ 33</td><td style="text-align:right;">50</td></tr>
+              <tr><td>2025/12/30</td><td>消費獲得</td><td>消費滿 NT$ 1,700</td><td>#WL25001520</td><td style="text-align:right;" class="tx-amount-add">+ 17</td><td style="text-align:right;">17</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sub-pane" data-tx-pane="stored">
+          <table class="tx-table">
+            <thead>
+              <tr><th>日期</th><th>類型</th><th>說明</th><th>對應訂單</th><th style="text-align:right;">金額</th><th style="text-align:right;">餘額</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>2026/02/01</td><td>儲值</td><td>商務儲值方案 $5,000（贈 $500）</td><td>—</td><td style="text-align:right;" class="tx-amount-add">+ $ 5,500</td><td style="text-align:right;">$ 5,500</td></tr>
+              <tr><td>2026/03/15</td><td>消費扣抵</td><td>勤美館租借</td><td>#WL26001102</td><td style="text-align:right;" class="tx-amount-sub">- $ 2,000</td><td style="text-align:right;">$ 3,500</td></tr>
+              <tr><td>2026/04/20</td><td>消費扣抵</td><td>勤美館租借</td><td>#WL26001210</td><td style="text-align:right;" class="tx-amount-sub">- $ 1,500</td><td style="text-align:right;">$ 2,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- 會員籍                          -->
+      <!-- ============================== -->
+      <div class="account-tab-content" data-content="membership">
+        <div class="acc-card-header" style="border:none;">
+          <div class="acc-card-title">💎 會員籍</div>
+        </div>
+
+        <!-- 大會員卡 -->
+        <div class="tier-card-big">
+          <div class="tier-current">您目前的等級</div>
+          <div class="tier-name">經濟會員</div>
+          <div class="tier-discount">享 92 折優惠</div>
+
+          <div class="tier-progress">
+            <div class="tier-progress-fill" style="width: 45.7%;"></div>
+          </div>
+          <div class="tier-progress-label">
+            <span>累積消費 NT$ 45,680</span>
+            <span>下一級 NT$ 100,000</span>
+          </div>
+          <div style="margin-top:8px; font-size:13px;">距離「<strong>商務會員</strong>」還差 <strong>NT$ 54,320</strong></div>
+        </div>
+
+        <!-- 5 等級對照 -->
+        <div class="tier-compare">
+          <div class="tier-mini">
+            <div class="tier-mini-name">一般會員</div>
+            <div class="tier-mini-threshold">$0 ~ $5,999</div>
+            <div class="tier-mini-discount">無折扣</div>
+          </div>
+          <div class="tier-mini">
+            <div class="tier-mini-name">小資會員</div>
+            <div class="tier-mini-threshold">$6,000+</div>
+            <div class="tier-mini-discount">95 折</div>
+          </div>
+          <div class="tier-mini current">
+            <div style="font-size:10px; color:#92400e; margin-bottom:2px;">當前</div>
+            <div class="tier-mini-name">經濟會員</div>
+            <div class="tier-mini-threshold">$30,000+</div>
+            <div class="tier-mini-discount">92 折</div>
+          </div>
+          <div class="tier-mini">
+            <div class="tier-mini-name">商務會員</div>
+            <div class="tier-mini-threshold">$100,000+</div>
+            <div class="tier-mini-discount">90 折</div>
+          </div>
+          <div class="tier-mini">
+            <div class="tier-mini-name">高級會員</div>
+            <div class="tier-mini-threshold">$300,000+</div>
+            <div class="tier-mini-discount">85 折</div>
+          </div>
+        </div>
+
+        <!-- 福利清單 -->
+        <div class="acc-card" style="margin-top:18px;">
+          <div class="acc-card-title" style="font-size:15px; margin-bottom:14px;">🎁 您的等級福利</div>
+          <div style="font-size:14px; line-height:2;">
+            ✅ 全館租借享 <strong>92 折</strong>優惠<br>
+            ✅ 消費 1% 回饋紅利點數<br>
+            ✅ 生日禮 NT$ 300 折抵券<br>
+            ✅ 優先預訂熱門時段<br>
+            ✅ LINE 專屬客服通道<br>
+            <span style="color:#9ca3af;">⬜ 月月禮（升級到「商務會員」解鎖）</span><br>
+            <span style="color:#9ca3af;">⬜ 免費場地升等（升級到「高級會員」解鎖）</span>
+          </div>
+        </div>
+
+        <a href="member.html?tab=tier" style="display:inline-block; margin-top:14px; padding:10px 18px; background:#f97316; color:#fff; border-radius:6px; text-decoration:none; font-weight:600; font-size:14px;">查看全部等級福利說明 →</a>
+      </div>
+
+      <!-- ============================== -->
+      <!-- 帳戶管理                        -->
+      <!-- ============================== -->
+      <div class="account-tab-content" data-content="profile">
+        <div class="acc-card-header" style="border:none;">
+          <div class="acc-card-title">👤 帳戶管理</div>
+          <button class="btn-small primary" id="editProfileBtn" onclick="toggleEditProfile()">✏️ 編輯資料</button>
+        </div>
+
+        <!-- 基本資料 -->
+        <div class="acc-card">
+          <div class="form-section-title">基本資料</div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>姓名</label>
+              <input type="text" value="Joanna" disabled class="profile-input">
+            </div>
+            <div class="form-field">
+              <label>電子郵件</label>
+              <input type="email" value="joanna@urfit.com.tw" disabled class="profile-input">
+            </div>
+            <div class="form-field">
+              <label>手機</label>
+              <input type="tel" value="0912-345-678" disabled class="profile-input">
+            </div>
+            <div class="form-field">
+              <label>生日 <span style="font-size:11px; color:#9ca3af;">（會員生日禮用）</span></label>
+              <input type="date" value="1990-08-15" disabled class="profile-input">
+            </div>
+            <div class="form-field">
+              <label>LINE ID 綁定</label>
+              <input type="text" value="joanna_w" disabled class="profile-input">
+            </div>
+            <div class="form-field">
+              <label>性別</label>
+              <select disabled class="profile-input">
+                <option>女</option>
+                <option>男</option>
+                <option>不透露</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 通知設定 -->
+        <div class="acc-card">
+          <div class="form-section-title">通知設定</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:14px;">
+              <input type="checkbox" checked> 預訂確認通知（LINE）
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:14px;">
+              <input type="checkbox" checked> 預訂前 24 小時提醒（LINE + Email）
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:14px;">
+              <input type="checkbox" checked> 優惠 / 活動訊息（每週一次）
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:14px;">
+              <input type="checkbox"> 場館新開幕通知
+            </label>
+          </div>
+        </div>
+
+        <!-- 密碼修改 -->
+        <div class="acc-card">
+          <div class="form-section-title">修改密碼</div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>目前密碼</label>
+              <input type="password" placeholder="輸入目前密碼">
+            </div>
+            <div class="form-field">
+              <label>新密碼 <span style="font-size:11px; color:#9ca3af;">（至少 8 碼）</span></label>
+              <input type="password" placeholder="輸入新密碼">
+            </div>
+          </div>
+          <button class="btn-small primary" style="margin-top:6px;" onclick="alert('（demo）密碼變更成功')">更新密碼</button>
+        </div>
+
+        <!-- 危險區 -->
+        <div class="danger-zone">
+          <h4>⚠️ 危險操作</h4>
+          <p>刪除帳號將清除所有訂單、點數、儲值紀錄，且無法復原。</p>
+          <button class="btn-small danger" onclick="confirm('確定刪除帳號？此操作無法復原。') && alert('（demo）帳號刪除流程')">🗑️ 申請刪除帳號</button>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- 編輯地址                        -->
+      <!-- ============================== -->
+      <div class="account-tab-content" data-content="address">
+        <div class="acc-card-header" style="border:none;">
+          <div class="acc-card-title">🏠 收件地址</div>
+          <button class="btn-small primary" onclick="alert('（demo）開啟新增地址表單')">＋ 新增地址</button>
+        </div>
+
+        <p style="font-size:13px; color:#6b7280; margin-bottom:14px;">
+          地址用於：實體優惠券郵寄、節日禮品配送、發票寄送（如選擇紙本三聯式）
+        </p>
+
+        <!-- 預設地址 -->
+        <div class="address-card is-default">
+          <div>
+            <span class="addr-label-tag">⭐ 預設地址</span>
+            <span class="addr-name">Joanna　0912-345-678</span>
+          </div>
+          <div class="addr-detail">
+            台中市西區公益路一段 100 號 12 樓<br>
+            <span style="color:#9ca3af; font-size:12px;">收件人：Joanna　郵遞區號：403</span>
+          </div>
+          <div class="addr-actions">
+            <button class="btn-small" onclick="alert('（demo）編輯地址')">編輯</button>
+            <button class="btn-small danger" onclick="alert('（demo）預設地址不能刪除')">刪除</button>
+          </div>
+        </div>
+
+        <!-- 其他地址 -->
+        <div class="address-card">
+          <div>
+            <span class="addr-name">Joanna　0912-345-678</span>
+          </div>
+          <div class="addr-detail">
+            台中市北區英才路 396 號 11 樓-2（公司）<br>
+            <span style="color:#9ca3af; font-size:12px;">收件人：Joanna　郵遞區號：404</span>
+          </div>
+          <div class="addr-actions">
+            <button class="btn-small primary" onclick="alert('（demo）設為預設')">⭐ 設為預設</button>
+            <button class="btn-small" onclick="alert('（demo）編輯地址')">編輯</button>
+            <button class="btn-small danger" onclick="confirm('確定刪除？') && alert('（demo）已刪除')">刪除</button>
+          </div>
+        </div>
+
+        <div class="address-card">
+          <div>
+            <span class="addr-name">林媽媽　0922-111-333</span>
+          </div>
+          <div class="addr-detail">
+            台中市南屯區公益路二段 88 號（媽媽家）<br>
+            <span style="color:#9ca3af; font-size:12px;">收件人：林媽媽　郵遞區號：408</span>
+          </div>
+          <div class="addr-actions">
+            <button class="btn-small primary" onclick="alert('（demo）設為預設')">⭐ 設為預設</button>
+            <button class="btn-small" onclick="alert('（demo）編輯地址')">編輯</button>
+            <button class="btn-small danger" onclick="confirm('確定刪除？') && alert('（demo）已刪除')">刪除</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ========== Footer ========== -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h4>沃茲新創空間｜WordsLive</h4>
+        <p>營業人名稱：沃茲有限公司</p>
+        <p>統一編號：82981038</p>
+        <p class="footer-links">
+          <a href="index.html">首頁</a> ｜ <a href="#">訂單查詢</a> ｜ <a href="#">購物車</a> ｜ <a href="#">聯絡表單</a>
+        </p>
+        <div class="social-icons">
+          <a href="#" title="Facebook">F</a>
+          <a href="#" title="Instagram">IG</a>
+          <a href="#" title="LINE">L</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>聯絡方式</h4>
+        <p>服務時間：週一 至 週日 - 09:00～18:00</p>
+        <p>電話：04-3705-5005 #1 場地租借 #2 商辦空間</p>
+        <p>E-mail：wordsspace@wordslive.com.tw</p>
+        <p>地址：臺中市東區自由二街 91 號</p>
+      </div>
+      <div class="footer-col footer-fb">
+        <div class="fb-placeholder">
+          [Facebook Page 嵌入區]<br>
+          <small>Words Live 沃茲新創空間</small>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========== Floating Buttons ========== -->
+  <div class="floating-buttons">
+    <a href="tel:04-3705-5005" class="floating-btn phone" title="電話">📞</a>
+    <a href="#" class="floating-btn line" title="LINE">L</a>
+  </div>
+
+  <!-- ========== Script ========== -->
+  <script>
+    // Sidebar tab 切換
+    document.querySelectorAll('.account-nav-item[data-tab]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = item.dataset.tab;
+        document.querySelectorAll('.account-nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        document.querySelectorAll('.account-tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector('[data-content="' + tab + '"]').classList.add('active');
+      });
+    });
+
+    // URL 參數讀取 tab
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+      const btn = document.querySelector('.account-nav-item[data-tab="' + tabParam + '"]');
+      if (btn) btn.click();
+    }
+
+    // ===== 訂單篩選（sub-tab）=====
+    document.querySelectorAll('[data-order-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-order-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const f = btn.dataset.orderFilter;
+        document.querySelectorAll('#ordersList .order-item').forEach(item => {
+          if (f === 'all' || item.dataset.status === f) item.style.display = '';
+          else item.style.display = 'none';
+        });
+      });
+    });
+
+    // ===== 優惠券篩選（sub-tab）=====
+    document.querySelectorAll('[data-coupon-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-coupon-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const f = btn.dataset.couponFilter;
+        document.querySelectorAll('#couponsList .coupon-card').forEach(card => {
+          card.style.display = card.dataset.couponStatus === f ? '' : 'none';
+        });
+      });
+    });
+
+    // ===== 點數/儲值 異動 sub-tab =====
+    document.querySelectorAll('[data-tx-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-tx-tab]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const t = btn.dataset.txTab;
+        document.querySelectorAll('[data-tx-pane]').forEach(p => p.classList.remove('active'));
+        document.querySelector(`[data-tx-pane="${t}"]`).classList.add('active');
+      });
+    });
+
+    // ===== 帳戶管理：編輯 toggle =====
+    let isEditing = false;
+    function toggleEditProfile() {
+      isEditing = !isEditing;
+      const btn = document.getElementById('editProfileBtn');
+      const inputs = document.querySelectorAll('.profile-input');
+      inputs.forEach(i => i.disabled = !isEditing);
+      btn.textContent = isEditing ? '💾 儲存變更' : '✏️ 編輯資料';
+      btn.classList.toggle('primary');
+      if (!isEditing) {
+        alert('（demo）已儲存：實際串接後會更新資料庫');
+      }
+    }
+
+    // ===== 訂單操作（demo alerts）=====
+    function payOrder(id) {
+      alert(`（demo）跳到付款頁\n訂單編號：${id}\n方式：銀行匯款（顯示專屬末五碼）/ LINE Pay / 信用卡`);
+    }
+    function cancelOrder(id) {
+      if (confirm(`確定要取消訂單 ${id} 嗎？\n依照退款政策：使用日前 7 天可全額退款。`)) {
+        alert('（demo）已取消，款項將於 3-5 個工作天退回');
+      }
+    }
+    function viewOrder(id) {
+      alert(`（demo）開啟訂單明細：${id}`);
+    }
+    function reorder(id) {
+      alert(`（demo）將 ${id} 加入購物車，您可調整時段後重新下單`);
+    }
+  </script>
+
+</body>
+</html>

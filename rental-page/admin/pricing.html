@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>價格管理｜沃茲後台</title>
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    .price-table-wrapper {
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .price-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+    .price-table th, .price-table td {
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      font-size: 13px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .price-table thead th {
+      background: #f3f4f6;
+      font-weight: 600;
+      color: #374151;
+    }
+    .price-table .group-label {
+      background: #f3f4f6;
+      font-weight: 700;
+      color: #4b5563;
+      writing-mode: vertical-rl;
+      min-width: 40px;
+      max-width: 40px;
+      padding: 8px 4px;
+    }
+    .price-table .sub-label {
+      background: #f9fafb;
+      font-weight: 500;
+      color: #6b7280;
+      text-align: center;
+      min-width: 110px;
+      font-size: 12px;
+    }
+    .price-table .row-label {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #1f2937;
+      text-align: left;
+    }
+    .price-table .total-row { background:#fef2f2; color:#dc2626; font-weight:700; font-size:14px; }
+    .price-table .total-label { background:#fee2e2 !important; color:#991b1b; }
+    .price-table .empty-cell { color:#d1d5db; }
+    .price-table .header-venue { background:#fef3c7; color:#92400e; font-weight:700; font-size:14px; }
+    .price-table .header-space {
+      background:#f3f4f6; font-weight:600; min-width:120px;
+    }
+    .header-space-actions {
+      display: flex; gap: 4px; justify-content: center; margin-top: 4px;
+    }
+    .header-space-actions button {
+      padding: 2px 8px; font-size: 11px; border: 1px solid #d1d5db;
+      background: #fff; border-radius: 4px; cursor: pointer;
+    }
+    .header-space-actions button:hover { background: #f3f4f6; }
+    .no-price-banner {
+      padding: 60px 20px; text-align: center; color: #9ca3af;
+      background: #fafbfc; border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <script>
+    if (localStorage.getItem('admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <div class="admin-layout">
+
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-logo">
+        <img src="../images/LOGO.png" alt="WORDS LIVE" class="admin-sidebar-logo-img">
+        <p>後台管理系統</p>
+      </div>
+      <nav class="admin-sidebar-nav">
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">總覽</div>
+          <a href="index.html" class="admin-nav-item"><span class="admin-nav-icon">📊</span><span>Dashboard</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">場館設定</div>
+          <a href="venues.html" class="admin-nav-item"><span class="admin-nav-icon">🏛️</span><span>場館管理</span></a>
+          <a href="plans.html" class="admin-nav-item"><span class="admin-nav-icon">📦</span><span>方案管理</span></a>
+          <a href="pricing.html" class="admin-nav-item active"><span class="admin-nav-icon">💰</span><span>價格管理</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">營運管理</div>
+          <a href="orders.html" class="admin-nav-item"><span class="admin-nav-icon">🛍️</span><span>訂單管理</span></a>
+          <a href="customers.html" class="admin-nav-item"><span class="admin-nav-icon">👥</span><span>客戶管理</span></a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;"><span class="admin-nav-icon">🎟️</span><span>優惠券</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">帳款管理</div>
+          <a href="payments.html" class="admin-nav-item"><span class="admin-nav-icon">💸</span><span>匯款比對</span></a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;"><span class="admin-nav-icon">📄</span><span>發票管理</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">系統</div>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;"><span class="admin-nav-icon">👤</span><span>員工管理</span></a>
+        </div>
+      </nav>
+      <div class="admin-sidebar-footer">
+        v0.2 Demo<br>
+        <a href="#" onclick="resetData(); return false;" style="color:#9ca3af; text-decoration:underline; font-size:11px;">重置 demo 資料</a>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="admin-header-title">價格管理</div>
+        <div class="admin-header-user">
+          <span class="admin-header-user-name">👤 <span id="adminName">admin</span></span>
+          <button class="admin-header-logout" id="logoutBtn">登出</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+
+        <!-- 場館選擇 -->
+        <div class="admin-panel">
+          <div class="admin-panel-body" style="display:flex; gap:16px; align-items:center;">
+            <label style="font-size:13px; font-weight:600;">選擇場館：</label>
+            <select class="admin-filter" id="venueSelect" style="min-width:200px;"></select>
+            <span id="venueInfo" style="color:#6b7280; font-size:13px;"></span>
+          </div>
+        </div>
+
+        <!-- 時段說明 -->
+        <div class="admin-panel" style="background:#fefce8; border-color:#fde68a;">
+          <div class="admin-panel-body" style="padding:14px 20px;">
+            <strong style="color:#854d0e;">⏰ 時段費用說明（全部場館適用）</strong>
+            <ul style="font-size:13px; color:#854d0e; margin-top:6px; padding-left:20px;">
+              <li><strong>平日時段</strong>：星期一 ~ 星期五 08:00 ~ 18:00</li>
+              <li><strong>假日時段</strong>：星期五 18:00 後 ~ 星期日</li>
+              <li><strong>夜間加成</strong>：每日 18:00 ~ 24:00，套用該時段（平/假日）費用 ×1.5</li>
+            </ul>
+          </div>
+        </div>
+
+        <div id="priceTableContainer"></div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== 編輯價格 Modal ===== -->
+  <div class="admin-modal-overlay" id="priceModal">
+    <div class="admin-modal" style="max-width:720px;">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title" id="priceModalTitle">編輯價格</div>
+        <button class="admin-modal-close" onclick="closePriceModal()">×</button>
+      </div>
+      <div class="admin-modal-body" id="priceModalBody"></div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="closePriceModal()">取消</button>
+        <button class="admin-btn admin-btn-primary" onclick="savePriceForm()">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    document.getElementById('adminName').textContent = localStorage.getItem('admin_username') || 'admin';
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (confirm('確定要登出嗎？')) {
+        localStorage.removeItem('admin_logged_in');
+        localStorage.removeItem('admin_username');
+        window.location.href = 'login.html';
+      }
+    });
+
+    function resetData() {
+      if (confirm('確定要重置所有 demo 資料？\n（會清空您新增/修改的內容，回到原始 5 個場館）')) {
+        DataStore.reset();
+        location.reload();
+      }
+    }
+
+    function fmt(v) {
+      return v === null || v === undefined ? '—' : '$ ' + v.toLocaleString();
+    }
+
+    function loadVenueSelect() {
+      const select = document.getElementById('venueSelect');
+      const venues = DataStore.getVenues();
+      const urlVenue = new URLSearchParams(location.search).get('venue');
+
+      select.innerHTML = venues.map(v => {
+        const count = DataStore.getSpacesByVenue(v.id).length;
+        return `<option value="${v.id}">${v.name}（${count} 個空間）</option>`;
+      }).join('');
+
+      if (urlVenue) {
+        select.value = urlVenue;
+      }
+    }
+
+    let currentVenueId = null;
+
+    function renderPriceTable() {
+      currentVenueId = parseInt(document.getElementById('venueSelect').value);
+      const venue = DataStore.getVenue(currentVenueId);
+      if (!venue) return;
+
+      const spaces = DataStore.getSpacesByVenue(currentVenueId);
+      document.getElementById('venueInfo').textContent = `${venue.address}`;
+
+      if (spaces.length === 0) {
+        document.getElementById('priceTableContainer').innerHTML = `
+          <div class="no-price-banner">
+            <div style="font-size:48px; margin-bottom:12px;">📦</div>
+            <p>「${venue.name}」目前沒有空間</p>
+            <p style="font-size:13px; margin-top:8px;">請先到 <a href="venues.html" style="color:#1a1f36;">場館管理</a> 新增空間</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 為每個空間取得價格資料
+      const spacesWithPrice = spaces.map(s => ({
+        ...s,
+        price: DataStore.getPrice(s.id)
+      }));
+
+      const maxHc = Math.max(...spacesWithPrice.map(s => s.price && s.price.headcount ? s.price.headcount.length : 0), 0);
+      const maxCl = Math.max(...spacesWithPrice.map(s => s.price && s.price.cleanup ? s.price.cleanup.length : 0), 0);
+
+      let html = `
+        <div class="price-table-wrapper">
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th colspan="2" class="header-venue">${venue.venueName || venue.name}</th>
+                ${spacesWithPrice.map(s => `
+                  <th class="header-space">
+                    ${s.name}
+                    <div style="font-size:11px; color:#9ca3af; font-weight:400; margin-top:2px;">${s.capacity} 人</div>
+                    <div class="header-space-actions">
+                      <button onclick="openPriceModal(${s.id})">${s.price ? '編輯' : '+設定'}</button>
+                    </div>
+                  </th>
+                `).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td rowspan="2" class="group-label">基本租金</td>
+                <td class="sub-label">平日</td>
+                ${spacesWithPrice.map(s => `<td>${s.price ? fmt(s.price.weekday) : '<span class="empty-cell">未設定</span>'}</td>`).join('')}
+              </tr>
+              <tr>
+                <td class="sub-label">假日</td>
+                ${spacesWithPrice.map(s => `<td>${s.price ? fmt(s.price.weekend) : '<span class="empty-cell">未設定</span>'}</td>`).join('')}
+              </tr>`;
+
+      // 人次費
+      if (maxHc > 0) {
+        for (let i = 0; i < maxHc; i++) {
+          html += `<tr>`;
+          if (i === 0) html += `<td rowspan="${maxHc}" class="group-label">人次費</td>`;
+          const sample = spacesWithPrice.find(s => s.price && s.price.headcount && s.price.headcount[i]);
+          const sampleLabel = sample ? sample.price.headcount[i].label : '—';
+          html += `<td class="sub-label">${sampleLabel}</td>`;
+          html += spacesWithPrice.map(s => {
+            if (!s.price) return `<td><span class="empty-cell">—</span></td>`;
+            if (!s.price.headcount) return `<td><span class="empty-cell">不適用</span></td>`;
+            const tier = s.price.headcount[i];
+            if (!tier) return `<td><span class="empty-cell">—</span></td>`;
+            return `<td>${tier.label !== sampleLabel ? `<small style="color:#9ca3af;">${tier.label}</small><br>` : ''}${fmt(tier.price)}</td>`;
+          }).join('');
+          html += `</tr>`;
+        }
+      }
+
+      // 清潔費
+      if (maxCl > 0 || spacesWithPrice.some(s => s.price && s.price.cleanupFlat !== undefined)) {
+        const rows = Math.max(maxCl, 1);
+        for (let i = 0; i < rows; i++) {
+          html += `<tr>`;
+          if (i === 0) html += `<td rowspan="${rows}" class="group-label">環境清潔費</td>`;
+          const sample = spacesWithPrice.find(s => s.price && s.price.cleanup && s.price.cleanup[i]);
+          const sampleLabel = sample ? sample.price.cleanup[i].label : (i === 0 ? '依場館設定' : '—');
+          html += `<td class="sub-label">${sampleLabel}</td>`;
+          html += spacesWithPrice.map(s => {
+            if (!s.price) return `<td><span class="empty-cell">—</span></td>`;
+            if (s.price.cleanupFlat !== undefined) {
+              return i === 0 ? `<td>${fmt(s.price.cleanupFlat)}<br><small style="color:#9ca3af;">統一價</small></td>` : `<td><span class="empty-cell">↑</span></td>`;
+            }
+            if (!s.price.cleanup) return `<td><span class="empty-cell">—</span></td>`;
+            const tier = s.price.cleanup[i];
+            if (!tier) return `<td><span class="empty-cell">—</span></td>`;
+            return `<td>${tier.label !== sampleLabel ? `<small style="color:#9ca3af;">${tier.label}</small><br>` : ''}${fmt(tier.price)}</td>`;
+          }).join('');
+          html += `</tr>`;
+        }
+      }
+
+      // 押金
+      html += `
+              <tr>
+                <td colspan="2" class="row-label">押金</td>
+                ${spacesWithPrice.map(s => `<td>${s.price && s.price.deposit ? fmt(s.price.deposit) : '<span class="empty-cell">—</span>'}</td>`).join('')}
+              </tr>
+              <tr>
+                <td rowspan="2" class="group-label">加購服務</td>
+                <td class="sub-label">半自助配置</td>
+                ${spacesWithPrice.map(s => `<td>${s.price && s.price.halfSetup !== undefined ? fmt(s.price.halfSetup) : '<span class="empty-cell">—</span>'}</td>`).join('')}
+              </tr>
+              <tr>
+                <td class="sub-label">全配置服務</td>
+                ${spacesWithPrice.map(s => `<td>${s.price && s.price.fullSetup !== undefined ? fmt(s.price.fullSetup) : '<span class="empty-cell">—</span>'}</td>`).join('')}
+              </tr>
+              <tr>
+                <td rowspan="2" class="group-label" style="background:#fee2e2; color:#991b1b;">平日</td>
+                <td class="sub-label total-label">半日</td>
+                ${spacesWithPrice.map(s => `<td class="total-row">${s.price && s.price.weekdayHalf ? fmt(s.price.weekdayHalf) : '<span class="empty-cell">—</span>'}</td>`).join('')}
+              </tr>
+              <tr>
+                <td class="sub-label total-label">全日</td>
+                ${spacesWithPrice.map(s => `<td class="total-row">${s.price && s.price.weekdayFull ? fmt(s.price.weekdayFull) : '<span class="empty-cell">—</span>'}</td>`).join('')}
+              </tr>
+              <tr>
+                <td rowspan="2" class="group-label" style="background:#fee2e2; color:#991b1b;">假日</td>
+                <td class="sub-label total-label">半日</td>
+                ${spacesWithPrice.map(s => `<td class="total-row">${s.price && s.price.weekendHalf ? fmt(s.price.weekendHalf) : '<span class="empty-cell">—</span>'}</td>`).join('')}
+              </tr>
+              <tr>
+                <td class="sub-label total-label">全日</td>
+                ${spacesWithPrice.map(s => `<td class="total-row">${s.price && s.price.weekendFull ? fmt(s.price.weekendFull) : '<span class="empty-cell">—</span>'}</td>`).join('')}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      const unset = spacesWithPrice.filter(s => !s.price);
+      if (unset.length > 0) {
+        html += `
+          <div class="admin-panel" style="margin-top:20px; background:#fef3c7; border-color:#fde68a;">
+            <div class="admin-panel-body" style="padding:14px 20px;">
+              <strong style="color:#854d0e;">⚠️ 以下 ${unset.length} 個空間尚未設定價格</strong>
+              <p style="font-size:13px; color:#854d0e; margin-top:6px;">
+                ${unset.map(s => `<button class="admin-btn admin-btn-secondary admin-btn-sm" style="margin:2px;" onclick="openPriceModal(${s.id})">設定「${s.name}」</button>`).join('')}
+              </p>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('priceTableContainer').innerHTML = html;
+    }
+
+    document.getElementById('venueSelect').addEventListener('change', renderPriceTable);
+
+    // ===== 編輯價格 Modal =====
+    let editingSpaceId = null;
+
+    function openPriceModal(spaceId) {
+      editingSpaceId = spaceId;
+      const space = DataStore.getSpace(spaceId);
+      const price = DataStore.getPrice(spaceId) || {};
+      document.getElementById('priceModalTitle').textContent = `${price.space_id ? '編輯' : '新增'}價格｜${space.name}`;
+
+      const hc = price.headcount || [{ label: '', price: 0 }];
+      const cl = price.cleanup || [];
+      const isFlat = price.cleanupFlat !== undefined;
+
+      document.getElementById('priceModalBody').innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+          <div class="admin-form-group">
+            <label>平日基本價（per hour）</label>
+            <input type="number" id="pf_weekday" value="${price.weekday || ''}">
+          </div>
+          <div class="admin-form-group">
+            <label>假日基本價（per hour）</label>
+            <input type="number" id="pf_weekend" value="${price.weekend || ''}">
+          </div>
+        </div>
+
+        <!-- 人次費 -->
+        <div style="margin-bottom:20px;">
+          <label style="font-size:13px; font-weight:600; color:#374151;">人次費分級</label>
+          <p style="font-size:12px; color:#6b7280; margin-bottom:8px;">分級門檻 + 金額，可增減</p>
+          <div id="hcList"></div>
+          <button class="admin-btn admin-btn-secondary admin-btn-sm" type="button" onclick="addHcTier()">＋ 新增分級</button>
+        </div>
+
+        <!-- 清潔費 -->
+        <div style="margin-bottom:20px;">
+          <label style="font-size:13px; font-weight:600; color:#374151;">環境清潔費</label>
+          <div style="margin:8px 0;">
+            <label style="font-size:13px; font-weight:400;"><input type="radio" name="clMode" value="tier" ${!isFlat ? 'checked' : ''} onchange="renderClMode()"> 分級制</label>
+            <label style="font-size:13px; font-weight:400; margin-left:16px;"><input type="radio" name="clMode" value="flat" ${isFlat ? 'checked' : ''} onchange="renderClMode()"> 統一價</label>
+          </div>
+          <div id="clContainer"></div>
+        </div>
+
+        <!-- 押金 + 加購 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
+          <div class="admin-form-group">
+            <label>押金</label>
+            <input type="number" id="pf_deposit" value="${price.deposit || ''}">
+          </div>
+          <div class="admin-form-group">
+            <label>半自助配置</label>
+            <input type="number" id="pf_halfSetup" value="${price.halfSetup !== undefined ? price.halfSetup : ''}">
+          </div>
+          <div class="admin-form-group">
+            <label>全配置服務</label>
+            <input type="number" id="pf_fullSetup" value="${price.fullSetup !== undefined ? price.fullSetup : ''}">
+          </div>
+        </div>
+
+        <!-- 套裝方案 -->
+        <div style="background:#fef2f2; padding:12px; border-radius:6px; margin-bottom:8px;">
+          <label style="font-size:13px; font-weight:600; color:#991b1b;">套裝方案總價（半日 / 全日）</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
+            <div class="admin-form-group">
+              <label style="color:#991b1b;">平日 半日</label>
+              <input type="number" id="pf_wdh" value="${price.weekdayHalf || ''}">
+            </div>
+            <div class="admin-form-group">
+              <label style="color:#991b1b;">平日 全日</label>
+              <input type="number" id="pf_wdf" value="${price.weekdayFull || ''}">
+            </div>
+            <div class="admin-form-group">
+              <label style="color:#991b1b;">假日 半日</label>
+              <input type="number" id="pf_wkh" value="${price.weekendHalf || ''}">
+            </div>
+            <div class="admin-form-group">
+              <label style="color:#991b1b;">假日 全日</label>
+              <input type="number" id="pf_wkf" value="${price.weekendFull || ''}">
+            </div>
+          </div>
+        </div>
+      `;
+
+      tempHc = price.headcount ? JSON.parse(JSON.stringify(price.headcount)) : [];
+      tempCl = price.cleanup ? JSON.parse(JSON.stringify(price.cleanup)) : [];
+      tempClFlat = price.cleanupFlat;
+
+      renderHcList();
+      renderClMode();
+
+      document.getElementById('priceModal').classList.add('show');
+    }
+
+    let tempHc = [];
+    let tempCl = [];
+    let tempClFlat;
+
+    function renderHcList() {
+      document.getElementById('hcList').innerHTML = tempHc.length === 0
+        ? '<p style="color:#9ca3af; font-size:13px;">尚未新增任何分級</p>'
+        : tempHc.map((t, i) => `
+            <div style="display:grid; grid-template-columns:1fr 100px 30px; gap:8px; margin-bottom:6px;">
+              <input type="text" placeholder="分級名稱（如：15人以內）" value="${t.label}" onchange="tempHc[${i}].label=this.value" style="padding:6px 10px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              <input type="number" placeholder="金額" value="${t.price}" onchange="tempHc[${i}].price=parseInt(this.value)||0" style="padding:6px 10px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              <button type="button" onclick="removeHcTier(${i})" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:4px; cursor:pointer;">×</button>
+            </div>
+          `).join('');
+    }
+
+    function addHcTier() {
+      tempHc.push({ label: '', price: 0 });
+      renderHcList();
+    }
+
+    function removeHcTier(i) {
+      tempHc.splice(i, 1);
+      renderHcList();
+    }
+
+    function renderClMode() {
+      const mode = document.querySelector('input[name="clMode"]:checked').value;
+      if (mode === 'flat') {
+        document.getElementById('clContainer').innerHTML = `
+          <input type="number" id="cl_flat" placeholder="統一金額" value="${tempClFlat || ''}" style="width:200px; padding:6px 10px; border:1px solid #d1d5db; border-radius:4px;">
+        `;
+      } else {
+        renderClList();
+      }
+    }
+
+    function renderClList() {
+      document.getElementById('clContainer').innerHTML = `
+        <div id="clList"></div>
+        <button class="admin-btn admin-btn-secondary admin-btn-sm" type="button" onclick="addClTier()">＋ 新增分級</button>
+      `;
+      document.getElementById('clList').innerHTML = tempCl.length === 0
+        ? '<p style="color:#9ca3af; font-size:13px;">尚未新增任何分級</p>'
+        : tempCl.map((t, i) => `
+            <div style="display:grid; grid-template-columns:1fr 100px 30px; gap:8px; margin-bottom:6px;">
+              <input type="text" placeholder="分級名稱" value="${t.label}" onchange="tempCl[${i}].label=this.value" style="padding:6px 10px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              <input type="number" placeholder="金額" value="${t.price}" onchange="tempCl[${i}].price=parseInt(this.value)||0" style="padding:6px 10px; border:1px solid #d1d5db; border-radius:4px; font-size:13px;">
+              <button type="button" onclick="removeClTier(${i})" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:4px; cursor:pointer;">×</button>
+            </div>
+          `).join('');
+    }
+
+    function addClTier() { tempCl.push({ label:'', price:0 }); renderClList(); }
+    function removeClTier(i) { tempCl.splice(i,1); renderClList(); }
+
+    function closePriceModal() {
+      document.getElementById('priceModal').classList.remove('show');
+    }
+
+    function savePriceForm() {
+      const data = {
+        weekday: parseInt(document.getElementById('pf_weekday').value) || 0,
+        weekend: parseInt(document.getElementById('pf_weekend').value) || 0,
+        headcount: tempHc.filter(t => t.label),
+        deposit: parseInt(document.getElementById('pf_deposit').value) || 0,
+        halfSetup: parseInt(document.getElementById('pf_halfSetup').value) || 0,
+        fullSetup: parseInt(document.getElementById('pf_fullSetup').value) || 0,
+        weekdayHalf: parseInt(document.getElementById('pf_wdh').value) || 0,
+        weekdayFull: parseInt(document.getElementById('pf_wdf').value) || 0,
+        weekendHalf: parseInt(document.getElementById('pf_wkh').value) || 0,
+        weekendFull: parseInt(document.getElementById('pf_wkf').value) || 0
+      };
+
+      const clMode = document.querySelector('input[name="clMode"]:checked').value;
+      if (clMode === 'flat') {
+        const v = parseInt(document.getElementById('cl_flat').value);
+        if (!isNaN(v)) data.cleanupFlat = v;
+      } else {
+        data.cleanup = tempCl.filter(t => t.label);
+      }
+
+      DataStore.upsertPrice(editingSpaceId, data);
+      closePriceModal();
+      renderPriceTable();
+    }
+
+    // 初始化
+    loadVenueSelect();
+    renderPriceTable();
+  </script>
+
+</body>
+</html>

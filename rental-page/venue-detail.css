@@ -1,0 +1,787 @@
+/* ============================================================
+   venue-detail.html 專屬樣式
+   ============================================================ */
+
+.detail-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: var(--text-gray);
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.back-link:hover { color: var(--primary); }
+
+/* ===== Section 共用 ===== */
+.detail-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4a5b85;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.block-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #4a5b85;
+  margin: 20px 0 12px;
+}
+
+/* ===== Section 1: Hero ===== */
+.hero-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 3px solid var(--primary);
+}
+
+.image-carousel { display: flex; flex-direction: column; gap: 12px; }
+
+.carousel-main {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #d8d3cc;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.carousel-main img { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 2; }
+.carousel-placeholder {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff; font-size: 18px; font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 1;
+}
+
+.carousel-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+.thumb {
+  aspect-ratio: 4 / 3; border-radius: 4px; overflow: hidden;
+  cursor: pointer; border: 2px solid transparent;
+  transition: border-color 0.2s; background: #d8d3cc; position: relative;
+}
+
+.thumb.active { border-color: var(--primary); }
+
+.thumb-placeholder {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 13px; font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* ===== 場館資訊 Tabs ===== */
+.info-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+}
+
+.info-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-gray);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+
+.info-tab:hover {
+  color: var(--text-dark);
+}
+
+.info-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.info-tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.info-tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Section 2: 空間配置 ===== */
+.config-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: start; }
+
+.config-left { display: flex; flex-direction: column; gap: 12px; }
+
+.config-main-image {
+  aspect-ratio: 4 / 3; background: #f7f6f5;
+  border: 2px dashed var(--border); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.config-placeholder { text-align: center; color: var(--text-gray); }
+.config-placeholder .placeholder-icon { font-size: 48px; margin-bottom: 8px; }
+.config-placeholder p { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.config-placeholder small { font-size: 12px; }
+
+.config-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+.config-thumb {
+  aspect-ratio: 4 / 3; background: #f7f6f5;
+  border: 2px solid var(--border); border-radius: 4px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--text-gray); transition: all 0.2s;
+}
+
+.config-thumb.active {
+  border-color: var(--primary); background: #fff5f0;
+  color: var(--primary); font-weight: 600;
+}
+
+.config-thumb:hover { border-color: var(--primary); }
+
+.config-pill {
+  background: #fbc02d; color: #fff;
+  font-size: 20px; font-weight: 700;
+  padding: 16px 32px; border-radius: 999px;
+  text-align: center; margin-bottom: 32px;
+  box-shadow: 0 2px 8px rgba(251, 192, 45, 0.3);
+}
+
+.config-features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.feature { display: flex; align-items: center; gap: 12px; }
+.feature-icon { font-size: 28px; flex-shrink: 0; }
+.feature-text strong { display: block; font-size: 14px; font-weight: 600; color: var(--text-dark); }
+.feature-text small { display: block; font-size: 11px; color: var(--text-gray); margin-top: 2px; }
+
+/* ===== 場地特色簡介 ===== */
+.venue-intro {
+  margin-top: 32px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.intro-title { font-size: 18px; font-weight: 700; color: #4a5b85; margin-bottom: 12px; }
+.intro-content { font-size: 14px; color: var(--text-dark); line-height: 1.8; }
+.intro-content p { margin-bottom: 4px; }
+.intro-spacer { height: 16px; }
+.intro-tip { margin-top: 6px !important; }
+
+/* ===== Section 3: 日曆 ===== */
+.calendar-controls {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+
+.calendar-controls h3 {
+  font-size: 20px; color: var(--text-dark); font-weight: 700;
+}
+
+.cal-nav {
+  background: #fff; border: 1px solid var(--border);
+  padding: 8px 16px; border-radius: 4px;
+  cursor: pointer; font-size: 14px; color: var(--text-dark);
+  transition: all 0.2s;
+}
+
+.cal-nav:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.calendar-legend {
+  display: flex; gap: 24px; justify-content: center;
+  margin-bottom: 16px; font-size: 13px; color: var(--text-gray);
+}
+
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+
+.dot {
+  display: inline-block; width: 10px; height: 10px;
+  border-radius: 50%;
+}
+
+.dot-pending  { background: #fbc02d; }
+.dot-hourly   { background: #2196f3; }
+.dot-halfday  { background: #ec407a; }
+.dot-fullday  { background: #4caf50; }
+.dot-night    { background: #e53935; }
+
+/* === 週日曆（Google Calendar 風格） === */
+.week-calendar {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  grid-template-rows: 44px repeat(14, 48px);
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.day-header {
+  background: #f7f6f5;
+  padding: 8px 4px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 13px;
+  border-bottom: 2px solid #e0e0e0;
+  border-right: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.day-header small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-gray);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.time-label {
+  background: #fafafa;
+  padding: 0 6px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-gray);
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  position: relative;
+  top: -8px;
+}
+
+.time-cell {
+  background: #fff;
+  border-right: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.booking-block {
+  margin: 1px 2px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.booking-block:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 3;
+}
+
+.booking-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.booking-time {
+  font-size: 10px;
+  opacity: 0.75;
+  line-height: 1.2;
+}
+
+/* 5 種預訂顏色 */
+.booking-pending {
+  background: #fff9c4;
+  border-left: 4px solid #fbc02d;
+  color: #6d4c00;
+}
+
+.booking-hourly {
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  color: #0d47a1;
+}
+
+.booking-halfday {
+  background: #fce4ec;
+  border-left: 4px solid #ec407a;
+  color: #880e4f;
+}
+
+.booking-fullday {
+  background: #e8f5e9;
+  border-left: 4px solid #4caf50;
+  color: #1b5e20;
+}
+
+.booking-night {
+  background: #ffebee;
+  border-left: 4px solid #e53935;
+  color: #b71c1c;
+}
+
+/* ===== Section 4: 預約查詢 ===== */
+.section-booking { background: linear-gradient(135deg, #fff 0%, #fff8f5 100%); }
+
+.booking-form {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-row.form-row-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.form-row label {
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 13px; color: var(--text-gray);
+}
+
+.form-row label span { font-weight: 600; color: var(--text-dark); }
+
+.form-row input,
+.form-row select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.form-row select {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
+
+.form-row input:focus,
+.form-row select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(244, 80, 30, 0.1);
+}
+
+.btn-primary {
+  background: var(--primary); color: #fff;
+  border: none; padding: 12px 32px;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer; border-radius: 4px;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+
+.btn-primary:hover { background: var(--primary-hover); }
+
+.btn-search { width: 100%; padding: 14px; font-size: 16px; }
+
+.plans-result {
+  background: #fff;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.result-summary {
+  background: #fff5f0;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+/* 方案卡片 */
+.plan-cards { display: flex; flex-direction: column; gap: 10px; }
+
+.plan-card {
+  display: flex; align-items: center; gap: 16px;
+  border: 2px solid var(--border);
+  border-radius: 6px; padding: 16px;
+  cursor: pointer; transition: all 0.2s;
+  background: #fff;
+}
+
+.plan-card:hover { border-color: var(--primary); }
+
+.plan-card:has(input:checked) {
+  border-color: var(--primary);
+  background: #fff5f0;
+}
+
+.plan-card input[type="radio"] { width: 18px; height: 18px; accent-color: var(--primary); }
+
+.plan-info { flex: 1; }
+.plan-name { font-size: 15px; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
+.plan-detail { font-size: 13px; color: var(--text-gray); }
+
+.badge-best {
+  display: inline-block;
+  background: var(--primary); color: #fff;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 600;
+  margin-left: 8px;
+}
+
+.badge-warning {
+  display: inline-block;
+  background: #fff3e0;
+  color: #e65100;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+  border: 1px solid #ffb74d;
+}
+
+.plan-time-range {
+  font-size: 13px;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* 夜間時段選項標示 */
+.form-row select option.time-night {
+  background-color: #fff3e0;
+  color: #e65100;
+  font-weight: 500;
+}
+
+.form-row .hint {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--text-gray);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.plan-price {
+  font-size: 18px; font-weight: 700;
+  color: var(--primary);
+}
+
+/* 加購選項（分組 radio）*/
+.addon-section { display: flex; flex-direction: column; gap: 16px; }
+
+.addon-group {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.addon-group-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+}
+
+.addon-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.addon-radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafafa;
+}
+
+.addon-radio:hover {
+  border-color: var(--primary);
+  background: #fff5f0;
+}
+
+.addon-radio:has(input:checked) {
+  border-color: var(--primary);
+  background: #fff5f0;
+}
+
+.addon-radio input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+.addon-radio .opt-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.addon-radio .opt-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* 訂單明細 */
+.order-summary {
+  background: #f9f9f9;
+  border-radius: 4px;
+  padding: 16px 20px;
+}
+
+.order-line {
+  display: flex; justify-content: space-between;
+  padding: 6px 0; font-size: 14px;
+  color: var(--text-dark);
+}
+
+.order-line.order-mandatory { color: #555; }
+.order-line.order-addon { color: var(--primary); }
+
+/* 應付小計（活動費用） */
+.order-subtotal {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* 押金（先收後退） */
+.order-deposit {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #e3f2fd;
+  border-radius: 4px;
+  border-left: 4px solid #1976d2;
+  font-size: 14px;
+  color: #0d47a1;
+  font-weight: 600;
+  align-items: center;
+}
+
+.order-deposit small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: #1565c0;
+  margin-top: 2px;
+}
+
+.order-total {
+  display: flex; justify-content: space-between;
+  margin-top: 12px; padding-top: 12px;
+  border-top: 2px solid var(--text-dark);
+  font-size: 18px; font-weight: 700;
+  color: var(--text-dark);
+}
+
+.btn-confirm {
+  width: 100%;
+  margin-top: 20px;
+  padding: 16px;
+  font-size: 18px;
+  background: #4caf50;
+}
+
+.btn-confirm:hover { background: #43a047; }
+
+/* ===== Section 5: 價格表 ===== */
+.pricing-table-wrap, .addon-table-wrap {
+  overflow-x: auto;
+}
+
+.pricing-table {
+  width: 100%; border-collapse: collapse; font-size: 14px;
+}
+
+.pricing-table th {
+  background: #4a5b85; color: #fff;
+  padding: 12px 16px; text-align: center;
+  font-weight: 600;
+}
+
+.pricing-table th small { display: block; font-size: 11px; opacity: 0.8; }
+
+.pricing-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px; text-align: center;
+  color: var(--text-dark);
+}
+
+.pricing-table td.plan-type {
+  background: #f7f6f5;
+  font-weight: 600;
+  text-align: left;
+}
+
+.pricing-table tbody tr:hover { background: #fff5f0; }
+
+.pricing-note {
+  background: #fff8e1;
+  border-left: 4px solid #fbc02d;
+  padding: 20px 24px;
+  border-radius: 4px;
+  color: var(--text-dark);
+  margin-top: 16px;
+}
+
+.note-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 16px;
+}
+
+.note-block {
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px dashed rgba(0,0,0,0.08);
+}
+
+.note-block:last-child { border-bottom: none; }
+
+.note-block strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.note-block p {
+  font-size: 13px;
+  color: #555;
+  margin: 0;
+}
+
+.note-block.note-night strong {
+  color: #e65100;
+}
+
+.note-block.note-night b {
+  color: #e65100;
+}
+
+/* 夜間加成 row 樣式 */
+.pricing-table tr.row-night {
+  background: #fff3e0;
+}
+
+.pricing-table tr.row-night td {
+  color: #e65100;
+  font-weight: 500;
+}
+
+.pricing-table tr.row-night:hover {
+  background: #ffe0b2 !important;
+}
+
+/* ===== Section 6: 地圖 ===== */
+.map-layout {
+  display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
+}
+
+.map-iframe-wrap {
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--border);
+  background: #f0f0f0;
+}
+
+.map-iframe-wrap iframe {
+  width: 100%; height: 400px; border: 0;
+  display: block;
+}
+
+.map-info {
+  padding: 16px;
+  background: #f7f6f5;
+  border-radius: 8px;
+}
+
+.address-text { font-size: 16px; font-weight: 600; color: var(--text-dark); margin-bottom: 16px; }
+
+.transport-list { display: flex; flex-direction: column; gap: 16px; }
+
+.transport-item {
+  display: flex; align-items: flex-start; gap: 12px;
+}
+
+.transport-icon { font-size: 24px; flex-shrink: 0; }
+
+.transport-item strong { display: block; font-size: 14px; color: var(--text-dark); margin-bottom: 4px; }
+.transport-item p { font-size: 13px; color: var(--text-gray); margin: 0; }
+
+/* ===== 響應式 ===== */
+@media (max-width: 900px) {
+  .config-layout, .map-layout { grid-template-columns: 1fr; }
+  .config-features { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: repeat(2, 1fr); }
+  .hero-title { font-size: 24px; }
+  .section-title { font-size: 20px; }
+  .pricing-table { font-size: 12px; }
+  .pricing-table th, .pricing-table td { padding: 8px; }
+  .calendar td { height: 50px; }
+}
+
+@media (max-width: 600px) {
+  .carousel-thumbs { grid-template-columns: repeat(2, 1fr); }
+  .form-row { grid-template-columns: 1fr; }
+  .plan-card { flex-wrap: wrap; }
+  .calendar-legend { flex-direction: column; gap: 8px; align-items: flex-start; }
+}

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>場地租借｜沃茲新創空間</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+</head>
+<body>
+
+  <!-- ========== Navbar ========== -->
+  <header class="navbar">
+    <div class="navbar-container">
+      <a href="#" class="logo">
+        <img src="images/LOGO.png" alt="沃茲新創空間 WORDS" class="logo-img">
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">場地租借</a></li>
+          <li class="has-dropdown">
+            <a href="member.html">會員優惠 ▾</a>
+            <ul class="dropdown">
+              <li><a href="member.html?tab=tier">會員分級優惠</a></li>
+              <li><a href="member.html?tab=stored-value">儲值方案優惠</a></li>
+              <li><a href="member.html?tab=points">消費紅利折抵</a></li>
+            </ul>
+          </li>
+          <li><a href="cart.html">購物車</a></li>
+          <li><a href="login.html">註冊 / 登入</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== Breadcrumb ========== -->
+  <div class="breadcrumb-container">
+    <div class="breadcrumb">
+      <a href="#">首頁</a>
+      <span class="separator">›</span>
+      <span>場地租借</span>
+    </div>
+  </div>
+
+  <!-- ========== Main ========== -->
+  <main class="main-container">
+
+    <!-- 左側 -->
+    <aside class="sidebar">
+      <h2 class="sidebar-title">商品分類</h2>
+      <div class="sidebar-divider"></div>
+
+      <ul class="category-list">
+        <li>
+          <a href="#" class="cat-parent">儲值會員</a>
+          <ul>
+            <li><a href="#">小資會員</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#" class="cat-parent js-filter" data-filter="all">地點 <span class="reset-hint">（點下方可篩選）</span></a>
+          <ul id="districtFilterList">
+            <!-- 由 JS 從 DataStore 動態生成 -->
+          </ul>
+        </li>
+        <li>
+          <a href="#" class="cat-parent">活動性質</a>
+          <ul>
+            <li><a href="#">會議／課程／講座</a></li>
+            <li><a href="#">派對／聚會</a></li>
+            <li><a href="#">私人活動／發表會</a></li>
+            <li><a href="#">音樂／展演相關</a></li>
+            <li><a href="#">其他</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#" class="cat-parent">場地租借</a>
+          <ul>
+            <li><a href="#">小型空間 ｜ 10-50人次</a></li>
+            <li><a href="#">中小型空間 ｜ 20-80人次</a></li>
+            <li><a href="#">中型空間 ｜ 30-100人次</a></li>
+            <li><a href="#">大型空間 ｜ 40-200人次</a></li>
+            <li><a href="#">戶外空間</a></li>
+          </ul>
+        </li>
+      </ul>
+
+      <h2 class="sidebar-title" style="margin-top: 40px;">分類</h2>
+      <div class="sidebar-divider"></div>
+      <ul class="category-list">
+        <li><a href="#" class="cat-parent">文章列表</a></li>
+      </ul>
+    </aside>
+
+    <!-- 中間 -->
+    <section class="content">
+      <div class="content-header">
+        <p class="result-count">顯示 <strong id="visibleCount">20</strong> 個場館<span id="currentFilter"></span></p>
+        <div class="sort-dropdown">
+          <select>
+            <option>預設排序</option>
+            <option>價格：低到高</option>
+            <option>價格：高到低</option>
+            <option>名稱：A → Z</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 場館卡片（由 JS 從 DataStore 動態載入） -->
+      <div class="venue-grid" id="venueGrid"></div>
+
+      <!-- 以下原本的寫死卡片已移除，改由 JS 動態渲染 -->
+      <div style="display:none;">
+        <!-- 北區 -->
+        <article class="venue-card" data-location="北區">
+          <div class="venue-image" data-name="勤美館">
+            <img src="images/勤美.png" alt="勤美館" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">勤美館</h3>
+            <p class="venue-price">
+              <span class="price-line">$ 850/hr 起</span>
+              <span class="price-line price-secondary">$ 2,600 ~ 6,480 / 時段</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <!-- 南區 -->
+        <article class="venue-card" data-location="南區">
+          <div class="venue-image" data-name="忠明館">
+            <img src="images/忠明館.jpeg" alt="忠明館" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">忠明館</h3>
+            <p class="venue-price">
+              <span class="price-line">小時 / 時段方案</span>
+              <span class="price-line price-secondary">價格依方案而定</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="南區">
+          <div class="venue-image" data-name="忠明館-休息室">
+            <img src="images/忠明館-休息室.jpg" alt="忠明館-休息室" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">忠明館 - 休息室</h3>
+            <p class="venue-price">
+              <span class="price-line">小時方案</span>
+              <span class="price-line price-secondary">適合小型會議</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <!-- 西屯區（文華館） -->
+        <article class="venue-card" data-location="西屯區">
+          <div class="venue-image" data-name="文華館">
+            <img src="images/文華館.jpg" alt="文華館" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">文華館</h3>
+            <p class="venue-price">
+              <span class="price-line">小時 / 時段方案</span>
+              <span class="price-line price-secondary">價格依方案而定</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <!-- 西屯區 -->
+        <article class="venue-card" data-location="西屯區">
+          <div class="venue-image" data-name="漢口館-一館">
+            <img src="images/漢口館-一館.png" alt="漢口館-一館" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">漢口館 - 一館</h3>
+            <p class="venue-price">
+              <span class="price-line">$ 1,380/hr 起</span>
+              <span class="price-line price-secondary">小時 / 時段方案</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="西屯區">
+          <div class="venue-image" data-name="漢口館-二館">
+            <img src="images/漢口館-二館.webp" alt="漢口館-二館" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">漢口館 - 二館</h3>
+            <p class="venue-price">
+              <span class="price-line">$ 5,200 ~ 11,560 / 時段</span>
+              <span class="price-line price-secondary">4 小時起</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="西屯區">
+          <div class="venue-image" data-name="漢口館-會議室">
+            <img src="images/漢口館-會議室.png" alt="漢口館-會議室" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">漢口館 - 會議室</h3>
+            <p class="venue-price">
+              <span class="price-line">$ 1,000 / hr</span>
+              <span class="price-line price-secondary">1 小時起</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <!-- 東區（站前場館，13 個空間） -->
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前-咖啡廳1+2F包場">
+            <img src="images/站前-咖啡廳1+2F包場.jpg" alt="站前-咖啡廳1+2F包場" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前 - 咖啡廳 1+2F 包場</h3>
+            <p class="venue-price">
+              <span class="price-line">$ 10,000 ~ 26,000 / 時段</span>
+              <span class="price-line price-secondary">4 小時起</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前-咖啡廳2F包場">
+            <img src="images/站前-站前咖啡廳2F包場.jpg" alt="站前-咖啡廳2F包場" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前 - 咖啡廳 2F 包場</h3>
+            <p class="venue-price">
+              <span class="price-line">$ 5,000 ~ 13,000 / 時段</span>
+              <span class="price-line price-secondary">4 小時起</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-2F 休息室">
+            <img src="images/站前館- 2F 休息室.jpg" alt="站前館-2F 休息室" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 2F 休息室</h3>
+            <p class="venue-price">
+              <span class="price-line">$ 480/hr 起</span>
+              <span class="price-line price-secondary">$ 1,460 ~ 3,680 / 時段</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-2F 會議室">
+            <img src="images/站前館- 2F 會議室.webp" alt="站前館-2F 會議室" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 2F 會議室</h3>
+            <p class="venue-price">
+              <span class="price-line">小時 / 時段方案</span>
+              <span class="price-line price-secondary">價格依方案而定</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-2F 洽談室">
+            <img src="images/站前館- 2F 洽談室.webp" alt="站前館-2F 洽談室" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 2F 洽談室</h3>
+            <p class="venue-price">
+              <span class="price-line">小時方案</span>
+              <span class="price-line price-secondary">適合小型洽談</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-多功能一館">
+            <img src="images/站前館-多功能一館.webp" alt="站前館-多功能一館" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 多功能一館</h3>
+            <p class="venue-price">
+              <span class="price-line">小時 / 時段方案</span>
+              <span class="price-line price-secondary">價格依方案而定</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-多功能二館">
+            <img src="images/站前館-多功能二館.webp" alt="站前館-多功能二館" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 多功能二館</h3>
+            <p class="venue-price">
+              <span class="price-line">小時 / 時段方案</span>
+              <span class="price-line price-secondary">價格依方案而定</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-多功能全館">
+            <img src="images/站前館-多功能全館.webp" alt="站前館-多功能全館" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 多功能全館</h3>
+            <p class="venue-price">
+              <span class="price-line">包場方案</span>
+              <span class="price-line price-secondary">多功能一館 + 二館</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-藝文展間">
+            <img src="images/站前館-藝文展間.webp" alt="站前館-藝文展間" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 藝文展間</h3>
+            <p class="venue-price">
+              <span class="price-line">$ 1,104/hr 起</span>
+              <span class="price-line price-secondary">小時 / 時段方案</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-藝文展間（前段）">
+            <img src="images/站前館-藝文展間（前段）.webp" alt="站前館-藝文展間（前段）" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 藝文展間（前段）</h3>
+            <p class="venue-price">
+              <span class="price-line">小時 / 時段方案</span>
+              <span class="price-line price-secondary">藝文展間局部空間</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-藝文展間 (藝牆)">
+            <img src="images/站前館-藝文展間 (藝牆).webp" alt="站前館-藝文展間 (藝牆)" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 藝文展間（藝牆）</h3>
+            <p class="venue-price">
+              <span class="price-line">小時 / 時段方案</span>
+              <span class="price-line price-secondary">藝文展間藝牆區</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-靜態階梯空間">
+            <img src="images/站前館-靜態階梯空間.webp" alt="站前館-靜態階梯空間" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 靜態階梯空間</h3>
+            <p class="venue-price">
+              <span class="price-line">小時 / 時段方案</span>
+              <span class="price-line price-secondary">適合講座 / 發表</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+        <article class="venue-card" data-location="東區">
+          <div class="venue-image" data-name="站前館-藝文展間 + 靜態階梯空間">
+            <img src="images/站前館-藝文展間 + 靜態階梯空間.jpg" alt="站前館-藝文展間 + 靜態階梯空間" onerror="this.style.display='none'">
+          </div>
+          <div class="venue-info">
+            <h3 class="venue-name">站前館 - 藝文展間 + 靜態階梯空間</h3>
+            <p class="venue-price">
+              <span class="price-line">包場方案</span>
+              <span class="price-line price-secondary">兩空間連通使用</span>
+            </p>
+            <button class="venue-button">立即預約</button>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- 沒結果時顯示 -->
+      <div id="noResult" class="no-result" style="display:none;">
+        此地區目前沒有場館
+      </div>
+
+      <!-- Pagination -->
+      <nav class="pagination">
+        <a href="#" class="active">1</a>
+        <a href="#">2</a>
+        <a href="#" class="arrow">→</a>
+      </nav>
+    </section>
+  </main>
+
+  <!-- ========== Footer ========== -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h4>沃茲新創空間｜WordsLive</h4>
+        <p>營業人名稱：沃茲有限公司</p>
+        <p>統一編號：82981038</p>
+        <p class="footer-links">
+          <a href="#">首頁</a> ｜
+          <a href="#">訂單查詢</a> ｜
+          <a href="#">購物車</a> ｜
+          <a href="#">聯絡表單</a>
+        </p>
+        <div class="social-icons">
+          <a href="#" title="Facebook">F</a>
+          <a href="#" title="Instagram">IG</a>
+          <a href="#" title="LINE">L</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>聯絡方式</h4>
+        <p>服務時間：週一 至 週日 - 09:00～18:00</p>
+        <p>電話：04-3705-5005 #1 場地租借 #2 商辦空間</p>
+        <p>E-mail：wordsspace@wordslive.com.tw</p>
+        <p>地址：臺中市東區自由二街 91 號</p>
+      </div>
+      <div class="footer-col footer-fb">
+        <div class="fb-placeholder">
+          [Facebook Page 嵌入區]<br>
+          <small>Words Live 沃茲新創空間</small>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========== Floating Buttons ========== -->
+  <div class="floating-buttons">
+    <a href="tel:04-3705-5005" class="floating-btn phone" title="電話">📞</a>
+    <a href="#" class="floating-btn line" title="LINE">L</a>
+  </div>
+
+  <!-- ========== Script ========== -->
+  <script src="admin/data.js"></script>
+  <script>
+    // SPACE_IMAGES 已在 data.js 定義，這裡直接使用
+
+    // === 從 DataStore 載入場館 + 空間，渲染卡片 ===
+    function renderVenueCards() {
+      const venues = DataStore.getVenues().filter(v => v.status === 'active');
+      const allSpaces = [];
+      venues.forEach(v => {
+        const spaces = DataStore.getSpacesByVenue(v.id).filter(s => s.status === 'active');
+        spaces.forEach(s => {
+          allSpaces.push({ ...s, venue: v, price: DataStore.getPrice(s.id) });
+        });
+      });
+
+      // 渲染篩選清單（依目前的場館動態算出）
+      const districtCounts = {};
+      allSpaces.forEach(s => {
+        districtCounts[s.venue.district] = (districtCounts[s.venue.district] || 0) + 1;
+      });
+      const filterList = document.getElementById('districtFilterList');
+      filterList.innerHTML = Object.keys(districtCounts).sort().map(d =>
+        `<li><a href="#" class="js-filter" data-filter="${d}">台中市${d} <span class="count">(${districtCounts[d]})</span></a></li>`
+      ).join('');
+
+      // 渲染卡片
+      const grid = document.getElementById('venueGrid');
+      grid.innerHTML = allSpaces.map(s => {
+        const img = SPACE_IMAGES[s.name];
+        const imgHtml = img
+          ? `<img src="${img}" alt="${s.name}" onerror="this.style.display='none'">`
+          : `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:48px;">🏛️</div>`;
+
+        let priceHtml;
+        if (s.price) {
+          const hourly = s.price.weekend || s.price.weekday;
+          const halfMin = Math.min(s.price.weekdayHalf || Infinity, s.price.weekendHalf || Infinity);
+          const fullMax = Math.max(s.price.weekdayFull || 0, s.price.weekendFull || 0);
+          priceHtml = `
+            <span class="price-line">$ ${hourly.toLocaleString()}/hr 起</span>
+            ${halfMin !== Infinity ? `<span class="price-line price-secondary">$ ${halfMin.toLocaleString()} ~ ${fullMax.toLocaleString()} / 時段</span>` : ''}
+          `;
+        } else {
+          priceHtml = `<span class="price-line">📞 來電洽詢</span>`;
+        }
+
+        // 顯示「場館-空間」名稱（除非空間名就是場館名）
+        const displayName = s.name === s.venue.name ? s.name : `${s.venue.name}-${s.name}`;
+
+        return `
+          <article class="venue-card" data-location="${s.venue.district}" data-space-id="${s.id}">
+            <div class="venue-image">${imgHtml}</div>
+            <div class="venue-info">
+              <h3 class="venue-name">${displayName}</h3>
+              <p class="venue-price">${priceHtml}</p>
+              <button class="venue-button">立即預約</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      // 更新總數
+      document.getElementById('visibleCount').textContent = allSpaces.length;
+
+      // 綁定篩選 + 卡片點擊
+      bindFilters();
+      bindCards();
+    }
+
+    // === 篩選 ===
+    function bindFilters() {
+      const filterLinks = document.querySelectorAll('.js-filter');
+      const cards = document.querySelectorAll('.venue-card');
+      const visibleCount = document.getElementById('visibleCount');
+      const currentFilter = document.getElementById('currentFilter');
+      const noResult = document.getElementById('noResult');
+
+      filterLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const filter = link.dataset.filter;
+          let count = 0;
+
+          cards.forEach(card => {
+            if (filter === 'all' || card.dataset.location === filter) {
+              card.style.display = '';
+              count++;
+            } else {
+              card.style.display = 'none';
+            }
+          });
+
+          filterLinks.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+
+          visibleCount.textContent = count;
+          currentFilter.textContent = filter === 'all' ? '' : '（已篩選：台中市' + filter + '）';
+          noResult.style.display = count === 0 ? 'block' : 'none';
+        });
+      });
+    }
+
+    // === 卡片點擊跳轉（用 spaceId） ===
+    function bindCards() {
+      const cards = document.querySelectorAll('.venue-card');
+      cards.forEach(card => {
+        const spaceId = card.dataset.spaceId;
+        const url = 'venue-detail.html?spaceId=' + spaceId;
+
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', () => { window.location.href = url; });
+
+        const btn = card.querySelector('.venue-button');
+        if (btn) {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.location.href = url;
+          });
+        }
+      });
+    }
+
+    renderVenueCards();
+  </script>
+
+</body>
+</html>

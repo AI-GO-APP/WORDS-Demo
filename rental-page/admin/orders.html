@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>訂單管理｜沃茲後台</title>
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    /* ===== Tab strip ===== */
+    .admin-tabs-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 20px;
+    }
+    .admin-tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .admin-tab-btn:hover { color: #1a1f36; }
+    .admin-tab-btn.active {
+      color: #1a1f36;
+      border-bottom-color: #1a1f36;
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ===== Calendar ===== */
+    .cal-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .cal-nav-btn {
+      padding: 6px 14px;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .cal-nav-btn:hover { background: #f9fafb; }
+    .cal-range {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      min-width: 200px;
+      text-align: center;
+    }
+    .cal-legend {
+      display: flex;
+      gap: 12px;
+      margin-left: auto;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+    .cal-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .cal-legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .cal-header {
+      background: #f9fafb;
+      padding: 10px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      color: #4b5563;
+      border-bottom: 1px solid #e5e7eb;
+      border-right: 1px solid #f3f4f6;
+    }
+    .cal-header.is-today {
+      background: #eff6ff;
+      color: #1e40af;
+    }
+    .cal-header .day-num {
+      display: block;
+      font-size: 18px;
+      margin-top: 2px;
+    }
+
+    .cal-time-col, .cal-day-col {
+      border-right: 1px solid #f3f4f6;
+      position: relative;
+      min-height: 800px;  /* 16hr × 50px */
+    }
+    .cal-time-cell {
+      height: 50px;
+      padding: 4px 6px;
+      font-size: 11px;
+      color: #9ca3af;
+      text-align: right;
+      border-bottom: 1px solid #f3f4f6;
+      box-sizing: border-box;
+    }
+    .cal-hour-line {
+      height: 50px;
+      border-bottom: 1px solid #f3f4f6;
+      box-sizing: border-box;
+    }
+    .cal-day-col.is-today {
+      background: rgba(239,246,255, .4);
+    }
+
+    .cal-booking {
+      position: absolute;
+      padding: 4px 6px;
+      border-radius: 4px;
+      color: white;
+      font-size: 11px;
+      line-height: 1.3;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .1s;
+      box-shadow: 0 1px 2px rgba(0,0,0,.1);
+      box-sizing: border-box;
+    }
+    .cal-booking:hover {
+      transform: scale(1.02);
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    }
+    .cal-booking .bk-title {
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cal-booking .bk-time {
+      font-size: 10px;
+      opacity: .9;
+    }
+    .cal-booking .bk-space {
+      font-size: 10px;
+      opacity: .85;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 場館顏色 */
+    .venue-勤美 { background: #3b82f6; }
+    .venue-忠明 { background: #10b981; }
+    .venue-文華 { background: #8b5cf6; }
+    .venue-漢口 { background: #f59e0b; }
+    .venue-站前 { background: #ec4899; }
+
+    /* 狀態透明度 */
+    .status-pending     { opacity: 0.70; }  /* 待付款 = 預約中 70% */
+    .status-paid        { opacity: 1.00; }
+    .status-confirmed   { opacity: 1.00; }
+    .status-completed   { opacity: 1.00; }
+    .status-cancelled   { opacity: 0.30; text-decoration: line-through; }
+    .status-refunded    { opacity: 0.30; text-decoration: line-through; }
+
+    .cal-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9ca3af;
+    }
+
+    .cal-google-cta {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #f9fafb;
+      border: 1px dashed #d1d5db;
+      border-radius: 6px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    /* ===== 表頭內篩選器 ===== */
+    .filter-row th {
+      background: #f9fafb;
+      padding: 6px 8px;
+      border-top: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: normal;
+    }
+    .filter-input {
+      width: 100%;
+      padding: 5px 8px;
+      font-size: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    .filter-input:focus {
+      outline: none;
+      border-color: #1a1f36;
+      box-shadow: 0 0 0 2px rgba(26,31,54,0.1);
+    }
+    .filter-date-range {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .filter-date-range input {
+      flex: 1;
+      padding: 4px;
+      font-size: 11px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+    .sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    .sortable:hover { background: #f3f4f6; }
+    .sort-icon {
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 10px;
+      color: #9ca3af;
+    }
+    .sortable.is-asc .sort-icon::before  { content: '▲'; color: #1a1f36; }
+    .sortable.is-desc .sort-icon::before { content: '▼'; color: #1a1f36; }
+    .sortable:not(.is-asc):not(.is-desc) .sort-icon::before { content: '⇅'; }
+    .multi-select {
+      position: relative;
+      width: 100%;
+    }
+    .multi-select-trigger {
+      width: 100%;
+      padding: 5px 8px;
+      font-size: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      text-align: left;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .multi-select-trigger:hover { border-color: #1a1f36; }
+    .multi-select-panel {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 20;
+      margin-top: 2px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+      min-width: 140px;
+    }
+    .multi-select.open .multi-select-panel { display: block; }
+    .multi-select-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .multi-select-item:hover { background: #f9fafb; }
+    .multi-select-item input { margin: 0; }
+    .filter-count {
+      background: #1a1f36;
+      color: #fff;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      margin-left: 4px;
+    }
+    .clear-filters-btn {
+      padding: 5px 10px;
+      font-size: 12px;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #6b7280;
+    }
+    .clear-filters-btn:hover {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+  </style>
+</head>
+<body>
+
+  <script>
+    if (localStorage.getItem('admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <div class="admin-layout">
+
+    <!-- ===== 左側 Sidebar ===== -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-logo">
+        <img src="../images/LOGO.png" alt="WORDS LIVE" class="admin-sidebar-logo-img">
+        <p>後台管理系統</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">總覽</div>
+          <a href="index.html" class="admin-nav-item">
+            <span class="admin-nav-icon">📊</span><span>Dashboard</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">場館設定</div>
+          <a href="venues.html" class="admin-nav-item">
+            <span class="admin-nav-icon">🏛️</span><span>場館管理</span>
+          </a>
+          <a href="plans.html" class="admin-nav-item">
+            <span class="admin-nav-icon">📦</span><span>方案管理</span>
+          </a>
+          <a href="pricing.html" class="admin-nav-item">
+            <span class="admin-nav-icon">💰</span><span>價格管理</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">營運管理</div>
+          <a href="orders.html" class="admin-nav-item active">
+            <span class="admin-nav-icon">🛍️</span><span>訂單管理</span>
+          </a>
+          <a href="customers.html" class="admin-nav-item">
+            <span class="admin-nav-icon">👥</span><span>客戶管理</span>
+          </a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">🎟️</span><span>優惠券</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">帳款管理</div>
+          <a href="payments.html" class="admin-nav-item">
+            <span class="admin-nav-icon">💸</span><span>匯款比對</span>
+          </a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">📄</span><span>發票管理</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">系統</div>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">👤</span><span>員工管理</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="admin-sidebar-footer">v0.4 Demo</div>
+    </aside>
+
+    <!-- ===== 右側 Main ===== -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="admin-header-title">訂單管理</div>
+        <div class="admin-header-user">
+          <span class="admin-header-user-name">👤 <span id="adminName">admin</span></span>
+          <button class="admin-header-logout" id="logoutBtn">登出</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+
+        <!-- ===== Tab Strip ===== -->
+        <div class="admin-tabs-bar">
+          <button class="admin-tab-btn active" data-tab="list">📋 訂單列表</button>
+          <button class="admin-tab-btn" data-tab="calendar">📅 月曆（週視圖）</button>
+        </div>
+
+        <!-- ============================== -->
+        <!-- TAB 1: 訂單列表（原內容）       -->
+        <!-- ============================== -->
+        <div class="tab-pane active" data-pane="list">
+
+          <!-- 統計卡 -->
+          <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+              <div class="admin-stat-card-label">本月訂單數</div>
+              <div class="admin-stat-card-value" id="statTotalOrders">0</div>
+              <div class="admin-stat-card-trend">+12% vs 上月</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-card-label">待付款</div>
+              <div class="admin-stat-card-value" id="statPending" style="color:#f59e0b;">0</div>
+              <div class="admin-stat-card-trend" style="color:#9ca3af;">需追蹤</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-card-label">已完成</div>
+              <div class="admin-stat-card-value" id="statCompleted" style="color:#10b981;">0</div>
+              <div class="admin-stat-card-trend" style="color:#9ca3af;">本月</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-card-label">本月營收</div>
+              <div class="admin-stat-card-value" id="statRevenue">$ 0</div>
+              <div class="admin-stat-card-trend">+18.5% vs 上月</div>
+            </div>
+          </div>
+
+          <!-- 工具列（簡化版）-->
+          <div class="admin-toolbar">
+            <span id="resultCount" style="font-size:13px; color:#6b7280;">顯示 0 / 0 筆</span>
+            <button class="clear-filters-btn" onclick="clearAllFilters()">清除全部篩選</button>
+            <div class="admin-toolbar-right">
+              <button class="admin-btn admin-btn-secondary" onclick="exportCSV()">匯出 CSV</button>
+              <button class="admin-btn admin-btn-primary" id="addBtn">＋ 新增訂單</button>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <!-- Row 1: 欄位名 + 排序圖示 -->
+                <tr>
+                  <th>訂單編號</th>
+                  <th>客戶</th>
+                  <th>場館 / 空間</th>
+                  <th class="sortable" onclick="toggleSort('date')">
+                    預訂日期 <span class="sort-icon" id="sort_date"></span>
+                  </th>
+                  <th>時段</th>
+                  <th>方案</th>
+                  <th class="sortable" style="text-align:right;" onclick="toggleSort('amount')">
+                    金額 <span class="sort-icon" id="sort_amount"></span>
+                  </th>
+                  <th>狀態</th>
+                  <th>💸 匯款狀態</th>
+                  <th class="sortable" onclick="toggleSort('createdAt')">
+                    建立時間 <span class="sort-icon" id="sort_createdAt"></span>
+                  </th>
+                  <th style="width:90px;">操作</th>
+                </tr>
+
+                <!-- Row 2: 篩選器 -->
+                <tr class="filter-row">
+                  <th><input type="text" class="filter-input" id="f_id" placeholder="搜尋編號"></th>
+                  <th><input type="text" class="filter-input" id="f_customer" placeholder="搜尋客戶"></th>
+                  <th>
+                    <div class="multi-select" id="venueMultiSelect">
+                      <button class="multi-select-trigger" type="button" onclick="toggleMultiPanel(event, 'venueMultiSelect')">
+                        <span id="venueTriggerLabel">全部場館</span>
+                        <span>▾</span>
+                      </button>
+                      <div class="multi-select-panel" id="venuePanel"></div>
+                    </div>
+                  </th>
+                  <th>
+                    <div class="filter-date-range">
+                      <input type="date" id="f_date_from" title="預訂起始日">
+                      <span style="font-size:10px; color:#9ca3af;">~</span>
+                      <input type="date" id="f_date_to" title="預訂結束日">
+                    </div>
+                  </th>
+                  <th></th>
+                  <th><input type="text" class="filter-input" id="f_plan" placeholder="搜尋方案"></th>
+                  <th></th>
+                  <th>
+                    <div class="multi-select" id="statusMultiSelect">
+                      <button class="multi-select-trigger" type="button" onclick="toggleMultiPanel(event, 'statusMultiSelect')">
+                        <span id="statusTriggerLabel">全部狀態</span>
+                        <span>▾</span>
+                      </button>
+                      <div class="multi-select-panel" id="statusPanel"></div>
+                    </div>
+                  </th>
+                  <th>
+                    <select class="filter-input" id="f_payment" onchange="onPaymentFilterChange(this.value)">
+                      <option value="">全部</option>
+                      <option value="paid">已匯款</option>
+                      <option value="unpaid">未匯款</option>
+                      <option value="not_required">不適用</option>
+                    </select>
+                  </th>
+                  <th>
+                    <div class="filter-date-range">
+                      <input type="date" id="f_created_from" title="建立起始日">
+                      <span style="font-size:10px; color:#9ca3af;">~</span>
+                      <input type="date" id="f_created_to" title="建立結束日">
+                    </div>
+                  </th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+
+        </div><!-- /tab list -->
+
+        <!-- ============================== -->
+        <!-- TAB 2: 月曆（週視圖）           -->
+        <!-- ============================== -->
+        <div class="tab-pane" data-pane="calendar">
+
+          <!-- Calendar 工具列 -->
+          <div class="cal-toolbar">
+            <button class="cal-nav-btn" onclick="navWeek(-1)">← 上週</button>
+            <button class="cal-nav-btn" onclick="navWeek(0)">今天</button>
+            <button class="cal-nav-btn" onclick="navWeek(1)">下週 →</button>
+            <span class="cal-range" id="calRange">—</span>
+            <select class="admin-filter" id="calVenueFilter" onchange="onCalVenueChange()">
+              <option value="">全部場館</option>
+              <option value="勤美館">勤美館</option>
+              <option value="忠明館">忠明館</option>
+              <option value="文華館">文華館</option>
+              <option value="漢口館">漢口館</option>
+              <option value="站前館">站前館</option>
+            </select>
+            <select class="admin-filter" id="calSpaceFilter" onchange="renderCalendar()">
+              <option value="">全部空間</option>
+            </select>
+
+            <div class="cal-legend">
+              <div class="cal-legend-item"><span class="cal-legend-color venue-勤美"></span>勤美</div>
+              <div class="cal-legend-item"><span class="cal-legend-color venue-忠明"></span>忠明</div>
+              <div class="cal-legend-item"><span class="cal-legend-color venue-文華"></span>文華</div>
+              <div class="cal-legend-item"><span class="cal-legend-color venue-漢口"></span>漢口</div>
+              <div class="cal-legend-item"><span class="cal-legend-color venue-站前"></span>站前</div>
+              <div class="cal-legend-item">|</div>
+              <div class="cal-legend-item"><span class="cal-legend-color" style="background:#1f2937;"></span>已確認</div>
+              <div class="cal-legend-item"><span class="cal-legend-color" style="background:#1f2937; opacity:.7;"></span>預約中</div>
+            </div>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="cal-grid" id="calGrid"></div>
+
+          <!-- Google Calendar 串接占位 -->
+          <div class="cal-google-cta">
+            📌 之後將串接 Google Calendar：場館行事曆雙向同步、Email 邀請、行動裝置通知
+          </div>
+
+        </div><!-- /tab calendar -->
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== 訂單詳情 Modal ===== -->
+  <div class="admin-modal-overlay" id="orderModal">
+    <div class="admin-modal" style="max-width:760px;">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title" id="modalTitle">訂單詳情</div>
+        <button class="admin-modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="admin-modal-body" id="modalBody"></div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="closeModal()">關閉</button>
+        <button class="admin-btn admin-btn-primary" id="modalUpdateBtn" onclick="updateOrderStatus()">更新狀態</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('adminName').textContent = localStorage.getItem('admin_username') || 'admin';
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (confirm('確定要登出嗎？')) {
+        localStorage.removeItem('admin_logged_in');
+        localStorage.removeItem('admin_username');
+        window.location.href = 'login.html';
+      }
+    });
+
+    // ===== Mock 訂單資料（多筆重疊以示範月曆）=====
+    const ORDERS = [
+      // 本週多筆重疊（示範 side-by-side）
+      { id: 'WL26002001', customer: 'Joanna', venue: '勤美館', space: '勤美館', date: '2026-06-02', startTime: '10:00', endTime: '13:00', plan: '小時計費', amount: 2040, deposit: 3000, status: 'pending', createdAt: '2026-05-29 09:00', payment: '尚未付款', headcount: '15人以內', cleanup: '無飲食' },
+      { id: 'WL26002002', customer: '李美玲', venue: '勤美館', space: '勤美館', date: '2026-06-02', startTime: '11:00', endTime: '14:00', plan: '小時計費', amount: 2040, deposit: 3000, status: 'pending', createdAt: '2026-05-29 14:30', payment: '尚未付款', headcount: '15人以內', cleanup: '無飲食' },
+      { id: 'WL26002003', customer: '王志明', venue: '勤美館', space: '勤美館', date: '2026-06-02', startTime: '12:00', endTime: '15:00', plan: '小時計費', amount: 2040, deposit: 3000, status: 'confirmed', createdAt: '2026-05-30 10:15', payment: '信用卡', headcount: '15人以內', cleanup: '無飲食' },
+
+      { id: 'WL26002004', customer: '陳大文', venue: '站前館', space: '多功能 1 館', date: '2026-06-03', startTime: '09:00', endTime: '13:00', plan: '平日半日', amount: 5000, deposit: 3000, status: 'paid', createdAt: '2026-05-28 16:45', payment: '信用卡', headcount: '31-60人', cleanup: '31-60人' },
+      { id: 'WL26002005', customer: '林小美', venue: '站前館', space: '多功能 1 館', date: '2026-06-03', startTime: '14:00', endTime: '18:00', plan: '平日半日', amount: 5000, deposit: 3000, status: 'pending', createdAt: '2026-05-30 11:20', payment: '尚未付款', headcount: '31-60人', cleanup: '31-60人' },
+
+      { id: 'WL26002006', customer: '張雅婷', venue: '文華館', space: '文華館', date: '2026-06-04', startTime: '13:00', endTime: '17:00', plan: '平日半日', amount: 3300, deposit: 3000, status: 'paid', createdAt: '2026-05-27 10:30', payment: 'LINE Pay', headcount: '20人以內', cleanup: '20人以內' },
+
+      { id: 'WL26002007', customer: '黃建宏', venue: '漢口館', space: '漢口一館', date: '2026-06-05', startTime: '10:00', endTime: '18:00', plan: '平日全日', amount: 9450, deposit: 5000, status: 'confirmed', createdAt: '2026-05-25 09:00', payment: '信用卡', headcount: '41-80人', cleanup: '41-80人' },
+
+      { id: 'WL26002008', customer: '吳俊傑', venue: '站前館', space: '藝文展間', date: '2026-06-06', startTime: '09:00', endTime: '21:00', plan: '假日全日', amount: 11460, deposit: 3000, status: 'confirmed', createdAt: '2026-05-24 18:00', payment: 'LINE Pay', headcount: '31-60人', cleanup: '31-60人' },
+
+      { id: 'WL26002009', customer: '蔡佳穎', venue: '忠明館', space: '忠明館', date: '2026-06-07', startTime: '14:00', endTime: '20:00', plan: '假日半日', amount: 5200, deposit: 3000, status: 'pending', createdAt: '2026-05-31 12:00', payment: '尚未付款', headcount: '30人以內', cleanup: '30人以內' },
+
+      // 之前的訂單（其他週）
+      { id: 'WL26001245', customer: 'Joanna', venue: '勤美館', space: '勤美館', date: '2026-06-15', startTime: '14:00', endTime: '17:00', plan: '小時計費', amount: 3300, deposit: 3000, status: 'pending', createdAt: '2026-05-29 10:23', payment: '尚未付款', headcount: '15人以內', cleanup: '無飲食' },
+      { id: 'WL26001244', customer: '陳大文', venue: '站前館', space: '多功能 1 館', date: '2026-06-12', startTime: '09:00', endTime: '13:00', plan: '平日半日', amount: 5000, deposit: 3000, status: 'paid', createdAt: '2026-05-28 16:45', payment: '信用卡', headcount: '31-60人', cleanup: '31-60人' },
+      { id: 'WL26001243', customer: '林小美', venue: '漢口館', space: '漢口一館', date: '2026-06-10', startTime: '10:00', endTime: '18:00', plan: '平日全日', amount: 9450, deposit: 5000, status: 'confirmed', createdAt: '2026-05-28 14:12', payment: 'LINE Pay', headcount: '41-80人', cleanup: '41-80人' },
+      { id: 'WL26001242', customer: '王志明', venue: '忠明館', space: '忠明館', date: '2026-06-08', startTime: '13:00', endTime: '17:00', plan: '平日半日', amount: 4250, deposit: 3000, status: 'completed', createdAt: '2026-05-27 09:30', payment: '轉帳', headcount: '30人以內', cleanup: '30人以內' },
+      { id: 'WL26001240', customer: '黃建宏', venue: '站前館', space: '藝文展間', date: '2026-06-03', startTime: '09:00', endTime: '21:00', plan: '假日全日', amount: 11460, deposit: 3000, status: 'paid', createdAt: '2026-05-26 19:20', payment: '信用卡', headcount: '31-60人', cleanup: '31-60人' },
+      { id: 'WL26001239', customer: '李美玲', venue: '勤美館', space: '勤美館', date: '2026-06-01', startTime: '10:00', endTime: '12:00', plan: '小時計費（3hr 加成）', amount: 2448, deposit: 3000, status: 'cancelled', createdAt: '2026-05-26 15:00', payment: '已退款', headcount: '15人以內', cleanup: '無飲食' },
+      { id: 'WL26001238', customer: '陳大文', venue: '站前館', space: '會議室', date: '2026-05-30', startTime: '14:00', endTime: '17:00', plan: '小時計費', amount: 2080, deposit: 1000, status: 'completed', createdAt: '2026-05-25 11:30', payment: '信用卡', headcount: '15人以內', cleanup: '統一價 $300' },
+      { id: 'WL26001237', customer: '吳俊傑', venue: '站前館', space: '多功能全館', date: '2026-05-29', startTime: '09:00', endTime: '18:00', plan: '平日全日', amount: 13120, deposit: 5000, status: 'completed', createdAt: '2026-05-24 14:50', payment: 'LINE Pay', headcount: '101-140人', cleanup: '101-140人' },
+      { id: 'WL26001236', customer: '林小美', venue: '漢口館', space: '漢口二館', date: '2026-05-28', startTime: '13:00', endTime: '17:00', plan: '平日半日', amount: 5200, deposit: 5000, status: 'completed', createdAt: '2026-05-23 16:00', payment: '轉帳', headcount: '40人以內', cleanup: '40人以內' },
+      { id: 'WL26001235', customer: 'Joanna', venue: '站前館', space: '洽談室', date: '2026-05-27', startTime: '15:00', endTime: '18:00', plan: '小時計費', amount: 1680, deposit: 1000, status: 'completed', createdAt: '2026-05-22 09:10', payment: '信用卡', headcount: '8人以內', cleanup: '統一價 $300' },
+      { id: 'WL26001234', customer: '張雅婷', venue: '文華館', space: '文華館', date: '2026-05-26', startTime: '18:00', endTime: '22:00', plan: '夜間時段', amount: 4560, deposit: 3000, status: 'refunded', createdAt: '2026-05-21 20:30', payment: '已退款', headcount: '21-40人', cleanup: '21-40人' }
+    ];
+
+    const STATUS_CONFIG = {
+      pending:   { label: '待付款',  color: 'admin-badge-warning' },
+      paid:      { label: '已付款',  color: 'admin-badge-info' },
+      confirmed: { label: '已確認',  color: 'admin-badge-success' },
+      completed: { label: '已完成',  color: 'admin-badge-success' },
+      cancelled: { label: '已取消',  color: 'admin-badge-default' },
+      refunded:  { label: '已退款',  color: 'admin-badge-danger' }
+    };
+
+    // 訂單 ↔ 匯款記錄對應表（demo 用，未來從資料庫查）
+    // key = 訂單編號，value = 對應的銀行交易紀錄 id 陣列
+    const ORDER_PAYMENTS = {
+      'WL26002001': [{ tx_id: 1254, amount: 6874, paid_at: '2026-06-01 16:30:54', bank: '國泰世華 - 25343' }],
+      'WL26002004': [{ tx_id: 1253, amount: 20800, paid_at: '2026-06-01 15:56:20', bank: '中國信託 - 57576' }],
+      'WL26002005': [{ tx_id: 1252, amount: 36750, paid_at: '2026-06-01 15:37:29', bank: '台中銀行 - 00000', note: '與 WL26002006 / WL26002007 同筆匯款' }],
+      'WL26002008': [{ tx_id: 1251, amount: 14630, paid_at: '2026-06-01 12:55:03', bank: '台灣銀行 - 12114' }],
+      'WL26001236': [{ tx_id: 1250, amount: 5200, paid_at: '2026-06-01 11:12:08', bank: '台北富邦 - 12033', note: '補比對成功' }],
+      'WL26001240': [{ tx_id: 1246, amount: 11460, paid_at: '2026-05-31 14:05:33', bank: '台灣銀行 - 24876' }],
+      'WL26001238': [{ tx_id: 1245, amount: 11460, paid_at: '2026-05-31 11:33:47', bank: '國泰世華 - 11100' }]
+    };
+
+    // 計算訂單的匯款狀態
+    function getPaymentStatus(order) {
+      const txs = ORDER_PAYMENTS[order.id] || [];
+      // 已取消 / 退款 → 不適用
+      if (['cancelled','refunded'].includes(order.status)) {
+        return { code: 'not_required', label: '—', color: 'admin-badge-default', txs: [] };
+      }
+      if (txs.length === 0) {
+        return { code: 'unpaid', label: '未匯款', color: 'admin-badge-warning', txs: [] };
+      }
+      // 算已收金額
+      const paid = txs.reduce((s,t) => s + t.amount, 0);
+      // 多筆訂單合配時，paid 是匯款總額（含其他訂單份），這裡簡化為「已對應」就算已匯款
+      return { code: 'paid', label: '已匯款', color: 'admin-badge-success', txs };
+    }
+
+    let currentEditingId = null;
+
+    // ============================
+    // Tab 切換
+    // ============================
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = btn.dataset.tab;
+        document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelector(`[data-pane="${t}"]`).classList.add('active');
+        if (t === 'calendar') renderCalendar();
+      });
+    });
+
+    // ============================
+    // 列表（原本）
+    // ============================
+    function updateStats() {
+      const total = ORDERS.length;
+      const pending = ORDERS.filter(o => o.status === 'pending').length;
+      const completed = ORDERS.filter(o => o.status === 'completed').length;
+      const revenue = ORDERS.filter(o => ['paid','confirmed','completed'].includes(o.status))
+                            .reduce((sum, o) => sum + o.amount, 0);
+      document.getElementById('statTotalOrders').textContent = total;
+      document.getElementById('statPending').textContent = pending;
+      document.getElementById('statCompleted').textContent = completed;
+      document.getElementById('statRevenue').textContent = '$ ' + revenue.toLocaleString();
+    }
+
+    // ===== Filter / Sort 狀態 =====
+    let filters = {
+      id: '', customer: '', plan: '',
+      venues: [],   // 多選
+      statuses: [], // 多選
+      payment: '',  // 匯款狀態（單選）
+      dateFrom: '', dateTo: '',
+      createdFrom: '', createdTo: ''
+    };
+    let sort = { column: null, direction: null };
+
+    function onPaymentFilterChange(v) {
+      filters.payment = v;
+      renderTable();
+    }
+
+    const VENUE_LIST = ['勤美館','忠明館','文華館','漢口館','站前館'];
+
+    // ===== 初始化多選下拉 =====
+    function initVenuePanel() {
+      const panel = document.getElementById('venuePanel');
+      panel.innerHTML = '';
+      VENUE_LIST.forEach(v => {
+        const item = document.createElement('label');
+        item.className = 'multi-select-item';
+        item.innerHTML = `<input type="checkbox" value="${v}" onchange="onVenueCheck(this)"><span>${v}</span>`;
+        panel.appendChild(item);
+      });
+    }
+
+    function initStatusPanel() {
+      const panel = document.getElementById('statusPanel');
+      panel.innerHTML = '';
+      Object.entries(STATUS_CONFIG).forEach(([key, s]) => {
+        const item = document.createElement('label');
+        item.className = 'multi-select-item';
+        item.innerHTML = `<input type="checkbox" value="${key}" onchange="onStatusCheck(this)"><span class="admin-badge ${s.color}">${s.label}</span>`;
+        panel.appendChild(item);
+      });
+    }
+
+    function toggleMultiPanel(e, id) {
+      e.stopPropagation();
+      document.querySelectorAll('.multi-select').forEach(ms => {
+        if (ms.id !== id) ms.classList.remove('open');
+      });
+      document.getElementById(id).classList.toggle('open');
+    }
+
+    // 點外面收起
+    document.addEventListener('click', (e) => {
+      document.querySelectorAll('.multi-select').forEach(ms => {
+        if (!ms.contains(e.target)) ms.classList.remove('open');
+      });
+    });
+
+    function onVenueCheck(cb) {
+      if (cb.checked) {
+        if (!filters.venues.includes(cb.value)) filters.venues.push(cb.value);
+      } else {
+        filters.venues = filters.venues.filter(v => v !== cb.value);
+      }
+      updateMultiLabel('venue', filters.venues, VENUE_LIST, '全部場館', v => v);
+      renderTable();
+    }
+
+    function onStatusCheck(cb) {
+      if (cb.checked) {
+        if (!filters.statuses.includes(cb.value)) filters.statuses.push(cb.value);
+      } else {
+        filters.statuses = filters.statuses.filter(s => s !== cb.value);
+      }
+      updateMultiLabel('status', filters.statuses, Object.keys(STATUS_CONFIG), '全部狀態', k => STATUS_CONFIG[k].label);
+      renderTable();
+    }
+
+    function updateMultiLabel(name, selected, all, defaultLabel, formatFn) {
+      const label = document.getElementById(name + 'TriggerLabel');
+      if (selected.length === 0 || selected.length === all.length) {
+        label.innerHTML = defaultLabel;
+      } else if (selected.length === 1) {
+        label.innerHTML = formatFn(selected[0]);
+      } else {
+        label.innerHTML = `已選 <span class="filter-count">${selected.length}</span>`;
+      }
+    }
+
+    // ===== 排序 =====
+    function toggleSort(column) {
+      if (sort.column !== column) {
+        sort.column = column;
+        sort.direction = 'desc';
+      } else if (sort.direction === 'desc') {
+        sort.direction = 'asc';
+      } else {
+        sort.column = null;
+        sort.direction = null;
+      }
+      updateSortIndicators();
+      renderTable();
+    }
+
+    function updateSortIndicators() {
+      ['date','amount','createdAt'].forEach(col => {
+        const icon = document.getElementById('sort_' + col);
+        if (!icon) return;
+        const th = icon.parentElement;
+        th.classList.remove('is-asc','is-desc');
+        if (sort.column === col) {
+          th.classList.add(sort.direction === 'asc' ? 'is-asc' : 'is-desc');
+        }
+      });
+    }
+
+    // ===== 篩選欄位事件 =====
+    function bindFilterInputs() {
+      document.getElementById('f_id').addEventListener('input', e => { filters.id = e.target.value.toLowerCase(); renderTable(); });
+      document.getElementById('f_customer').addEventListener('input', e => { filters.customer = e.target.value.toLowerCase(); renderTable(); });
+      document.getElementById('f_plan').addEventListener('input', e => { filters.plan = e.target.value.toLowerCase(); renderTable(); });
+      document.getElementById('f_date_from').addEventListener('change', e => { filters.dateFrom = e.target.value; renderTable(); });
+      document.getElementById('f_date_to').addEventListener('change', e => { filters.dateTo = e.target.value; renderTable(); });
+      document.getElementById('f_created_from').addEventListener('change', e => { filters.createdFrom = e.target.value; renderTable(); });
+      document.getElementById('f_created_to').addEventListener('change', e => { filters.createdTo = e.target.value; renderTable(); });
+    }
+
+    function clearAllFilters() {
+      filters = { id:'', customer:'', plan:'', venues:[], statuses:[], payment:'', dateFrom:'', dateTo:'', createdFrom:'', createdTo:'' };
+      sort = { column: null, direction: null };
+      ['f_id','f_customer','f_plan','f_date_from','f_date_to','f_created_from','f_created_to'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const pf = document.getElementById('f_payment');
+      if (pf) pf.value = '';
+      document.querySelectorAll('.multi-select-panel input').forEach(cb => cb.checked = false);
+      updateMultiLabel('venue', [], VENUE_LIST, '全部場館', v => v);
+      updateMultiLabel('status', [], Object.keys(STATUS_CONFIG), '全部狀態', k => STATUS_CONFIG[k].label);
+      updateSortIndicators();
+      renderTable();
+    }
+
+    function renderTable() {
+      let filtered = ORDERS.filter(o => {
+        if (filters.id        && !o.id.toLowerCase().includes(filters.id))                return false;
+        if (filters.customer  && !o.customer.toLowerCase().includes(filters.customer))    return false;
+        if (filters.plan      && !o.plan.toLowerCase().includes(filters.plan))            return false;
+        if (filters.venues.length > 0   && !filters.venues.includes(o.venue))             return false;
+        if (filters.statuses.length > 0 && !filters.statuses.includes(o.status))          return false;
+        if (filters.payment) {
+          const ps = getPaymentStatus(o);
+          if (ps.code !== filters.payment) return false;
+        }
+        if (filters.dateFrom    && o.date < filters.dateFrom)                             return false;
+        if (filters.dateTo      && o.date > filters.dateTo)                               return false;
+        if (filters.createdFrom && o.createdAt.slice(0,10) < filters.createdFrom)         return false;
+        if (filters.createdTo   && o.createdAt.slice(0,10) > filters.createdTo)           return false;
+        return true;
+      });
+
+      // 排序
+      if (sort.column && sort.direction) {
+        filtered.sort((a,b) => {
+          let va = a[sort.column], vb = b[sort.column];
+          if (sort.column === 'amount') {
+            // 數字排序
+            return sort.direction === 'asc' ? va - vb : vb - va;
+          }
+          // 字串/日期排序
+          if (va < vb) return sort.direction === 'asc' ? -1 : 1;
+          if (va > vb) return sort.direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+
+      // 結果計數
+      document.getElementById('resultCount').textContent = `顯示 ${filtered.length} / ${ORDERS.length} 筆`;
+
+      const tbody = document.getElementById('ordersTable');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11"><div class="admin-empty"><div class="admin-empty-icon">📭</div>找不到符合條件的訂單</div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(o => {
+        const s = STATUS_CONFIG[o.status];
+        const ps = getPaymentStatus(o);
+        let paymentCell = `<span class="admin-badge ${ps.color}">${ps.label}</span>`;
+        if (ps.txs.length > 0) {
+          paymentCell += ps.txs.map(t => `<br><small style="color:#9ca3af; font-size:10px;">📥 #${t.tx_id}</small>`).join('');
+        }
+        return `
+          <tr style="cursor:pointer;" onclick="viewOrder('${o.id}')">
+            <td><strong style="font-family:monospace;">#${o.id}</strong></td>
+            <td><strong>${o.customer}</strong></td>
+            <td>${o.venue}<br><small style="color:#9ca3af;">${o.space}</small></td>
+            <td>${o.date}</td>
+            <td>${o.startTime} - ${o.endTime}</td>
+            <td><small>${o.plan}</small></td>
+            <td style="text-align:right;"><strong>$ ${o.amount.toLocaleString()}</strong></td>
+            <td><span class="admin-badge ${s.color}">${s.label}</span></td>
+            <td>${paymentCell}</td>
+            <td style="color:#9ca3af; font-size:12px;">${o.createdAt}</td>
+            <td onclick="event.stopPropagation();">
+              <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="viewOrder('${o.id}')">查看</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function viewOrder(id) {
+      const o = ORDERS.find(x => x.id === id);
+      if (!o) return;
+      currentEditingId = id;
+      const s = STATUS_CONFIG[o.status];
+
+      document.getElementById('modalTitle').textContent = `訂單詳情 #${o.id}`;
+      document.getElementById('modalBody').innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <div>
+            <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">📋 訂單資訊</h4>
+            <div style="font-size:13px; line-height:2;">
+              <div><strong>訂單編號：</strong>${o.id}</div>
+              <div><strong>建立時間：</strong>${o.createdAt}</div>
+              <div><strong>當前狀態：</strong><span class="admin-badge ${s.color}">${s.label}</span></div>
+              <div><strong>付款方式：</strong>${o.payment}</div>
+            </div>
+          </div>
+          <div>
+            <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">👤 客戶資訊</h4>
+            <div style="font-size:13px; line-height:2;">
+              <div><strong>姓名：</strong>${o.customer}</div>
+              <div><strong>會員等級：</strong>一般會員</div>
+              <div><strong>歷史訂單：</strong>查看</div>
+            </div>
+          </div>
+          <div style="grid-column:1/-1;">
+            <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">🏛️ 預訂內容</h4>
+            <div style="background:#f9fafb; padding:14px; border-radius:6px; font-size:13px;">
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+                <div><strong>場館：</strong>${o.venue}</div>
+                <div><strong>空間：</strong>${o.space}</div>
+                <div><strong>方案：</strong>${o.plan}</div>
+                <div><strong>日期：</strong>${o.date}</div>
+                <div><strong>時段：</strong>${o.startTime} - ${o.endTime}</div>
+                <div><strong>人數：</strong>${o.headcount}</div>
+              </div>
+            </div>
+          </div>
+          <div style="grid-column:1/-1;">
+            <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">💰 金額明細</h4>
+            <table style="width:100%; font-size:13px; border-collapse:collapse;">
+              <tr><td style="padding:6px 0;">租借費用</td><td style="text-align:right;">$ ${(o.amount - 500).toLocaleString()}</td></tr>
+              <tr><td style="padding:6px 0;">人次費 / 清潔費（${o.cleanup}）</td><td style="text-align:right;">$ 500</td></tr>
+              <tr style="border-top:1px solid #e5e7eb;"><td style="padding:8px 0;"><strong>應付金額</strong></td><td style="text-align:right;"><strong>$ ${o.amount.toLocaleString()}</strong></td></tr>
+              <tr><td style="padding:6px 0; color:#9ca3af;">押金（先收後退）</td><td style="text-align:right; color:#9ca3af;">+ $ ${o.deposit.toLocaleString()}</td></tr>
+              <tr style="border-top:2px solid #1a1f36;"><td style="padding:10px 0;"><strong>總匯款金額</strong></td><td style="text-align:right;"><strong style="color:#dc2626;">$ ${(o.amount + o.deposit).toLocaleString()}</strong></td></tr>
+            </table>
+          </div>
+
+          ${(() => {
+            const ps = getPaymentStatus(o);
+            if (ps.code === 'not_required') return '';
+            return `
+              <div style="grid-column:1/-1;">
+                <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">💸 匯款記錄</h4>
+                ${ps.txs.length === 0
+                  ? `<div style="background:#fef3c7; padding:14px; border-radius:6px; font-size:13px; color:#92400e;">
+                       ⚠️ 此訂單尚未收到匯款（狀態：${ps.label}）
+                       <br><a href="payments.html" style="color:#92400e; text-decoration:underline; font-size:12px;">→ 前往匯款比對頁查找</a>
+                     </div>`
+                  : `<table style="width:100%; font-size:13px; border-collapse:collapse; border:1px solid #e5e7eb; border-radius:6px;">
+                       <thead>
+                         <tr style="background:#f9fafb;">
+                           <th style="padding:8px; text-align:left; font-size:11px; color:#6b7280;">帳務 ID</th>
+                           <th style="padding:8px; text-align:left; font-size:11px; color:#6b7280;">匯款時間</th>
+                           <th style="padding:8px; text-align:left; font-size:11px; color:#6b7280;">銀行 / 末五碼</th>
+                           <th style="padding:8px; text-align:right; font-size:11px; color:#6b7280;">金額</th>
+                           <th style="padding:8px; text-align:center; font-size:11px; color:#6b7280;">操作</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         ${ps.txs.map(t => `
+                           <tr style="border-top:1px solid #f3f4f6;">
+                             <td style="padding:8px;"><strong>#${t.tx_id}</strong></td>
+                             <td style="padding:8px; color:#6b7280;">${t.paid_at}</td>
+                             <td style="padding:8px;">${t.bank}${t.note ? `<br><small style="color:#92400e;">⚠️ ${t.note}</small>` : ''}</td>
+                             <td style="padding:8px; text-align:right;"><strong style="color:#10b981;">+NT$ ${t.amount.toLocaleString()}</strong></td>
+                             <td style="padding:8px; text-align:center;"><a href="payments.html" style="color:#1a1f36; text-decoration:underline; font-size:12px;">查看</a></td>
+                           </tr>
+                         `).join('')}
+                       </tbody>
+                     </table>`
+                }
+              </div>
+            `;
+          })()}
+          <div style="grid-column:1/-1;">
+            <h4 style="font-size:13px; color:#6b7280; margin-bottom:10px;">🔄 更新狀態</h4>
+            <select id="newStatusSelect" class="admin-filter" style="width:200px;">
+              ${Object.entries(STATUS_CONFIG).map(([k, v]) => `<option value="${k}" ${k === o.status ? 'selected' : ''}>${v.label}</option>`).join('')}
+            </select>
+            <p style="font-size:12px; color:#9ca3af; margin-top:6px;">選擇新狀態後按下方「更新狀態」按鈕</p>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('orderModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('orderModal').classList.remove('show');
+    }
+
+    function updateOrderStatus() {
+      if (!currentEditingId) return;
+      const newStatus = document.getElementById('newStatusSelect').value;
+      const o = ORDERS.find(x => x.id === currentEditingId);
+      if (o) {
+        const oldStatus = o.status;
+        o.status = newStatus;
+        alert(`訂單 #${o.id} 狀態：${STATUS_CONFIG[oldStatus].label} → ${STATUS_CONFIG[newStatus].label}\n\n（demo：未實際存入資料庫）`);
+        closeModal();
+        renderTable();
+        updateStats();
+        // 月曆若在 active tab 也重繪
+        if (document.querySelector('[data-pane="calendar"]').classList.contains('active')) {
+          renderCalendar();
+        }
+      }
+    }
+
+    function exportCSV() { alert('（demo）匯出 CSV'); }
+    document.getElementById('addBtn').addEventListener('click', () => alert('（demo）新增訂單'));
+
+    // ============================
+    // 月曆（週視圖）
+    // ============================
+    const CAL_START_HOUR = 8;   // 8:00
+    const CAL_END_HOUR = 24;    // 24:00
+    const CAL_HOUR_PX = 50;     // 每小時 50px
+    let calWeekStart = startOfWeek(new Date('2026-06-01')); // 預設顯示 6/1 那週
+
+    // 場館 → 空間對照表
+    const VENUE_SPACES = {
+      '勤美館': ['勤美館'],
+      '忠明館': ['忠明館', '忠明館-休息室'],
+      '文華館': ['文華館'],
+      '漢口館': ['漢口一館', '漢口二館', '漢口會議室'],
+      '站前館': [
+        '藝文展間', '階梯教室', '多功能 1 館', '多功能 2 館',
+        '階梯+展間', '多功能全館', '藝文半展間',
+        '會議室', '洽談室', '休息室', '站前館外廣場', '站前館外長廊'
+      ]
+    };
+
+    // 場館下拉改變 → 重新填空間下拉
+    function onCalVenueChange() {
+      const venue = document.getElementById('calVenueFilter').value;
+      const spaceSel = document.getElementById('calSpaceFilter');
+      spaceSel.innerHTML = '<option value="">全部空間</option>';
+      if (venue && VENUE_SPACES[venue]) {
+        VENUE_SPACES[venue].forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = s;
+          spaceSel.appendChild(opt);
+        });
+      }
+      renderCalendar();
+    }
+
+    function startOfWeek(d) {
+      const date = new Date(d);
+      const day = date.getDay(); // 0=日, 1=一
+      const diff = day === 0 ? -6 : 1 - day; // 週一為一週開始
+      date.setDate(date.getDate() + diff);
+      date.setHours(0,0,0,0);
+      return date;
+    }
+
+    function addDays(d, n) {
+      const x = new Date(d);
+      x.setDate(x.getDate() + n);
+      return x;
+    }
+
+    function toDateStr(d) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function timeToMin(t) {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function venueColorClass(venue) {
+      if (venue.includes('勤美')) return 'venue-勤美';
+      if (venue.includes('忠明')) return 'venue-忠明';
+      if (venue.includes('文華')) return 'venue-文華';
+      if (venue.includes('漢口')) return 'venue-漢口';
+      if (venue.includes('站前')) return 'venue-站前';
+      return '';
+    }
+
+    function navWeek(direction) {
+      if (direction === 0) {
+        calWeekStart = startOfWeek(new Date('2026-06-01'));
+      } else {
+        calWeekStart = addDays(calWeekStart, direction * 7);
+      }
+      renderCalendar();
+    }
+
+    // ========== 重疊處理：cluster + lane assignment ==========
+    function layoutDayBookings(bookings) {
+      if (bookings.length === 0) return [];
+
+      // 依 startTime 排序，用來建 cluster
+      const sortedByStart = [...bookings].sort((a, b) =>
+        timeToMin(a.startTime) - timeToMin(b.startTime)
+      );
+
+      // 建立 cluster (互相重疊的一組)
+      const clusters = [];
+      for (const b of sortedByStart) {
+        const bStart = timeToMin(b.startTime);
+        const bEnd = timeToMin(b.endTime);
+        let target = null;
+        for (const c of clusters) {
+          if (c.some(x => timeToMin(x.startTime) < bEnd && timeToMin(x.endTime) > bStart)) {
+            target = c;
+            break;
+          }
+        }
+        if (target) target.push(b);
+        else clusters.push([b]);
+      }
+
+      // 每個 cluster 內：依 createdAt 排序 (早的在左)，再 greedy lane
+      const result = [];
+      for (const c of clusters) {
+        c.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        const laneEnd = []; // 每 lane 最後一筆的 endMin
+        for (const b of c) {
+          const bStart = timeToMin(b.startTime);
+          const bEnd = timeToMin(b.endTime);
+          let assigned = -1;
+          for (let i = 0; i < laneEnd.length; i++) {
+            if (laneEnd[i] <= bStart) {
+              laneEnd[i] = bEnd;
+              assigned = i;
+              break;
+            }
+          }
+          if (assigned === -1) {
+            laneEnd.push(bEnd);
+            assigned = laneEnd.length - 1;
+          }
+          b._lane = assigned;
+        }
+        const totalLanes = laneEnd.length;
+        for (const b of c) {
+          b._totalLanes = totalLanes;
+          result.push(b);
+        }
+      }
+      return result;
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calGrid');
+      const todayStr = toDateStr(new Date('2026-06-02')); // demo 用固定「今天」= 6/2
+
+      // 範圍標題
+      const weekEnd = addDays(calWeekStart, 6);
+      document.getElementById('calRange').textContent =
+        `${toDateStr(calWeekStart)} ~ ${toDateStr(weekEnd)}`;
+
+      // 篩選 venue + space
+      const venueFilter = document.getElementById('calVenueFilter').value;
+      const spaceFilter = document.getElementById('calSpaceFilter').value;
+
+      // 清空
+      grid.innerHTML = '';
+
+      // 第一行：時段欄頭 + 7 天 headers
+      const cornerCell = document.createElement('div');
+      cornerCell.className = 'cal-header';
+      cornerCell.textContent = '';
+      grid.appendChild(cornerCell);
+
+      const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+      for (let i = 0; i < 7; i++) {
+        const d = addDays(calWeekStart, i);
+        const dStr = toDateStr(d);
+        const head = document.createElement('div');
+        head.className = 'cal-header' + (dStr === todayStr ? ' is-today' : '');
+        head.innerHTML = `週${weekdays[i]}<span class="day-num">${d.getMonth()+1}/${d.getDate()}</span>`;
+        grid.appendChild(head);
+      }
+
+      // 時間欄
+      const timeCol = document.createElement('div');
+      timeCol.className = 'cal-time-col';
+      for (let h = CAL_START_HOUR; h < CAL_END_HOUR; h++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-time-cell';
+        cell.textContent = `${String(h).padStart(2,'0')}:00`;
+        timeCol.appendChild(cell);
+      }
+      grid.appendChild(timeCol);
+
+      // 7 個日期欄
+      let totalBookingsThisWeek = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = addDays(calWeekStart, i);
+        const dStr = toDateStr(d);
+        const dayCol = document.createElement('div');
+        dayCol.className = 'cal-day-col' + (dStr === todayStr ? ' is-today' : '');
+
+        // 小時格線
+        for (let h = CAL_START_HOUR; h < CAL_END_HOUR; h++) {
+          const line = document.createElement('div');
+          line.className = 'cal-hour-line';
+          dayCol.appendChild(line);
+        }
+
+        // 本日訂單
+        let dayBookings = ORDERS.filter(o => o.date === dStr);
+        if (venueFilter) dayBookings = dayBookings.filter(o => o.venue === venueFilter);
+        if (spaceFilter) dayBookings = dayBookings.filter(o => o.space === spaceFilter);
+
+        const laidOut = layoutDayBookings(dayBookings);
+        totalBookingsThisWeek += laidOut.length;
+
+        for (const b of laidOut) {
+          const startMin = timeToMin(b.startTime);
+          const endMin = timeToMin(b.endTime);
+          const top = (startMin - CAL_START_HOUR * 60) * CAL_HOUR_PX / 60;
+          const height = (endMin - startMin) * CAL_HOUR_PX / 60;
+          const widthPct = 100 / b._totalLanes;
+          const leftPct = b._lane * widthPct;
+
+          const el = document.createElement('div');
+          el.className = `cal-booking ${venueColorClass(b.venue)} status-${b.status}`;
+          el.style.top = top + 'px';
+          el.style.height = (height - 2) + 'px';
+          el.style.left = `calc(${leftPct}% + 1px)`;
+          el.style.width = `calc(${widthPct}% - 2px)`;
+          el.title = `${b.customer} - ${b.space} (${b.startTime}-${b.endTime})`;
+          el.innerHTML = `
+            <div class="bk-title">${b.customer}</div>
+            <div class="bk-time">${b.startTime}-${b.endTime}</div>
+            <div class="bk-space">${b.space}</div>
+          `;
+          el.onclick = () => viewOrder(b.id);
+          dayCol.appendChild(el);
+        }
+
+        grid.appendChild(dayCol);
+      }
+
+      if (totalBookingsThisWeek === 0) {
+        grid.innerHTML += `<div style="grid-column:1/-1;"><div class="cal-empty"><div style="font-size:48px;">📅</div>本週尚無訂單</div></div>`;
+      }
+    }
+
+    // 初始化
+    initVenuePanel();
+    initStatusPanel();
+    bindFilterInputs();
+    updateStats();
+    renderTable();
+  </script>
+
+</body>
+</html>

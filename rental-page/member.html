@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>會員優惠｜沃茲新創空間</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="venue-detail.css">
+</head>
+<body>
+
+  <!-- ========== Navbar ========== -->
+  <header class="navbar">
+    <div class="navbar-container">
+      <a href="index.html" class="logo">
+        <img src="images/LOGO.png" alt="沃茲新創空間 WORDS" class="logo-img">
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">場地租借</a></li>
+          <li class="has-dropdown">
+            <a href="member.html">會員優惠 ▾</a>
+            <ul class="dropdown">
+              <li><a href="member.html?tab=tier">會員分級優惠</a></li>
+              <li><a href="member.html?tab=stored-value">儲值方案優惠</a></li>
+              <li><a href="member.html?tab=points">消費紅利折抵</a></li>
+            </ul>
+          </li>
+          <li><a href="cart.html">購物車</a></li>
+          <li><a href="login.html">註冊 / 登入</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== Main ========== -->
+  <main class="detail-container">
+    <section class="detail-section">
+      <!-- Tab Navigation -->
+      <div class="info-tabs">
+        <button class="info-tab active" data-tab="home">最新消息</button>
+        <button class="info-tab" data-tab="tier">會員分級優惠</button>
+        <button class="info-tab" data-tab="stored-value">儲值方案優惠</button>
+        <button class="info-tab" data-tab="points">消費紅利折抵</button>
+      </div>
+
+      <!-- Tab 1: 首頁 -->
+      <div class="info-tab-content active" data-tab-content="home">
+
+        <!-- Block 1: VIP 會員分級優惠 -->
+        <div class="member-home-block">
+          <h2 class="member-home-title">【VIP會員分級優惠】</h2>
+          <p class="member-home-subtitle">一般消費系統自動為您累積成為VIP會員</p>
+          <div class="member-home-image">
+            <img src="images/會員-首頁01.jpg" alt="VIP會員分級優惠最高8折">
+          </div>
+        </div>
+
+        <!-- Block 2: 五星好評互惠 -->
+        <div class="member-home-block">
+          <h2 class="member-home-title">【五星好評互惠】</h2>
+          <p class="member-home-subtitle">在所租場館留下 5 星好評，即可折抵 NT$30 / 則！</p>
+          <p class="member-home-note">ps. 最高上限 30 則，截圖憑證匯退</p>
+          <div class="member-home-image">
+            <img src="images/會員-首頁-google.png" alt="Google 5 星好評享折扣">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tab 2: 會員分級優惠 -->
+      <div class="info-tab-content" data-tab-content="tier">
+
+        <!-- Hero -->
+        <div class="tier-hero">
+          <p class="tier-brand">沃茲新創</p>
+          <h2 class="tier-main-title">會員分級優惠</h2>
+          <p class="tier-subtitle">消費累積越多、等級越高、折扣無限大！</p>
+          <a href="#" class="tier-register-btn">立即註冊</a>
+        </div>
+
+        <p class="tier-auto-note">* 一般消費系統自動為您累積成為 VIP 會員</p>
+
+        <!-- VIP Banner -->
+        <div class="tier-banner">
+          <img src="images/會員分級-01.png" alt="VIP會員分級優惠最高8折">
+        </div>
+
+        <!-- 4 個等級卡片 -->
+        <div class="tier-cards">
+
+          <article class="tier-card">
+            <div class="tier-card-head">
+              <span class="tier-badge">入門</span>
+              <h3 class="tier-name">小資會員</h3>
+            </div>
+            <div class="tier-card-price">
+              <p class="tier-price-orig">NT$ 7,200</p>
+              <p class="tier-price-final"><span class="tier-price-currency">NT$</span> 6,000</p>
+              <p class="tier-price-cond">（累積消費滿）</p>
+            </div>
+            <div class="tier-card-body">
+              <ul class="tier-benefits">
+                <li>◆ 總價最高 95 折</li>
+                <li>◆ 依系統試算為準</li>
+              </ul>
+              <p class="tier-card-note">（其他整合性服務不列入）</p>
+            </div>
+          </article>
+
+          <article class="tier-card">
+            <div class="tier-card-head">
+              <span class="tier-badge">高 CP</span>
+              <h3 class="tier-name">經濟會員</h3>
+            </div>
+            <div class="tier-card-price">
+              <p class="tier-price-orig">NT$ 18,000</p>
+              <p class="tier-price-final"><span class="tier-price-currency">NT$</span> 15,000</p>
+              <p class="tier-price-cond">（累積消費滿）</p>
+            </div>
+            <div class="tier-card-body">
+              <ul class="tier-benefits">
+                <li>◆ 總價最高 9 折</li>
+                <li>◆ 依系統試算為準</li>
+              </ul>
+              <p class="tier-card-note">（其他整合性服務不列入）</p>
+            </div>
+          </article>
+
+          <article class="tier-card tier-card-yellow">
+            <div class="tier-card-head">
+              <span class="tier-badge">推薦！</span>
+              <h3 class="tier-name">商務會員</h3>
+            </div>
+            <div class="tier-card-price">
+              <p class="tier-price-orig">NT$ 38,500</p>
+              <p class="tier-price-final"><span class="tier-price-currency">NT$</span> 32,000</p>
+              <p class="tier-price-cond">（累積消費滿）</p>
+            </div>
+            <div class="tier-card-body">
+              <ul class="tier-benefits">
+                <li>◆ 總價最高 85 折</li>
+                <li>◆ 依系統試算為準</li>
+              </ul>
+              <p class="tier-card-note">（其他整合性服務不列入）</p>
+            </div>
+          </article>
+
+          <article class="tier-card tier-card-yellow">
+            <div class="tier-card-head">
+              <span class="tier-badge">VVIP</span>
+              <h3 class="tier-name">高級會員</h3>
+            </div>
+            <div class="tier-card-price">
+              <p class="tier-price-orig">NT$ 70,000</p>
+              <p class="tier-price-final"><span class="tier-price-currency">NT$</span> 58,000</p>
+              <p class="tier-price-cond">（累積消費滿）</p>
+            </div>
+            <div class="tier-card-body">
+              <ul class="tier-benefits">
+                <li>◆ 總價最高 8 折</li>
+                <li>◆ 依系統試算為準</li>
+              </ul>
+              <p class="tier-card-note">（其他整合性服務不列入）</p>
+            </div>
+          </article>
+
+        </div>
+
+        <!-- 終生有效 -->
+        <div class="tier-lifetime">
+          <h3 class="tier-lifetime-sub">VIP 享優惠</h3>
+          <h2 class="tier-lifetime-main">終生有效、終生折扣！</h2>
+          <p class="tier-lifetime-note">* 如有長期需求 請洽 LINE 客服</p>
+          <p class="tier-lifetime-note">* 以最高會員折扣為準</p>
+        </div>
+
+        <!-- Q&A -->
+        <h2 class="tier-section-title">常見問題 Q&A</h2>
+
+        <div class="tier-qa">
+          <h3 class="tier-qa-title">如何取得【VIP 會員】資格？</h3>
+          <ul class="tier-qa-list">
+            <li>✦ 您要先註冊為「一般會員」即可消費累計、朝著 VIP 會員前進唷！</li>
+            <li>✦ VIP 會員分 4 個等級，消費累計越多、等級越高、折數越高！</li>
+          </ul>
+        </div>
+
+        <div class="tier-qa">
+          <h3 class="tier-qa-title">如何註冊一般會員？</h3>
+          <ul class="tier-qa-list">
+            <li>✦ <strong>方法 1：</strong>點選【我的帳戶 (加入會員)】，直接註冊就可以囉！</li>
+            <li>✦ <strong>方法 2：</strong>預訂檔期下單時，會填寫姓名、電子信箱、手機，再多輸入【登入密碼】，送單的同時，即成為「一般會員」囉！</li>
+          </ul>
+
+          <h4 class="tier-qa-sub">【方法 1】註冊一般會員 步驟</h4>
+          <div class="tier-steps">
+            <div class="tier-step">
+              <div class="tier-step-num">STEP 1</div>
+              <div class="tier-step-img">📱</div>
+              <p>進入官網點選「左上角」</p>
+            </div>
+            <div class="tier-step">
+              <div class="tier-step-num">STEP 2</div>
+              <div class="tier-step-img">📱</div>
+              <p>點選「我的帳戶 (加入會員)」</p>
+            </div>
+            <div class="tier-step">
+              <div class="tier-step-num">STEP 3</div>
+              <div class="tier-step-img">📱</div>
+              <p>點選「註冊」</p>
+            </div>
+            <div class="tier-step">
+              <div class="tier-step-num tier-step-num-done">註冊完成</div>
+              <div class="tier-step-img">📱</div>
+              <p>輸入「電子郵件」「密碼」「名字」</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tier-qa">
+          <h3 class="tier-qa-title">如何從一般會員「晉升」為【VIP 會員】</h3>
+          <p class="tier-qa-example"><strong>例：若您此次場地租借消費金額為 $10,000（不含押金）。</strong></p>
+          <ul class="tier-qa-list">
+            <li>✦ 您結帳完成匯款後，因滿足小資會員金額 $6,000，系統將自動為您從一般會員「晉升」為【小資會員】。</li>
+            <li>✦ 您下次消費時，因有小資會員 VIP，即會為您的訂單總額（不含押金）直接打 95 折！</li>
+            <li>✦ 您下次消費滿 $5,000，總累積金額即 $15,000，結帳完成匯款後，就又取得【經濟會員】！下次消費就可以打 9 折囉～（以此類推）</li>
+          </ul>
+        </div>
+
+        <div class="tier-qa">
+          <h3 class="tier-qa-title">VIP 會員等級優惠懶人包！</h3>
+          <div class="tier-summary-grid">
+            <div>✦ 小資會員：95 折</div>
+            <div>✦ 商務會員：85 折</div>
+            <div>✦ 經濟會員：9 折</div>
+            <div>✦ 高級會員：8 折</div>
+          </div>
+          <p class="tier-summary-note">* 折扣依系統試算為準</p>
+          <p class="tier-summary-note">* 以最高會員折扣為準</p>
+        </div>
+
+      </div>
+
+      <!-- Tab 3: 儲值方案優惠 -->
+      <div class="info-tab-content" data-tab-content="stored-value">
+
+        <!-- Hero -->
+        <div class="tier-hero">
+          <p class="tier-brand">沃茲新創空間</p>
+          <h2 class="tier-main-title">選擇儲值方案<br>享受最高 7 折 的超值優惠！</h2>
+          <p class="tier-subtitle">1 點等於 1 元，一次儲值越多、優惠越高！</p>
+          <a href="#" class="tier-register-btn">立即註冊</a>
+        </div>
+
+        <!-- 副標題 -->
+        <div class="stored-intro">
+          <h3>儲值方案 1 點等於 1 元</h3>
+          <p>儲值越多、優惠就越多</p>
+        </div>
+
+        <!-- 3 個儲值方案卡片 -->
+        <div class="stored-cards">
+
+          <article class="tier-card">
+            <div class="tier-card-head">
+              <h3 class="tier-name">小資儲值方案</h3>
+            </div>
+            <div class="tier-card-price">
+              <p class="tier-price-final"><span class="tier-price-currency">NT$</span> 30,000</p>
+              <p class="tier-price-cond">儲值金額</p>
+            </div>
+            <div class="tier-card-body">
+              <p class="stored-points">即可獲得 37,500 點</p>
+              <p class="stored-discount">◆ 等同優惠 8 折 ◆</p>
+              <p class="stored-suit">適合每季度使用</p>
+            </div>
+          </article>
+
+          <article class="tier-card tier-card-blue">
+            <div class="tier-card-head">
+              <span class="tier-badge">推薦</span>
+              <h3 class="tier-name">進階儲值方案</h3>
+            </div>
+            <div class="tier-card-price">
+              <p class="tier-price-final"><span class="tier-price-currency">NT$</span> 50,000</p>
+              <p class="tier-price-cond">儲值金額</p>
+            </div>
+            <div class="tier-card-body">
+              <p class="stored-points">即可獲得 66,667 點</p>
+              <p class="stored-discount">◆ 等同於優惠 75 折 ◆</p>
+              <p class="stored-suit">適合每 2 個月使用</p>
+            </div>
+          </article>
+
+          <article class="tier-card">
+            <div class="tier-card-head">
+              <h3 class="tier-name">特級儲值方案</h3>
+            </div>
+            <div class="tier-card-price">
+              <p class="tier-price-final"><span class="tier-price-currency">NT$</span> 100,000</p>
+              <p class="tier-price-cond">儲值金額</p>
+            </div>
+            <div class="tier-card-body">
+              <p class="stored-points">即可獲得 142,857 點</p>
+              <p class="stored-discount">◆ 等同於優惠 7 折 ◆</p>
+              <p class="stored-suit">適合每月使用</p>
+            </div>
+          </article>
+
+        </div>
+
+        <!-- 規則 -->
+        <ol class="stored-rules">
+          <li>儲值後自第一次使用日起，有效使用期限為 24 個月</li>
+          <li>限於同一訂購人預定，但可轉移給他人使用</li>
+          <li>可搭配不同館使用，靈活運用場地資源</li>
+          <li>儲值點數可用於抵扣每次訂單總價</li>
+          <li>抵扣範圍不含整合項目，如外燴餐點、動/靜態攝影 … 等</li>
+        </ol>
+
+      </div>
+
+      <!-- Tab 4: 消費紅利折抵 -->
+      <div class="info-tab-content" data-tab-content="points">
+
+        <!-- Hero -->
+        <div class="tier-hero">
+          <p class="tier-brand">沃茲新創空間</p>
+          <h2 class="tier-main-title">消費紅利折抵</h2>
+          <div class="points-hero-features">
+            <p>◆ 消費越多、累積越多</p>
+            <p>◆ 1 點折 1 塊！</p>
+          </div>
+          <p class="points-hero-note">ps. 需註冊才能累積使用唷</p>
+          <a href="#" class="tier-register-btn">立即註冊</a>
+        </div>
+
+        <!-- 「紅利點數」消費回饋 -->
+        <div class="points-intro">
+          <h3>「紅利點數」消費回饋</h3>
+          <p>紅利點數等同現金，<br>全站消費 2% 回饋給你！</p>
+          <p class="points-intro-note">* 最高折抵總價 10%</p>
+        </div>
+
+        <!-- 100 點主橫幅 -->
+        <div class="points-banner">
+          <img src="images/紅利點數-01.png" alt="現在註冊馬上領取 100 點">
+        </div>
+
+        <!-- 4 個特色 icon -->
+        <div class="points-features">
+          <div class="points-feature">
+            <img src="images/紅利點數-icon-01.png" alt="全站使用">
+            <h4>全站使用</h4>
+            <p>全站「消費」皆可累積<br>全站「商品」皆可折抵</p>
+          </div>
+          <div class="points-feature">
+            <img src="images/紅利點數-icon-02.png" alt="消費回饋 2%">
+            <h4>消費回饋 2%</h4>
+            <p>消費 50 元回饋 1 紅利點數</p>
+          </div>
+          <div class="points-feature">
+            <img src="images/紅利點數-icon-03.png" alt="1 點折 1 塊">
+            <h4>1 點折 1 塊</h4>
+            <p>紅利點數 1 點<br>等同台幣 1 塊</p>
+          </div>
+          <div class="points-feature">
+            <img src="images/紅利點數-icon-04.png" alt="使用期限長">
+            <h4>使用期限長</h4>
+            <p>24 個月使用效期</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== Footer ========== -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h4>沃茲新創空間｜WordsLive</h4>
+        <p>營業人名稱：沃茲有限公司</p>
+        <p>統一編號：82981038</p>
+        <p class="footer-links">
+          <a href="index.html">首頁</a> ｜ <a href="#">訂單查詢</a> ｜ <a href="#">購物車</a> ｜ <a href="#">聯絡表單</a>
+        </p>
+        <div class="social-icons">
+          <a href="#" title="Facebook">F</a>
+          <a href="#" title="Instagram">IG</a>
+          <a href="#" title="LINE">L</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>聯絡方式</h4>
+        <p>服務時間：週一 至 週日 - 09:00～18:00</p>
+        <p>電話：04-3705-5005 #1 場地租借 #2 商辦空間</p>
+        <p>E-mail：wordsspace@wordslive.com.tw</p>
+        <p>地址：臺中市東區自由二街 91 號</p>
+      </div>
+      <div class="footer-col footer-fb">
+        <div class="fb-placeholder">
+          [Facebook Page 嵌入區]<br>
+          <small>Words Live 沃茲新創空間</small>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========== Floating Buttons ========== -->
+  <div class="floating-buttons">
+    <a href="tel:04-3705-5005" class="floating-btn phone" title="電話">📞</a>
+    <a href="#" class="floating-btn line" title="LINE">L</a>
+  </div>
+
+  <!-- ========== Script ========== -->
+  <script>
+    // === Tab 切換 ===
+    document.querySelectorAll('.info-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.info-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.info-tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector('[data-tab-content="' + tab + '"]').classList.add('active');
+      });
+    });
+
+    // === URL 參數讀取 tab（從 navbar 下拉項目進來時自動切到對應 tab）===
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+      const btn = document.querySelector('.info-tab[data-tab="' + tabParam + '"]');
+      if (btn) btn.click();
+    }
+  </script>
+
+</body>
+</html>

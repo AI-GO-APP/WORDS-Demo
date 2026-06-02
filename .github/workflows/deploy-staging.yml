@@ -1,0 +1,16 @@
+name: 部署到 Staging
+
+on:
+  workflow_dispatch:    # 可手動到 GitHub Actions 觸發
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+
+jobs:
+  deploy:
+    uses: AI-GO-APP/.github/.github/workflows/staging-deploy.yml@main
+    with:
+      project-name: ${{ github.event.repository.name }}
+    secrets: inherit

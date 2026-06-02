@@ -1,0 +1,561 @@
+// ============================================================
+// 場館空間租借系統 — 資料庫 ER 圖 v0.1
+// 基於：SMOG-ERD-v0.6 改造（派工排班 → 空間租借）
+// 日期：2026-05-15
+//
+// 本次調整重點：
+//   1. 業務領域：派工排班 → 空間租借
+//   2. branch → venue（場館） + space（空間）
+//      - 場館：站前 / 漢口 / 勤美 / 文華 / 忠明（5 個）
+//      - 站前底下有 12 個空間
+//      - 漢口底下有「漢口一館」「漢口二館」兩個空間
+//      - 勤美/文華/忠明目前各 1 個空間，未來可擴充
+//   3. 移除 vehicle（不需要車輛）
+//   4. technician → staff（場地佈置 / 專人服務）
+//   5. cases → bookings（案件 → 訂單）
+//   6. space 也是 resource（取代 vehicle 的角色）
+//      - resource_type 三種：staff / customer / space
+//      - spaces 是 resources 的 sub-table（PK = resources.id）
+//      - event_resources 用 location role 關聯空間佔用
+//   7. bookings 不存時間欄位（比照 SMOG cases 設計）
+//      - 客戶租借時段由 events (type=booking_rental) 表達
+//      - 衝突偵測、時間查詢都走 events + event_resources
+//      - event_type 加 booking_rental（取代 SMOG 的 case_measurement / case_installation 角色）
+//   8. ⭐ 所有計費項目統一在 plans 表
+//      - plan_type 7 種：hourly / half_day / full_day / setup / deposit / cleanup_fee / headcount
+//      - 主時段方案、加購服務、強制費用都是 plan
+//      - 全部走同一套 plans / space_plan_pricing / booking_plans 流程
+//      - 砍掉 addons / addon_pricing / booking_addons 三張表
+//   9. 訂單可拆多筆 booking_plans（支援組合計費）
+//      - 例：11-12 小時 + 13-17 下午半日 + 押金 + 清潔費 = 4 筆 booking_plans
+//      - 不同空間可有不同 plan 價格（透過 space_plan_pricing）
+//      - 例：藝文展間押金 $5000、其他空間押金 $3000
+//  10. 移除 is_quick_booking 標記（未來預定流程統一，沒有「快速」「客製」分流）
+//      - 客戶輸入時間 → 系統枚舉方案組合 → 客戶選一種
+//      - 強制費用（deposit/cleanup_fee/headcount）由應用層自動加
+//  11. addresses 表移除，地址欄位併入 venues
+//      - 客戶不再記錄地址（業務上不需要）
+//      - venues 直接有 address + geolocation 兩欄
+//  12. 新增會員等級系統
+//      - membership_tiers 主檔（name / sort_order / qualification_type / qualification_amount）
+//      - customer 加 membership_tier_id FK
+//      - 升降級判斷靠關聯即時計算（bookings SUM、未來儲值記錄表），不存快取
+//
+// 表數：14 張
+//
+// 使用方式：
+//   1. 開 https://dbdiagram.io/d
+//   2. 全選刪左邊範例 → 貼整份內容
+//   3. 命名「VENUE-ERD-v0.1」
+// ============================================================
+
+
+// ========== ENUM 定義 ==========
+
+Enum resource_type {
+  staff     [note: "員工"]
+  customer  [note: "客戶"]
+  space     [note: "空間（可被 event 佔用，取代原 SMOG 系統 vehicle 的角色）"]
+}
+
+Enum staff_type {
+  setup    [note: "場地佈置"]
+  service  [note: "專人服務"]
+}
+
+Enum event_type {
+  staff_availability     [note: "員工自己填的可上班時間"]
+  staff_shift_on_duty    [note: "行政排定的上班"]
+  staff_shift_off_duty   [note: "行政排定的休假"]
+  staff_shift_overtime   [note: "加班"]
+  booking_inquiry        [note: "訂單諮詢"]
+  booking_proposed_slot  [note: "訂單候選時段"]
+  booking_rental         [note: "訂單主租借時段（客戶實際使用空間的時間）"]
+  booking_setup          [note: "訂單場地佈置（已排）"]
+  booking_service        [note: "訂單專人服務（已排）"]
+}
+
+Enum event_resource_role {
+  performer  [note: "執行者（員工去佈置/服務）"]
+  subject    [note: "服務對象（客戶）"]
+  location   [note: "地點資源（空間）"]
+}
+
+Enum plan_type {
+  hourly       [note: "按小時計費（時段類，綁 time_slot=null）"]
+  half_day     [note: "半日計費 4hr（時段類，綁特定 time_slot）"]
+  full_day     [note: "全日計費 9hr（時段類，綁特定 time_slot）"]
+  setup        [note: "場佈/場復服務加購（非時段類，可選）"]
+  deposit      [note: "押金（非時段類，強制收）"]
+  cleanup_fee  [note: "飲食環境清潔費（非時段類，依人數級距）"]
+  headcount    [note: "活動參與人數費（非時段類，依人數級距）"]
+}
+
+Enum time_slot_type {
+  morning    [note: "上午時段 08:30-12:30"]
+  afternoon  [note: "下午時段 13:00-17:00"]
+  evening    [note: "晚上時段 17:30-21:30"]
+  full_day   [note: "全日時段（9hr）"]
+}
+
+Enum time_period_type {
+  weekday        [note: "平日（週一08:00至週五18:00前）"]
+  weekend        [note: "假日（週五18:00後至週一00:00前）"]
+  weekday_night  [note: "平日夜間 週一至週四 22:00至隔日08:00"]
+  weekend_night  [note: "假日夜間 週五至週日 22:00至隔日08:00"]
+}
+
+Enum booking_status {
+  pending    [note: "待確認"]
+  confirmed  [note: "已確認"]
+  completed  [note: "已完成"]
+  cancelled  [note: "已取消"]
+}
+
+Enum booking_source {
+  line_official  [note: "LINE 官方"]
+  phone          [note: "電話"]
+  referral       [note: "介紹"]
+  walk_in        [note: "直接上門"]
+  website        [note: "官網"]
+  other          [note: "其他"]
+}
+
+Enum tier_qualification_type {
+  stored_value     [note: "儲值金額（從儲值記錄表 SUM 計算）"]
+  purchase_amount  [note: "累積消費金額（從 bookings SUM 計算）"]
+}
+
+Enum log_type {
+  insert
+  update
+  delete
+}
+
+
+// ============================================================
+// PART 1：場館 + 空間
+// ============================================================
+
+Table venues {
+  id           uuid          [pk, default: `gen_random_uuid()`]
+  name         text          [not null, note: "場館顯示名稱 站前/漢口/勤美/文華/忠明"]
+  address      text          [note: "場館完整地址字串"]
+  phone        text
+  sort_order   int           [not null, default: 0]
+  notes        jsonb
+  created_at   timestamptz   [not null, default: `now()`]
+  updated_at   timestamptz   [not null, default: `now()`]
+  deleted_at   timestamptz   [note: "軟刪除安全網"]
+
+  Note: "場館 — 站前/漢口/勤美/文華/忠明 共 5 個。漢口場館底下有「漢口一館」「漢口二館」兩個 space。每個場館底下至少一個 space。"
+}
+
+Table spaces {
+  id          uuid          [pk, ref: - resources.id, note: "1:1 對應 resources.id（resource_type=space）"]
+  venue_id    uuid          [not null, ref: > venues.id, note: "所屬場館"]
+  capacity    int           [note: "最大容納人數（用於首頁人數篩選、訂單人數驗證）"]
+  sort_order  int           [not null, default: 0]
+
+  Note: "空間細節（resource_type=space 才有）。場館底下的可租借單元。站前 12 間、漢口場館底下有漢口一館/二館共 2 間、勤美/文華/忠明目前各 1 間。capacity 表示該空間最大容納人數（通常是講座型配置的上限）。共用欄位（name/code/notes/created_at/updated_at/deleted_at）在 resources 主表。"
+
+  Indexes {
+    venue_id
+    capacity
+  }
+}
+
+
+// ============================================================
+// PART 3：資源主表（staff + customer + space）
+// ============================================================
+
+Table resources {
+  id            uuid          [pk, default: `gen_random_uuid()`]
+  resource_type resource_type [not null, note: "員工 / 客戶 / 空間"]
+  code          text          [not null, note: "代碼 S001/C2026-001/SP001"]
+  name          text          [not null]
+  notes         jsonb
+  created_at    timestamptz   [not null, default: `now()`]
+  updated_at    timestamptz   [not null, default: `now()`]
+  deleted_at    timestamptz   [note: "軟刪除"]
+
+  Note: "資源主表 — 任何「會被 event 佔用 / 跟 booking 關聯」的實體都在這裡。共用欄位放主表，特化欄位放 sub-table（staff/customer/spaces）。"
+
+  Indexes {
+    (resource_type, code) [unique, name: "uq_resource_code"]
+    resource_type
+  }
+}
+
+Table staff {
+  id        uuid           [pk, ref: - resources.id, note: "1:1 對應 resources.id"]
+  venue_id  uuid           [not null, ref: > venues.id, note: "歸屬場館"]
+  phone     text
+  type      "staff_type[]" [not null, default: `'{}'`, note: "能做的工作類型陣列 例 {setup, service}"]
+  hired_at  date
+
+  Note: "員工細節（resource_type=staff 才有）。負責場地佈置與專人服務。"
+
+  Indexes {
+    venue_id
+  }
+}
+
+Table customer {
+  id                  uuid          [pk, ref: - resources.id, note: "1:1 對應 resources.id"]
+  membership_tier_id  uuid          [ref: > membership_tiers.id, note: "會員等級（可空，新客戶未分級）"]
+  phone               text          [not null]
+  line_id             text          [unique]
+  line_name           text
+  email               text          [not null]
+
+  Note: "客戶細節（resource_type=customer 才有）。客戶不存地址也不歸屬特定場館（業務上不需要）。phone 與 email 都必填。會員等級的儲值/累積消費由關聯表即時計算。"
+
+  Indexes {
+    phone
+    membership_tier_id
+  }
+}
+
+
+// ============================================================
+// PART 3.5：會員等級
+// ============================================================
+
+Table membership_tiers {
+  id                    uuid                      [pk, default: `gen_random_uuid()`]
+  name                  text                      [not null, note: "等級名稱 例 銅卡/銀卡/金卡/白金卡"]
+  sort_order            int                       [not null, default: 0, note: "排序用（顯示順序，也代表等級高低）"]
+  qualification_type    tier_qualification_type   [not null, note: "判別條件類型 stored_value / purchase_amount"]
+  qualification_amount  decimal(12,2)             [not null, note: "達標金額"]
+  discount_rate         decimal(4,2)              [note: "折扣乘數（0.95 = 95折，1.00 = 不打折）。null = 不打折。未來折扣規則複雜化可改 jsonb"]
+  notes                 jsonb
+  created_at            timestamptz               [not null, default: `now()`]
+  updated_at            timestamptz               [not null, default: `now()`]
+  deleted_at            timestamptz               [note: "軟刪除"]
+
+  Note: "會員等級 — 後台設定 (name + qualification_type + qualification_amount + discount_rate)。升降級判斷靠 qualification_amount 比較，不需要 rank 欄位。一個 customer 對應一個 tier。discount_rate 暫定簡單乘數，未來規則複雜可改 jsonb。"
+
+  Indexes {
+    sort_order
+  }
+}
+
+
+// ============================================================
+// PART 4：方案與計價（統一所有計費項目）
+// ============================================================
+
+Table time_slots {
+  id          uuid           [pk, default: `gen_random_uuid()`]
+  type        time_slot_type [not null, note: "上午/下午/晚上/全日"]
+  name        text           [not null, note: "顯示名稱 例 上午"]
+  start_time  time           [not null, note: "開始時間 例 08:30"]
+  end_time    time           [not null, note: "結束時間 例 12:30"]
+  notes       jsonb
+  created_at  timestamptz    [not null, default: `now()`]
+  updated_at  timestamptz    [not null, default: `now()`]
+
+  Note: "固定時段定義 — 上午(08:30-12:30)/下午(13:00-17:00)/晚上(17:30-21:30)/全日(9hr)。全系統統一。時長從 (end_time - start_time) 即時計算，不存欄位。"
+
+  Indexes {
+    type
+  }
+}
+
+Table plans {
+  id            uuid          [pk, default: `gen_random_uuid()`]
+  type          plan_type     [not null, note: "計費項目類型（hourly/half_day/full_day/setup/deposit/cleanup_fee/headcount）"]
+  name          text          [not null, note: "顯示名稱 例 按小時 / 上午半日 / 全配置服務 / 押金"]
+  time_slot_id  uuid          [ref: > time_slots.id, note: "綁定的固定時段（僅 half_day/full_day 用；其他類型為 null）"]
+  notes         jsonb
+  created_at    timestamptz   [not null, default: `now()`]
+  updated_at    timestamptz   [not null, default: `now()`]
+  deleted_at    timestamptz
+
+  Note: "計費項目主檔 — 統一所有跟錢有關的項目。範例資料：按小時/上午半日/下午半日/晚上半日/全日(早起)/全日(下午起)/半自助配置/全配置服務/押金/清潔費/人次費。是否強制收由應用層依 type 判斷（deposit/cleanup_fee/headcount 強制；setup 可選；hourly/half_day/full_day 必選一種組合）。"
+
+  Indexes {
+    type
+    time_slot_id
+  }
+}
+
+Table space_plan_pricing {
+  id             uuid              [pk, default: `gen_random_uuid()`]
+  space_id       uuid              [not null, ref: > spaces.id]
+  plan_id        uuid              [not null, ref: > plans.id]
+  time_period    time_period_type  [note: "weekday/weekend/weekday_night/weekend_night（非時段類 plan 通常填 weekday 或統一）"]
+  min_headcount  int               [note: "人數下限（含），給 cleanup_fee/headcount 用；其他 plan 為 null"]
+  max_headcount  int               [note: "人數上限（含，null=不限），給 cleanup_fee/headcount 用；其他 plan 為 null"]
+  price          decimal(10,2)     [not null, note: "金額（hourly=每小時、half_day/full_day=固定總價、setup/deposit=固定額、cleanup_fee/headcount=該人數級距金額）"]
+  notes          jsonb
+  created_at     timestamptz       [not null, default: `now()`]
+  updated_at     timestamptz       [not null, default: `now()`]
+
+  Note: "萬用價格表 — 涵蓋所有 plan × space 的價格組合。時段類 plan 用 time_period 區分平日/假日；人數級距類 plan（cleanup_fee/headcount）用 min/max_headcount 區分；固定價類 plan（setup/deposit）直接給 price。"
+
+  Indexes {
+    (space_id, plan_id, time_period, min_headcount) [unique]
+    space_id
+    plan_id
+  }
+}
+
+
+// ============================================================
+// PART 5：訂單（bookings）
+// ============================================================
+
+Table bookings {
+  id                  uuid            [pk, default: `gen_random_uuid()`]
+
+  customer_id         uuid            [not null, ref: > resources.id, note: "FK 至 resources.id（要求 resource_type=customer）"]
+  space_id            uuid            [not null, ref: > spaces.id, note: "預訂的空間"]
+
+  status              booking_status  [not null, default: 'pending']
+  source              booking_source  [note: "訂單來源（可空，後台事後補登時可能尚未確認）"]
+
+  headcount           int             [note: "預估人數（決定 cleanup_fee/headcount 級距；null 或低於最低級距時，cleanup_fee/headcount 對應金額可能為 0）"]
+
+  subtotal_plans      decimal(10,2)   [note: "訂單小計（booking_plans 加總，含主時段方案 + 加購 + 強制費用）"]
+  total_price         decimal(10,2)   [note: "訂單總價（subtotal_plans 加上未來可能的折扣/稅後總額）"]
+
+  notes               jsonb
+  created_at          timestamptz     [not null, default: `now()`]
+  updated_at          timestamptz     [not null, default: `now()`]
+  created_by          uuid
+  deleted_at          timestamptz
+
+  Note: "訂單 — 一筆 = 一個空間 + 一段連續時間。不連續時間 = 多筆訂單。時間欄位由 events (type=booking_rental) 表達。所有計費（含押金/清潔費/加購）都走 booking_plans 一張表。"
+
+  Indexes {
+    customer_id
+    space_id
+    status
+  }
+}
+
+
+// ============================================================
+// PART 6：訂單方案明細（涵蓋所有計費項目）
+// ============================================================
+
+Table booking_plans {
+  id           uuid              [pk, default: `gen_random_uuid()`]
+  booking_id   uuid              [not null, ref: > bookings.id]
+  plan_id      uuid              [not null, ref: > plans.id]
+
+  starts_at    timestamptz       [note: "此明細涵蓋的起始時間（時段類 plan 必填；setup/deposit/cleanup_fee/headcount 為 null）"]
+  ends_at      timestamptz       [note: "此明細涵蓋的結束時間（同上）"]
+  time_period  time_period_type  [note: "計價用的時段類型 weekday/weekend/...（時段類 plan 必填；其他 null）"]
+
+  quantity     int               [not null, default: 1, note: "數量（小時方案=幾小時；半日/全日/加購/強制費=1）"]
+  unit_price   decimal(10,2)     [not null, note: "單價快照（從 space_plan_pricing 帶入）"]
+  subtotal     decimal(10,2)     [not null, note: "小計 = unit_price × quantity"]
+
+  notes        jsonb
+  created_at   timestamptz       [not null, default: `now()`]
+  updated_at   timestamptz       [not null, default: `now()`]
+
+  Note: "訂單計費明細 — 涵蓋所有計費項目（主時段方案、加購服務、強制費用）。一筆訂單可拆多條：例 11-12 按小時 + 13-17 下午半日 + 全配置 + 押金 + 清潔費 = 5 筆 booking_plans。價格存快照，避免日後改價影響歷史訂單。"
+
+  Indexes {
+    booking_id
+    plan_id
+  }
+}
+
+
+// ============================================================
+// PART 7：事件（events）
+// ============================================================
+
+Table events {
+  id           uuid          [pk, default: `gen_random_uuid()`]
+  type         event_type    [not null, note: "事件類型"]
+
+  starts_at    timestamptz   [not null]
+  ends_at      timestamptz   [not null]
+  is_confirmed boolean       [not null, default: false]
+
+  notes        jsonb
+  created_at   timestamptz   [not null, default: `now()`]
+  updated_at   timestamptz   [not null, default: `now()`]
+  deleted_at   timestamptz
+
+  Note: "事件統一表。員工班表（含休假/加班）、訂單主時段、訂單佈置、訂單服務、訂單諮詢、候選時段都是 event。"
+
+  Indexes {
+    (type, starts_at)
+    (starts_at, ends_at)
+    is_confirmed
+  }
+}
+
+
+// ============================================================
+// PART 8：事件 ↔ 資源
+// ============================================================
+
+Table event_resources {
+  id           uuid                 [pk, default: `gen_random_uuid()`]
+  event_id     uuid                 [not null, ref: > events.id]
+  resource_id  uuid                 [not null, ref: > resources.id]
+  role         event_resource_role  [not null]
+  notes        jsonb
+  created_at   timestamptz          [not null, default: `now()`]
+
+  Note: "事件 ↔ 資源的 N:N。員工=performer、客戶=subject、空間=location。"
+
+  Indexes {
+    (event_id, resource_id, role) [unique]
+    event_id
+    resource_id
+    role
+  }
+}
+
+
+// ============================================================
+// PART 9：訂單 ↔ 事件
+// ============================================================
+
+Table booking_events {
+  id          uuid          [pk, default: `gen_random_uuid()`]
+  booking_id  uuid          [not null, ref: > bookings.id]
+  event_id    uuid          [not null, ref: > events.id]
+  created_at  timestamptz   [not null, default: `now()`]
+
+  Note: "訂單 ↔ 事件中介（比照 SMOG case_events）。一個 booking 對應多個 events（rental 主時段、setup 佈置、service 服務、inquiry 諮詢、proposed_slot 候選）。"
+
+  Indexes {
+    (booking_id, event_id) [unique]
+    booking_id
+    event_id
+  }
+}
+
+
+// ============================================================
+// PART 10：事件變動記錄
+// ============================================================
+
+Table event_log {
+  id           uuid          [pk, default: `gen_random_uuid()`]
+  event_id     uuid          [not null, ref: > events.id]
+  type         log_type      [not null, note: "操作類型 insert/update/delete"]
+  old_values   jsonb         [note: "變更前 {field: value, ...}"]
+  new_values   jsonb         [note: "變更後 {field: value, ...}"]
+  changed_by   uuid
+  changed_at   timestamptz   [not null, default: `now()`]
+  notes        jsonb
+
+  Note: "事件變動歷史"
+
+  Indexes {
+    event_id
+    (event_id, changed_at)
+    type
+  }
+}
+
+
+// ============================================================
+// 設計重點摘要
+// ============================================================
+//
+// 1. 場館 (venues) + 空間 (spaces) 兩層結構
+//    → 場館 5 個：站前 / 漢口 / 勤美 / 文華 / 忠明
+//    → 站前場館底下 12 個 spaces
+//    → 漢口場館底下 2 個 spaces（漢口一館 / 漢口二館）
+//    → 勤美 / 文華 / 忠明各 1 space
+//    → 未來其他場館要拆分 → 加 spaces 即可
+//
+// 1b. space 也是 resource（取代 SMOG 系統 vehicle 的角色）
+//    → resource_type 有三種：staff / customer / space
+//    → spaces 是 resources 的 sub-table（跟 staff/customer 同結構，PK ref resources.id）
+//    → 任何「會被 event 佔用」的實體都在 resources，event_resources 統一關聯
+//    → 查「某空間某時段是否被佔用」一句 SQL：
+//      SELECT e.* FROM events e
+//      JOIN event_resources er ON er.event_id = e.id
+//      WHERE er.resource_id = '空間ID' AND er.role = 'location'
+//        AND e.type = 'booking_rental'
+//        AND e.starts_at < ? AND e.ends_at > ?
+//
+// 1c. bookings 不存時間欄位（比照 SMOG cases）
+//    → 訂單時段由 events (type=booking_rental) 表達，避免時間重複存兩處
+//    → 一筆 booking 對應多種 events（rental 主時段、setup 佈置、service 服務、inquiry 諮詢、proposed_slot 候選）
+//    → 時間查詢、衝突偵測都走 events，不查 bookings
+//    → 流程範例（A 預約藝文展間 5/23 10-16）：
+//      1. bookings 加一筆 (status=pending, total_price=計算結果)
+//      2. events 加一筆 (type=booking_rental, starts=10:00, ends=16:00, is_confirmed=false)
+//         + event_resources: A客戶(subject) + 藝文展間(location)
+//      3. booking_events 加一筆連結 booking ↔ rental event
+//      4. A 匯款 → bookings.status=confirmed, events.is_confirmed=true
+//
+// 2. ⭐ 所有計費項目統一在 plans（核心設計決定）
+//    → plan_type 7 種：
+//        - 主時段方案：hourly / half_day / full_day
+//        - 加購服務：  setup（場佈/場復）
+//        - 強制費用：  deposit（押金）/ cleanup_fee（清潔費）/ headcount（人次費）
+//    → 全部走同一套 plans / space_plan_pricing / booking_plans 流程
+//    → 取消 addons / addon_pricing / booking_addons 三張表（瘦身 3 張）
+//    → 強制 vs 可選由應用層依 plan_type 判斷（不在 schema 寫死）：
+//        - deposit / cleanup_fee / headcount → 自動加
+//        - setup → 客戶選配
+//        - hourly / half_day / full_day → 必選一種組合
+//
+// 3. space_plan_pricing 是萬用價格表
+//    → 時段類 plan：time_period 區分平日/假日，min/max_headcount=null
+//    → 人數級距類 plan（cleanup_fee/headcount）：time_period=weekday（不分），min/max_headcount 區分級距
+//    → 固定價類 plan（setup/deposit）：time_period=weekday，min/max_headcount=null
+//    → 不同空間可有不同 plan 價格（例：藝文展間押金 $5000、其他 $3000）
+//
+// 4. 訂單方案明細 (booking_plans) 設計：1 筆訂單 ↔ N 筆明細
+//    → 純小時 4hr + 強制費：5 筆（hourly×1 + deposit×1 + cleanup_fee×1 + headcount×1 = 4 筆 + 加購0~1 筆）
+//    → 組合方案：booking_plans 可拆 (hourly + half_day + setup + deposit + cleanup_fee + headcount)
+//    → 前端「枚舉組合 → 算總價 → 給客戶選 → 加上強制費用」，後端只存最後的明細
+//    → 非時段類 plan 的 starts_at/ends_at/time_period 為 null
+//
+// 5. 價格快照 (unit_price 存在 booking_plans)
+//    → 未來改價不影響歷史訂單
+//    → 對帳/退款可追溯當時實際金額
+//
+// 6. 三個容易混淆的 enum，定位釐清：
+//    - plan_type：計費項目類型（hourly/half_day/full_day/setup/deposit/cleanup_fee/headcount）
+//    - time_slot_type：哪個固定時段（morning/afternoon/evening/full_day）
+//    - time_period_type：平日還是假日（weekday/weekend/weekday_night/weekend_night）
+//
+// 7. 移除 is_quick_booking 標記
+//    → 未來預定流程統一：客戶輸入時間 → 系統列方案組合 → 客戶選
+//    → 沒有「快速」「客製」的入口分流
+//    → 強制費用由應用層自動加，不需要 schema 欄位區分
+//
+// 7b. 會員等級系統（membership_tiers）
+//    → 後台設定 3 個欄位：name / qualification_type / qualification_amount
+//    → qualification_type 兩種：stored_value（儲值金額）/ purchase_amount（累積消費）
+//    → 一個 customer 對應一個 tier（customer.membership_tier_id）
+//    → 升降級判斷不存快取，靠關聯即時計算：
+//        - purchase_amount → SUM(bookings.total_price) WHERE customer_id=X AND status='completed'
+//        - stored_value    → SUM(stored_value_records.amount)（儲值記錄表未來再建）
+//    → 用 qualification_amount 比較取最高符合的 tier，不需要 rank 欄位
+//
+// 7c. addresses 表移除（業務瘦身）
+//    → 客戶不存地址（業務不需要）
+//    → 場館地址直接放在 venues（address + geolocation）
+//    → 6 個場館各 1 行地址，獨立表是過度設計
+//
+// 8. 員工排班沿用 events 統一表（type=staff_*）
+//    → 跟「訂單到場服務的事件」共用同一張表
+//    → 查詢「某員工某天有沒有空」一句 SQL 就好
+//
+// 9. 軟刪除策略：deleted_at IS NULL 表示啟用
+//    → venues / spaces / resources / plans / bookings / events 都有
+//    → 不再有「暫停」狀態
+//
+// 10. notes 都是 jsonb
+//    → 可存結構化備註，例 {"text": "客戶很急", "tags": ["urgent"]}
+//
+// ============================================================

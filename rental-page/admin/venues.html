@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>場館管理｜沃茲後台</title>
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    /* ===== Tab strip ===== */
+    .admin-tabs-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 20px;
+    }
+    .admin-tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+    }
+    .admin-tab-btn:hover { color: #1a1f36; }
+    .admin-tab-btn.active {
+      color: #1a1f36;
+      border-bottom-color: #1a1f36;
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ===== Editor 編輯區 ===== */
+    .editor-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .editor-sidebar {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      position: sticky;
+      top: 80px;
+    }
+    .editor-sidebar h4 {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 10px;
+    }
+    .editor-nav-item {
+      display: block;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #4b5563;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 2px;
+    }
+    .editor-nav-item:hover { background: #f3f4f6; color: #1a1f36; }
+    .editor-nav-item.active { background: #1a1f36; color: #fff; }
+
+    .editor-main { display: grid; gap: 18px; }
+    .editor-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .editor-card-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f9fafb;
+    }
+    .editor-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    .editor-card-body { padding: 20px; }
+
+    .editor-field { margin-bottom: 16px; }
+    .editor-field:last-child { margin-bottom: 0; }
+    .editor-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+    .editor-label .hint {
+      font-size: 11px;
+      color: #9ca3af;
+      font-weight: normal;
+      margin-left: 6px;
+    }
+    .editor-input, .editor-textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .editor-input:focus, .editor-textarea:focus {
+      outline: none;
+      border-color: #1a1f36;
+      box-shadow: 0 0 0 3px rgba(26,31,54,0.1);
+    }
+    .editor-textarea { min-height: 120px; resize: vertical; }
+
+    /* 圖片上傳 */
+    .image-uploader {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 30px;
+      text-align: center;
+      background: #f9fafb;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .image-uploader:hover {
+      border-color: #1a1f36;
+      background: #f3f4f6;
+    }
+    .image-uploader .upload-icon { font-size: 36px; margin-bottom: 8px; }
+    .image-uploader .upload-text { font-size: 13px; color: #6b7280; }
+    .image-uploader .upload-hint { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+
+    .image-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .image-thumb {
+      position: relative;
+      aspect-ratio: 4/3;
+      background: #f3f4f6;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: grab;
+    }
+    .image-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .image-thumb .delete-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 22px;
+      height: 22px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    .image-thumb .main-badge {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      padding: 2px 6px;
+      background: #1a1f36;
+      color: #fff;
+      font-size: 10px;
+      border-radius: 3px;
+    }
+
+    /* 設施 checkbox grid */
+    .facility-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .facility-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .1s;
+    }
+    .facility-item:has(input:checked) {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #1e40af;
+      font-weight: 600;
+    }
+
+    /* 富文本工具列 */
+    .rte-toolbar {
+      display: flex;
+      gap: 4px;
+      padding: 6px;
+      background: #f9fafb;
+      border: 1px solid #d1d5db;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+    }
+    .rte-btn {
+      padding: 4px 10px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .rte-btn:hover { background: #f3f4f6; }
+    .rte-content {
+      min-height: 180px;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 0 0 6px 6px;
+      font-size: 14px;
+      line-height: 1.6;
+      outline: none;
+    }
+    .rte-content:focus { border-color: #1a1f36; }
+
+    /* 操作 sticky bar */
+    .editor-action-bar {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+      margin-top: 16px;
+    }
+    .save-status { font-size: 12px; color: #6b7280; }
+    .save-status.saved { color: #10b981; }
+  </style>
+</head>
+<body>
+
+  <script>
+    if (localStorage.getItem('admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <div class="admin-layout">
+
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-logo">
+        <img src="../images/LOGO.png" alt="WORDS LIVE" class="admin-sidebar-logo-img">
+        <p>後台管理系統</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">總覽</div>
+          <a href="index.html" class="admin-nav-item"><span class="admin-nav-icon">📊</span><span>Dashboard</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">場館設定</div>
+          <a href="venues.html" class="admin-nav-item active"><span class="admin-nav-icon">🏛️</span><span>場館管理</span></a>
+          <a href="plans.html" class="admin-nav-item"><span class="admin-nav-icon">📦</span><span>方案管理</span></a>
+          <a href="pricing.html" class="admin-nav-item"><span class="admin-nav-icon">💰</span><span>價格管理</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">營運管理</div>
+          <a href="orders.html" class="admin-nav-item"><span class="admin-nav-icon">🛍️</span><span>訂單管理</span></a>
+          <a href="customers.html" class="admin-nav-item"><span class="admin-nav-icon">👥</span><span>客戶管理</span></a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;"><span class="admin-nav-icon">🎟️</span><span>優惠券</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">帳款管理</div>
+          <a href="payments.html" class="admin-nav-item"><span class="admin-nav-icon">💸</span><span>匯款比對</span></a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;"><span class="admin-nav-icon">📄</span><span>發票管理</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">系統</div>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;"><span class="admin-nav-icon">👤</span><span>員工管理</span></a>
+        </div>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        v0.2 Demo<br>
+        <a href="#" onclick="resetData(); return false;" style="color:#9ca3af; text-decoration:underline; font-size:11px;">重置 demo 資料</a>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="admin-header-title">場館管理</div>
+        <div class="admin-header-user">
+          <span class="admin-header-user-name">👤 <span id="adminName">admin</span></span>
+          <button class="admin-header-logout" id="logoutBtn">登出</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+
+        <!-- ===== Tab Strip ===== -->
+        <div class="admin-tabs-bar">
+          <button class="admin-tab-btn active" data-tab="list">🏛️ 場館列表</button>
+          <button class="admin-tab-btn" data-tab="editor">✏️ 頁面編輯</button>
+        </div>
+
+        <!-- ============================== -->
+        <!-- TAB 1: 場館列表（原內容）       -->
+        <!-- ============================== -->
+        <div class="tab-pane active" data-pane="list">
+
+        <div class="admin-toolbar">
+          <input type="text" class="admin-search" placeholder="🔍 搜尋場館名稱" id="searchInput">
+          <select class="admin-filter" id="districtFilter">
+            <option value="">全部區域</option>
+            <option value="北區">北區</option>
+            <option value="南區">南區</option>
+            <option value="東區">東區</option>
+            <option value="西屯區">西屯區</option>
+          </select>
+          <select class="admin-filter" id="statusFilter">
+            <option value="">全部狀態</option>
+            <option value="active">上架中</option>
+            <option value="inactive">已下架</option>
+          </select>
+          <div class="admin-toolbar-right">
+            <button class="admin-btn admin-btn-primary" id="addBtn">＋ 新增場館</button>
+          </div>
+        </div>
+
+        <div class="admin-table-wrapper">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width:60px;">圖片</th>
+                <th>場館名稱</th>
+                <th style="width:90px;">代號</th>
+                <th>區域</th>
+                <th>地址</th>
+                <th style="width:100px;">空間數</th>
+                <th style="width:100px;">狀態</th>
+                <th style="width:200px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="venuesTable"></tbody>
+          </table>
+        </div>
+
+        </div><!-- /tab list -->
+
+        <!-- ============================== -->
+        <!-- TAB 2: 頁面編輯（CMS 編輯器）   -->
+        <!-- ============================== -->
+        <div class="tab-pane" data-pane="editor">
+
+          <!-- 頁面類型 + 場館選擇 -->
+          <div class="editor-card" style="margin-bottom:18px;">
+            <div class="editor-card-body" style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+              <div>
+                <label class="editor-label">編輯頁面類型</label>
+                <select class="editor-input" style="width:220px;" id="editorPageType" onchange="onEditorPageChange()">
+                  <option value="venue-detail">場館介紹預約頁</option>
+                  <option value="venue-list">場館總覽頁（首頁）</option>
+                  <option value="member-perks">會員優惠頁</option>
+                  <option value="about-us">關於我們</option>
+                </select>
+              </div>
+              <div>
+                <label class="editor-label">選擇場館</label>
+                <select class="editor-input" style="width:220px;" id="editorVenueSelect" onchange="loadVenueContent()">
+                  <option value="勤美館">勤美館</option>
+                  <option value="忠明館">忠明館</option>
+                  <option value="文華館">文華館</option>
+                  <option value="漢口館">漢口館</option>
+                  <option value="站前館">站前館</option>
+                </select>
+              </div>
+              <div style="margin-left:auto;">
+                <button class="admin-btn admin-btn-secondary" onclick="previewPage()">👁️ 預覽</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 編輯主版面：左側目錄 + 右側內容 -->
+          <div class="editor-layout">
+
+            <!-- 左側目錄 -->
+            <div class="editor-sidebar">
+              <h4>📄 編輯區塊</h4>
+              <a class="editor-nav-item active" onclick="scrollToSection('s-hero')">🖼️ 主視覺圖片</a>
+              <a class="editor-nav-item" onclick="scrollToSection('s-basic')">📋 基本資訊</a>
+              <a class="editor-nav-item" onclick="scrollToSection('s-intro')">📝 場館介紹文案</a>
+              <a class="editor-nav-item" onclick="scrollToSection('s-facility')">🔧 設備設施</a>
+              <a class="editor-nav-item" onclick="scrollToSection('s-rules')">⚠️ 規則 / 注意事項</a>
+              <a class="editor-nav-item" onclick="scrollToSection('s-spaces')">🏛️ 空間介紹</a>
+              <a class="editor-nav-item" onclick="scrollToSection('s-faq')">❓ FAQ</a>
+              <a class="editor-nav-item" onclick="scrollToSection('s-seo')">🔍 SEO 設定</a>
+            </div>
+
+            <!-- 右側編輯主區 -->
+            <div class="editor-main">
+
+              <!-- ===== 主視覺圖片 ===== -->
+              <div class="editor-card" id="s-hero">
+                <div class="editor-card-header">
+                  <div class="editor-card-title">🖼️ 主視覺圖片</div>
+                  <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="alert('（demo）批次上傳照片')">批次上傳</button>
+                </div>
+                <div class="editor-card-body">
+                  <div class="editor-field">
+                    <label class="editor-label">主圖 <span class="hint">建議 1200×800px，將顯示於場館卡片與詳情頁頂部</span></label>
+                    <div class="image-uploader" onclick="alert('（demo）開啟檔案選擇器')">
+                      <div class="upload-icon">🖼️</div>
+                      <div class="upload-text">點擊或拖曳上傳主圖</div>
+                      <div class="upload-hint">支援 .jpg / .png / .webp，最大 5MB</div>
+                    </div>
+                  </div>
+
+                  <div class="editor-field">
+                    <label class="editor-label">場館相簿 <span class="hint">最多 12 張，可拖曳排序</span></label>
+                    <div class="image-gallery" id="galleryGrid">
+                      <div class="image-thumb">
+                        <img src="../images/勤美.png" alt="勤美館主圖" onerror="this.style.display='none'">
+                        <span class="main-badge">主圖</span>
+                        <button class="delete-btn" onclick="alert('（demo）刪除')">×</button>
+                      </div>
+                      <div class="image-thumb" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe); display:flex; align-items:center; justify-content:center; color:#1e40af; font-size:12px;">
+                        場館外觀
+                        <button class="delete-btn" onclick="alert('（demo）刪除')">×</button>
+                      </div>
+                      <div class="image-thumb" style="background:linear-gradient(135deg,#fef3c7,#fde68a); display:flex; align-items:center; justify-content:center; color:#92400e; font-size:12px;">
+                        內部空間
+                        <button class="delete-btn" onclick="alert('（demo）刪除')">×</button>
+                      </div>
+                      <div class="image-thumb" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0); display:flex; align-items:center; justify-content:center; color:#065f46; font-size:12px;">
+                        活動花絮
+                        <button class="delete-btn" onclick="alert('（demo）刪除')">×</button>
+                      </div>
+                      <div class="image-thumb" style="border:2px dashed #d1d5db; background:#fafafa; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="alert('（demo）新增照片')">
+                        <span style="color:#9ca3af; font-size:24px;">+</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 基本資訊 ===== -->
+              <div class="editor-card" id="s-basic">
+                <div class="editor-card-header">
+                  <div class="editor-card-title">📋 基本資訊</div>
+                </div>
+                <div class="editor-card-body">
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                    <div class="editor-field">
+                      <label class="editor-label">場館名稱 <span class="hint">將顯示在頁面標題</span></label>
+                      <input type="text" class="editor-input" value="勤美館">
+                    </div>
+                    <div class="editor-field">
+                      <label class="editor-label">場館代號</label>
+                      <input type="text" class="editor-input" value="QM">
+                    </div>
+                    <div class="editor-field">
+                      <label class="editor-label">地址</label>
+                      <input type="text" class="editor-input" value="404 台中市北區英才路 396 號 11 樓-2">
+                    </div>
+                    <div class="editor-field">
+                      <label class="editor-label">捷運 / 交通</label>
+                      <input type="text" class="editor-input" placeholder="例：BRT 科博館站步行 5 分鐘">
+                    </div>
+                    <div class="editor-field">
+                      <label class="editor-label">場館特色 Tags <span class="hint">用 , 分隔</span></label>
+                      <input type="text" class="editor-input" value="親子友善, 寵物友善, 適合派對, 24hr">
+                    </div>
+                    <div class="editor-field">
+                      <label class="editor-label">營業時間</label>
+                      <input type="text" class="editor-input" value="09:00 ~ 22:00（週一~週日）">
+                    </div>
+                  </div>
+
+                  <div class="editor-field" style="margin-top:16px;">
+                    <label class="editor-label">場館一句話介紹 <span class="hint">顯示在卡片下方、SEO 摘要用</span></label>
+                    <input type="text" class="editor-input" value="位於勤美誠品旁，30 人空間，適合派對、發表會、工作坊" maxlength="60">
+                    <div style="text-align:right; font-size:11px; color:#9ca3af; margin-top:4px;">37 / 60 字</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 場館介紹文案 ===== -->
+              <div class="editor-card" id="s-intro">
+                <div class="editor-card-header">
+                  <div class="editor-card-title">📝 場館介紹文案</div>
+                </div>
+                <div class="editor-card-body">
+                  <div class="rte-toolbar">
+                    <button class="rte-btn"><strong>B</strong></button>
+                    <button class="rte-btn"><em>I</em></button>
+                    <button class="rte-btn"><u>U</u></button>
+                    <button class="rte-btn">H2</button>
+                    <button class="rte-btn">H3</button>
+                    <button class="rte-btn">• 清單</button>
+                    <button class="rte-btn">🔗 連結</button>
+                    <button class="rte-btn">🖼️ 圖片</button>
+                  </div>
+                  <div class="rte-content" contenteditable="true">
+                    <h3>關於勤美館</h3>
+                    <p>勤美館位於台中勤美誠品旁的精華地段，30 坪明亮空間搭配落地窗，自然光線充足。</p>
+                    <p>適合舉辦小型派對、產品發表會、讀書會、攝影課程等多元活動。</p>
+                    <ul>
+                      <li>容納 30 人</li>
+                      <li>提供基本桌椅、投影設備、白板</li>
+                      <li>提供無線網路、飲水機、冰箱</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 設備設施 ===== -->
+              <div class="editor-card" id="s-facility">
+                <div class="editor-card-header">
+                  <div class="editor-card-title">🔧 設備設施</div>
+                </div>
+                <div class="editor-card-body">
+                  <p style="font-size:12px; color:#6b7280; margin-bottom:12px;">勾選此場館提供的設備（會在詳情頁以 icon 顯示）</p>
+                  <div class="facility-grid">
+                    <label class="facility-item"><input type="checkbox" checked> 📺 投影設備</label>
+                    <label class="facility-item"><input type="checkbox" checked> 🎤 麥克風</label>
+                    <label class="facility-item"><input type="checkbox" checked> 📋 白板</label>
+                    <label class="facility-item"><input type="checkbox" checked> 🪑 桌椅</label>
+                    <label class="facility-item"><input type="checkbox" checked> 📶 無線網路</label>
+                    <label class="facility-item"><input type="checkbox" checked> 💧 飲水機</label>
+                    <label class="facility-item"><input type="checkbox" checked> ❄️ 冷氣</label>
+                    <label class="facility-item"><input type="checkbox"> 🍳 廚房 / 流理台</label>
+                    <label class="facility-item"><input type="checkbox"> 🔌 充電插座</label>
+                    <label class="facility-item"><input type="checkbox"> 🚿 衛浴設備</label>
+                    <label class="facility-item"><input type="checkbox"> 🅿️ 停車位</label>
+                    <label class="facility-item"><input type="checkbox"> 🛗 電梯</label>
+                    <label class="facility-item"><input type="checkbox"> ♿ 無障礙</label>
+                    <label class="facility-item"><input type="checkbox"> 🐾 寵物友善</label>
+                    <label class="facility-item"><input type="checkbox" checked> 🎵 音響設備</label>
+                    <label class="facility-item"><input type="checkbox"> 📸 攝影燈</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 規則 / 注意事項 ===== -->
+              <div class="editor-card" id="s-rules">
+                <div class="editor-card-header">
+                  <div class="editor-card-title">⚠️ 規則 / 注意事項</div>
+                </div>
+                <div class="editor-card-body">
+                  <div class="editor-field">
+                    <label class="editor-label">使用規則（每行一條）</label>
+                    <textarea class="editor-textarea">禁止吸菸（含電子煙）
+室內請穿襪、不可穿鞋
+活動結束請恢復原狀
+垃圾請分類後帶走
+喧嘩請避免影響其他樓層
+寵物入內請使用推車或抱抱
+押金將於活動結束 3-5 個工作天內退還</textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== 空間介紹 ===== -->
+              <div class="editor-card" id="s-spaces">
+                <div class="editor-card-header">
+                  <div class="editor-card-title">🏛️ 空間介紹</div>
+                  <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="alert('（demo）新增空間')">＋ 新增空間</button>
+                </div>
+                <div class="editor-card-body">
+                  <p style="font-size:12px; color:#6b7280; margin-bottom:14px;">此場館的空間清單（編輯個別空間請在「場館列表」tab → 點空間按鈕）</p>
+                  <div style="display:grid; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:14px; padding:12px; background:#f9fafb; border-radius:6px;">
+                      <div style="width:60px; height:45px; background:#fbbf24; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#fff;">🏛️</div>
+                      <div style="flex:1;">
+                        <div style="font-weight:600;">勤美館</div>
+                        <div style="font-size:12px; color:#6b7280;">容納 30 人 · 已上架 · 已設定價格</div>
+                      </div>
+                      <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="alert('（demo）編輯空間介紹')">✏️ 編輯</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== FAQ ===== -->
+              <div class="editor-card" id="s-faq">
+                <div class="editor-card-header">
+                  <div class="editor-card-title">❓ FAQ 常見問題</div>
+                  <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="alert('（demo）新增 Q&A')">＋ 新增</button>
+                </div>
+                <div class="editor-card-body">
+                  <div style="display:grid; gap:10px;">
+                    <div style="padding:12px; border:1px solid #e5e7eb; border-radius:6px;">
+                      <div style="font-weight:600; margin-bottom:4px;">Q：可以帶外食嗎？</div>
+                      <div style="font-size:13px; color:#4b5563;">A：可以，請另加購環境清潔費（依人數計算）。</div>
+                    </div>
+                    <div style="padding:12px; border:1px solid #e5e7eb; border-radius:6px;">
+                      <div style="font-weight:600; margin-bottom:4px;">Q：取消預訂的退款政策？</div>
+                      <div style="font-size:13px; color:#4b5563;">A：使用日前 7 天可全額退款、3-6 天退 80%、48 小時內不退款。</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== SEO 設定 ===== -->
+              <div class="editor-card" id="s-seo">
+                <div class="editor-card-header">
+                  <div class="editor-card-title">🔍 SEO 設定</div>
+                </div>
+                <div class="editor-card-body">
+                  <div class="editor-field">
+                    <label class="editor-label">頁面標題 (title) <span class="hint">建議 30-60 字</span></label>
+                    <input type="text" class="editor-input" value="勤美館 - 沃茲新創空間｜台中場地租借">
+                  </div>
+                  <div class="editor-field">
+                    <label class="editor-label">頁面描述 (description) <span class="hint">建議 80-160 字</span></label>
+                    <textarea class="editor-textarea" style="min-height:60px;">台中勤美誠品旁的多功能空間，適合派對、發表會、工作坊。30 人容量、明亮落地窗、完整設備，提供小時 / 半日 / 全日多種租借方案。</textarea>
+                  </div>
+                  <div class="editor-field">
+                    <label class="editor-label">關鍵字 <span class="hint">用 , 分隔</span></label>
+                    <input type="text" class="editor-input" value="台中場地租借, 勤美場地, 派對場地, 工作坊空間, 攝影場地">
+                  </div>
+                  <div class="editor-field">
+                    <label class="editor-label">分享預覽圖（OG image）</label>
+                    <div class="image-uploader" onclick="alert('（demo）開啟檔案選擇器')" style="padding:18px;">
+                      <div class="upload-text">點擊上傳社群分享預覽圖（1200×630px）</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 操作 sticky bar -->
+              <div class="editor-action-bar">
+                <span class="save-status saved" id="saveStatus">✓ 自動儲存於 5 分鐘前</span>
+                <div style="display:flex; gap:8px;">
+                  <button class="admin-btn admin-btn-secondary" onclick="previewPage()">👁️ 預覽</button>
+                  <button class="admin-btn admin-btn-secondary" onclick="alert('（demo）儲存草稿、不發佈')">📝 儲存草稿</button>
+                  <button class="admin-btn admin-btn-primary" onclick="publishPage()">🚀 儲存並發佈</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div><!-- /tab editor -->
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== 新增/編輯場館 Modal ===== -->
+  <div class="admin-modal-overlay" id="venueModal">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title" id="modalTitle">新增場館</div>
+        <button class="admin-modal-close" onclick="closeVenueModal()">×</button>
+      </div>
+      <div class="admin-modal-body">
+        <div class="admin-form-grid">
+          <div class="admin-form-group full">
+            <label>場館名稱 <span class="required">*</span></label>
+            <input type="text" id="f_name" placeholder="例：勤美館">
+          </div>
+          <div class="admin-form-group">
+            <label>場館代號</label>
+            <input type="text" id="f_code" placeholder="例：QM（系統識別用）">
+          </div>
+          <div class="admin-form-group">
+            <label>區域 <span class="required">*</span></label>
+            <select id="f_district">
+              <option value="北區">北區</option>
+              <option value="南區">南區</option>
+              <option value="東區">東區</option>
+              <option value="西屯區">西屯區</option>
+              <option value="中區">中區</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="admin-form-group full">
+            <label>地址 <span class="required">*</span></label>
+            <input type="text" id="f_address" placeholder="例：台中市西區公益路 100 號">
+          </div>
+          <div class="admin-form-group">
+            <label>狀態</label>
+            <select id="f_status">
+              <option value="active">上架中</option>
+              <option value="inactive">已下架</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="closeVenueModal()">取消</button>
+        <button class="admin-btn admin-btn-primary" onclick="saveVenue()">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 空間管理 Modal ===== -->
+  <div class="admin-modal-overlay" id="spacesModal">
+    <div class="admin-modal" style="max-width:760px;">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title" id="spacesModalTitle">空間管理</div>
+        <button class="admin-modal-close" onclick="closeSpacesModal()">×</button>
+      </div>
+      <div class="admin-modal-body" id="spacesModalBody"></div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="closeSpacesModal()">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 新增/編輯空間 Modal ===== -->
+  <div class="admin-modal-overlay" id="spaceFormModal">
+    <div class="admin-modal" style="max-width:480px;">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title" id="spaceFormTitle">新增空間</div>
+        <button class="admin-modal-close" onclick="closeSpaceFormModal()">×</button>
+      </div>
+      <div class="admin-modal-body">
+        <div class="admin-form-group" style="margin-bottom:16px;">
+          <label>空間名稱 <span class="required">*</span></label>
+          <input type="text" id="sf_name" placeholder="例：多功能 1 館">
+        </div>
+        <div class="admin-form-group" style="margin-bottom:16px;">
+          <label>容納人數 <span class="required">*</span></label>
+          <input type="number" id="sf_capacity" placeholder="例：30">
+        </div>
+        <div class="admin-form-group">
+          <label>狀態</label>
+          <select id="sf_status">
+            <option value="active">啟用中</option>
+            <option value="inactive">已停用</option>
+          </select>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="closeSpaceFormModal()">取消</button>
+        <button class="admin-btn admin-btn-primary" onclick="saveSpace()">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    document.getElementById('adminName').textContent = localStorage.getItem('admin_username') || 'admin';
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (confirm('確定要登出嗎？')) {
+        localStorage.removeItem('admin_logged_in');
+        localStorage.removeItem('admin_username');
+        window.location.href = 'login.html';
+      }
+    });
+
+    function resetData() {
+      if (confirm('確定要重置所有 demo 資料？\n（會清空您新增/修改的內容，回到原始 5 個場館）')) {
+        DataStore.reset();
+        location.reload();
+      }
+    }
+
+    let editingVenueId = null;
+    let currentVenueIdForSpaces = null;
+    let editingSpaceId = null;
+
+    function renderTable() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const district = document.getElementById('districtFilter').value;
+      const status = document.getElementById('statusFilter').value;
+
+      const venues = DataStore.getVenues().filter(v => {
+        if (search && !v.name.toLowerCase().includes(search)) return false;
+        if (district && v.district !== district) return false;
+        if (status && v.status !== status) return false;
+        return true;
+      });
+
+      const tbody = document.getElementById('venuesTable');
+      if (venues.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="admin-empty"><div class="admin-empty-icon">📭</div>找不到符合條件的場館</div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = venues.map(v => {
+        const spacesCount = DataStore.getSpacesByVenue(v.id).length;
+        return `
+        <tr>
+          <td><div class="admin-table-thumb" style="display:flex; align-items:center; justify-content:center; color:#9ca3af;">🏛️</div></td>
+          <td><strong>${v.name}</strong></td>
+          <td><span style="font-family:monospace; color:#6b7280;">${v.code || '—'}</span></td>
+          <td>${v.district}</td>
+          <td style="color:#6b7280;">${v.address}</td>
+          <td><strong>${spacesCount}</strong> 個空間</td>
+          <td>${v.status === 'active' ? '<span class="admin-badge admin-badge-success">上架中</span>' : '<span class="admin-badge admin-badge-default">已下架</span>'}</td>
+          <td>
+            <div class="admin-table-actions">
+              <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="openSpaces(${v.id})">空間</button>
+              <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="editVenue(${v.id})">編輯</button>
+              <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="deleteVenue(${v.id})">刪除</button>
+            </div>
+          </td>
+        </tr>
+      `;
+      }).join('');
+    }
+
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('districtFilter').addEventListener('change', renderTable);
+    document.getElementById('statusFilter').addEventListener('change', renderTable);
+
+    // ===== 場館 CRUD =====
+    document.getElementById('addBtn').addEventListener('click', () => {
+      editingVenueId = null;
+      document.getElementById('modalTitle').textContent = '新增場館';
+      document.getElementById('f_name').value = '';
+      document.getElementById('f_code').value = '';
+      document.getElementById('f_district').value = '北區';
+      document.getElementById('f_address').value = '';
+      document.getElementById('f_status').value = 'active';
+      document.getElementById('venueModal').classList.add('show');
+    });
+
+    function editVenue(id) {
+      const v = DataStore.getVenue(id);
+      if (!v) return;
+      editingVenueId = id;
+      document.getElementById('modalTitle').textContent = '編輯場館';
+      document.getElementById('f_name').value = v.name;
+      document.getElementById('f_code').value = v.code || '';
+      document.getElementById('f_district').value = v.district;
+      document.getElementById('f_address').value = v.address;
+      document.getElementById('f_status').value = v.status;
+      document.getElementById('venueModal').classList.add('show');
+    }
+
+    function deleteVenue(id) {
+      const v = DataStore.getVenue(id);
+      const spacesCount = DataStore.getSpacesByVenue(id).length;
+      if (confirm(`確定要刪除「${v.name}」嗎？\n會一起刪除底下 ${spacesCount} 個空間和對應價格！`)) {
+        DataStore.deleteVenue(id);
+        renderTable();
+      }
+    }
+
+    function closeVenueModal() {
+      document.getElementById('venueModal').classList.remove('show');
+    }
+
+    function saveVenue() {
+      const name = document.getElementById('f_name').value.trim();
+      if (!name) { alert('請輸入場館名稱'); return; }
+
+      const data = {
+        name,
+        code: document.getElementById('f_code').value.trim(),
+        district: document.getElementById('f_district').value,
+        address: document.getElementById('f_address').value.trim(),
+        status: document.getElementById('f_status').value
+      };
+
+      if (editingVenueId) {
+        DataStore.updateVenue(editingVenueId, data);
+      } else {
+        DataStore.addVenue(data);
+      }
+      closeVenueModal();
+      renderTable();
+    }
+
+    // ===== 空間管理 =====
+    function openSpaces(venueId) {
+      currentVenueIdForSpaces = venueId;
+      const v = DataStore.getVenue(venueId);
+      const spaces = DataStore.getSpacesByVenue(venueId);
+
+      document.getElementById('spacesModalTitle').textContent = `${v.name}｜空間管理`;
+
+      const list = spaces.length === 0 ? `
+        <div class="admin-empty" style="padding:30px 20px;">
+          <div class="admin-empty-icon">📦</div>
+          <p>此場館目前沒有空間</p>
+          <p style="font-size:12px;">點擊下方「+新增空間」開始</p>
+        </div>
+      ` : `
+        <table class="admin-table" style="border:1px solid #e5e7eb; border-radius:6px;">
+          <thead>
+            <tr>
+              <th style="width:50px;">#</th>
+              <th>空間名稱</th>
+              <th style="width:100px;">容納人數</th>
+              <th style="width:100px;">價格設定</th>
+              <th style="width:90px;">狀態</th>
+              <th style="width:140px;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${spaces.map((s, i) => {
+              const hasPrice = !!DataStore.getPrice(s.id);
+              return `
+                <tr>
+                  <td>${i+1}</td>
+                  <td><strong>${s.name}</strong></td>
+                  <td>${s.capacity} 人</td>
+                  <td>${hasPrice ? '<span class="admin-badge admin-badge-success">已設定</span>' : '<span class="admin-badge admin-badge-warning">未設定</span>'}</td>
+                  <td>${s.status === 'active' ? '<span class="admin-badge admin-badge-success">啟用</span>' : '<span class="admin-badge admin-badge-default">停用</span>'}</td>
+                  <td>
+                    <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="editSpace(${s.id})">編輯</button>
+                    <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="deleteSpace(${s.id})">刪除</button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+
+      document.getElementById('spacesModalBody').innerHTML = `
+        <p style="font-size:13px; color:#6b7280; margin-bottom:12px;">📍 ${v.address}</p>
+        ${list}
+        <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center;">
+          <button class="admin-btn admin-btn-primary admin-btn-sm" onclick="openSpaceForm()">＋ 新增空間</button>
+          <a href="pricing.html?venue=${venueId}" style="font-size:13px; color:#1a1f36; text-decoration:underline;">→ 前往設定價格</a>
+        </div>
+      `;
+
+      document.getElementById('spacesModal').classList.add('show');
+    }
+
+    function closeSpacesModal() {
+      document.getElementById('spacesModal').classList.remove('show');
+      renderTable(); // 重新計算空間數
+    }
+
+    function openSpaceForm(spaceId) {
+      if (spaceId) {
+        const s = DataStore.getSpace(spaceId);
+        if (!s) return;
+        editingSpaceId = spaceId;
+        document.getElementById('spaceFormTitle').textContent = '編輯空間';
+        document.getElementById('sf_name').value = s.name;
+        document.getElementById('sf_capacity').value = s.capacity;
+        document.getElementById('sf_status').value = s.status;
+      } else {
+        editingSpaceId = null;
+        document.getElementById('spaceFormTitle').textContent = '新增空間';
+        document.getElementById('sf_name').value = '';
+        document.getElementById('sf_capacity').value = '';
+        document.getElementById('sf_status').value = 'active';
+      }
+      document.getElementById('spaceFormModal').classList.add('show');
+    }
+
+    function editSpace(id) { openSpaceForm(id); }
+
+    function deleteSpace(id) {
+      const s = DataStore.getSpace(id);
+      if (confirm(`確定要刪除空間「${s.name}」？\n會一起刪除此空間的價格設定！`)) {
+        DataStore.deleteSpace(id);
+        openSpaces(currentVenueIdForSpaces); // 重新渲染空間列表
+      }
+    }
+
+    function closeSpaceFormModal() {
+      document.getElementById('spaceFormModal').classList.remove('show');
+    }
+
+    function saveSpace() {
+      const name = document.getElementById('sf_name').value.trim();
+      const capacity = parseInt(document.getElementById('sf_capacity').value);
+      if (!name) { alert('請輸入空間名稱'); return; }
+      if (isNaN(capacity) || capacity <= 0) { alert('請輸入有效的容納人數'); return; }
+
+      const data = {
+        venue_id: currentVenueIdForSpaces,
+        name, capacity,
+        status: document.getElementById('sf_status').value
+      };
+
+      if (editingSpaceId) {
+        DataStore.updateSpace(editingSpaceId, data);
+      } else {
+        DataStore.addSpace(data);
+      }
+      closeSpaceFormModal();
+      openSpaces(currentVenueIdForSpaces); // 重新渲染
+    }
+
+    renderTable();
+
+    // ============================
+    // 頁面編輯 Tab 邏輯
+    // ============================
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = btn.dataset.tab;
+        document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelector(`[data-pane="${t}"]`).classList.add('active');
+      });
+    });
+
+    // 左側目錄 active 切換
+    document.querySelectorAll('.editor-nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.editor-nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function onEditorPageChange() {
+      const type = document.getElementById('editorPageType').value;
+      const venueSel = document.getElementById('editorVenueSelect');
+      // 場館列表頁不需要選場館
+      if (type === 'venue-list') {
+        venueSel.style.opacity = '.4';
+        venueSel.disabled = true;
+      } else {
+        venueSel.style.opacity = '1';
+        venueSel.disabled = false;
+      }
+      alert(`（demo）切換到「${document.querySelector('#editorPageType option:checked').textContent}」的編輯介面`);
+    }
+
+    function loadVenueContent() {
+      const v = document.getElementById('editorVenueSelect').value;
+      alert(`（demo）載入「${v}」的頁面內容到編輯器`);
+      // 實際會從 DataStore 載入該場館的所有內容（圖片、文案、設施等）填入表單
+    }
+
+    function previewPage() {
+      const v = document.getElementById('editorVenueSelect').value;
+      if (confirm(`預覽「${v}」的場館介紹頁？（會開新分頁顯示）`)) {
+        window.open(`../venue-detail.html?name=${encodeURIComponent(v)}`, '_blank');
+      }
+    }
+
+    function publishPage() {
+      const v = document.getElementById('editorVenueSelect').value;
+      if (confirm(`確定要儲存並發佈「${v}」的頁面？\n\n（demo：不會真的存進資料庫）`)) {
+        document.getElementById('saveStatus').textContent = '✓ 已發佈於剛剛';
+        document.getElementById('saveStatus').classList.add('saved');
+        alert('已發佈！前台用戶下次訪問會看到新版本。');
+      }
+    }
+
+    // 自動儲存提示（demo：每 30 秒）
+    setInterval(() => {
+      const s = document.getElementById('saveStatus');
+      if (s) s.textContent = '✓ 自動儲存於剛剛';
+    }, 30000);
+  </script>
+
+</body>
+</html>

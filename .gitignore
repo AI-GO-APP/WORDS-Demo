@@ -1,0 +1,21 @@
+# macOS 系統檔
+.DS_Store
+
+# Office 開啟時的 lock 檔
+.~lock.*
+
+# 客戶資料 / 文件（不公開到 Public repo）
+沃茲-場地租借開發排程.pdf
+沃茲-年度開發計畫.xlsx
+年度計畫模板/
+
+# Logs
+*.log
+
+# Node modules (以防將來)
+node_modules/
+
+# 編輯器設定
+.vscode/
+.idea/
+系統使用流程文件.md

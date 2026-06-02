@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>方案管理｜沃茲後台</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <script>
+    if (localStorage.getItem('admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <div class="admin-layout">
+
+    <!-- ===== 左側 Sidebar ===== -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-logo">
+        <img src="../images/LOGO.png" alt="WORDS LIVE" class="admin-sidebar-logo-img">
+        <p>後台管理系統</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">總覽</div>
+          <a href="index.html" class="admin-nav-item">
+            <span class="admin-nav-icon">📊</span><span>Dashboard</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">場館設定</div>
+          <a href="venues.html" class="admin-nav-item">
+            <span class="admin-nav-icon">🏛️</span><span>場館管理</span>
+          </a>
+          <a href="plans.html" class="admin-nav-item active">
+            <span class="admin-nav-icon">📦</span><span>方案管理</span>
+          </a>
+          <a href="pricing.html" class="admin-nav-item">
+            <span class="admin-nav-icon">💰</span><span>價格管理</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">營運管理</div>
+          <a href="orders.html" class="admin-nav-item">
+            <span class="admin-nav-icon">🛍️</span><span>訂單管理</span>
+          </a>
+          <a href="customers.html" class="admin-nav-item">
+            <span class="admin-nav-icon">👥</span><span>客戶管理</span>
+          </a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">🎟️</span><span>優惠券</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">帳款管理</div>
+          <a href="payments.html" class="admin-nav-item">
+            <span class="admin-nav-icon">💸</span><span>匯款比對</span>
+          </a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">📄</span><span>發票管理</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">系統</div>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">👤</span><span>員工管理</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="admin-sidebar-footer">v0.1 Demo</div>
+    </aside>
+
+    <!-- ===== 右側 Main ===== -->
+    <main class="admin-main">
+
+      <header class="admin-header">
+        <div class="admin-header-title">方案管理</div>
+        <div class="admin-header-user">
+          <span class="admin-header-user-name">👤 <span id="adminName">admin</span></span>
+          <button class="admin-header-logout" id="logoutBtn">登出</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+
+        <!-- 提示說明 -->
+        <div class="admin-panel" style="background:#eff6ff; border-color:#bfdbfe;">
+          <div class="admin-panel-body" style="padding:14px 20px;">
+            <strong style="color:#1e40af;">💡 方案範本說明</strong>
+            <p style="font-size:13px; color:#1e40af; margin-top:4px;">
+              方案範本（Plan Template）定義「什麼時段、什麼類型」的租借模式，例如「平日小時計費」、「假日半日方案」等。
+              實際價格在「<a href="pricing.html" style="color:#1e40af; text-decoration:underline;">價格管理</a>」設定。
+            </p>
+          </div>
+        </div>
+
+        <!-- 工具列 -->
+        <div class="admin-toolbar">
+          <input type="text" class="admin-search" placeholder="🔍 搜尋方案名稱" id="searchInput">
+          <select class="admin-filter" id="typeFilter">
+            <option value="">全部類型</option>
+            <option value="hourly">小時計費</option>
+            <option value="half_day">半日方案</option>
+            <option value="full_day">全日方案</option>
+            <option value="custom">自訂方案</option>
+          </select>
+          <div class="admin-toolbar-right">
+            <button class="admin-btn admin-btn-primary" id="addBtn">＋ 新增方案</button>
+          </div>
+        </div>
+
+        <!-- 表格 -->
+        <div class="admin-table-wrapper">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>方案名稱</th>
+                <th style="width:110px;">類型</th>
+                <th>適用時段</th>
+                <th>包含項目</th>
+                <th style="width:90px;">狀態</th>
+                <th style="width:140px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="plansTable"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== 新增/編輯 Modal ===== -->
+  <div class="admin-modal-overlay" id="planModal">
+    <div class="admin-modal" style="max-width:720px;">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title" id="modalTitle">新增方案</div>
+        <button class="admin-modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="admin-modal-body">
+
+        <div class="admin-form-grid">
+          <div class="admin-form-group">
+            <label>方案名稱 <span class="required">*</span></label>
+            <input type="text" id="f_name" placeholder="例：平日小時計費">
+          </div>
+          <div class="admin-form-group">
+            <label>方案類型 <span class="required">*</span></label>
+            <select id="f_type">
+              <option value="hourly">小時計費</option>
+              <option value="half_day">半日方案</option>
+              <option value="full_day">全日方案</option>
+              <option value="custom">自訂方案</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 適用時段 -->
+        <div style="margin-top:20px;">
+          <label style="font-size:13px; font-weight:600; color:#374151;">適用時段 <span style="color:#dc2626;">*</span></label>
+          <p class="admin-form-hint" style="margin-bottom:10px;">勾選此方案適用的星期，並設定時段</p>
+
+          <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="weekday-cb" value="MON" checked> 一</label>
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="weekday-cb" value="TUE" checked> 二</label>
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="weekday-cb" value="WED" checked> 三</label>
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="weekday-cb" value="THU" checked> 四</label>
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="weekday-cb" value="FRI" checked> 五</label>
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="weekday-cb" value="SAT"> 六</label>
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" class="weekday-cb" value="SUN"> 日</label>
+          </div>
+
+          <div class="admin-form-grid">
+            <div class="admin-form-group">
+              <label>開始時間</label>
+              <input type="time" id="f_start_time" value="09:00">
+            </div>
+            <div class="admin-form-group">
+              <label>結束時間</label>
+              <input type="time" id="f_end_time" value="18:00">
+            </div>
+          </div>
+        </div>
+
+        <!-- 包含項目 -->
+        <div style="margin-top:20px;">
+          <label style="font-size:13px; font-weight:600; color:#374151;">包含項目（可勾選多項）</label>
+          <p class="admin-form-hint" style="margin-bottom:10px;">勾選此方案會包含哪些費用項目</p>
+
+          <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;">
+            <label style="display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px;">
+              <input type="checkbox" checked> 基本租金（base_price）
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px;">
+              <input type="checkbox"> 超時加成（overtime）
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px;">
+              <input type="checkbox"> 人數費用（headcount）
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px;">
+              <input type="checkbox"> 清潔費（cleanup_fee）
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px;">
+              <input type="checkbox"> 押金（deposit）
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:6px;">
+              <input type="checkbox"> 場佈費（setup）
+            </label>
+          </div>
+        </div>
+
+        <div class="admin-form-grid" style="margin-top:20px;">
+          <div class="admin-form-group">
+            <label>狀態</label>
+            <select id="f_status">
+              <option value="active">啟用中</option>
+              <option value="inactive">已停用</option>
+            </select>
+          </div>
+          <div class="admin-form-group">
+            <label>排序</label>
+            <input type="number" id="f_sort" value="1">
+          </div>
+          <div class="admin-form-group full">
+            <label>方案說明</label>
+            <textarea id="f_description" placeholder="輸入方案的特色、適用情境..."></textarea>
+          </div>
+        </div>
+
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn admin-btn-secondary" onclick="closeModal()">取消</button>
+        <button class="admin-btn admin-btn-primary" onclick="savePlan()">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('adminName').textContent = localStorage.getItem('admin_username') || 'admin';
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (confirm('確定要登出嗎？')) {
+        localStorage.removeItem('admin_logged_in');
+        localStorage.removeItem('admin_username');
+        window.location.href = 'login.html';
+      }
+    });
+
+    const TYPE_LABEL = {
+      hourly: { label: '小時計費', class: 'admin-badge-info' },
+      half_day: { label: '半日方案', class: 'admin-badge-success' },
+      full_day: { label: '全日方案', class: 'admin-badge-warning' },
+      custom: { label: '自訂方案', class: 'admin-badge-default' }
+    };
+
+    let plans = [
+      {
+        id: 1, name: '平日小時計費', type: 'hourly',
+        weekdays: ['MON','TUE','WED','THU','FRI'], start_time: '09:00', end_time: '18:00',
+        items: ['基本租金','清潔費'], status: 'active', sort: 1
+      },
+      {
+        id: 2, name: '假日小時計費', type: 'hourly',
+        weekdays: ['SAT','SUN'], start_time: '09:00', end_time: '18:00',
+        items: ['基本租金','清潔費'], status: 'active', sort: 2
+      },
+      {
+        id: 3, name: '平日半日方案', type: 'half_day',
+        weekdays: ['MON','TUE','WED','THU','FRI'], start_time: '09:00', end_time: '13:00',
+        items: ['基本租金','清潔費','場佈費'], status: 'active', sort: 3
+      },
+      {
+        id: 4, name: '假日半日方案', type: 'half_day',
+        weekdays: ['SAT','SUN'], start_time: '09:00', end_time: '13:00',
+        items: ['基本租金','清潔費','場佈費'], status: 'active', sort: 4
+      },
+      {
+        id: 5, name: '平日全日方案', type: 'full_day',
+        weekdays: ['MON','TUE','WED','THU','FRI'], start_time: '09:00', end_time: '18:00',
+        items: ['基本租金','清潔費','場佈費','押金'], status: 'active', sort: 5
+      },
+      {
+        id: 6, name: '假日全日方案', type: 'full_day',
+        weekdays: ['SAT','SUN'], start_time: '09:00', end_time: '18:00',
+        items: ['基本租金','清潔費','場佈費','押金'], status: 'active', sort: 6
+      },
+      {
+        id: 7, name: '夜間歡樂時光', type: 'custom',
+        weekdays: ['FRI','SAT'], start_time: '19:00', end_time: '23:00',
+        items: ['基本租金','人數費用','清潔費'], status: 'inactive', sort: 7
+      }
+    ];
+
+    const WEEKDAY_CN = { MON:'一', TUE:'二', WED:'三', THU:'四', FRI:'五', SAT:'六', SUN:'日' };
+    let editingId = null;
+
+    function renderTable() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const type = document.getElementById('typeFilter').value;
+
+      const filtered = plans
+        .filter(p => {
+          if (search && !p.name.toLowerCase().includes(search)) return false;
+          if (type && p.type !== type) return false;
+          return true;
+        })
+        .sort((a,b) => a.sort - b.sort);
+
+      const tbody = document.getElementById('plansTable');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">📭</div>找不到符合條件的方案</div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(p => `
+        <tr>
+          <td><strong>${p.name}</strong></td>
+          <td><span class="admin-badge ${TYPE_LABEL[p.type].class}">${TYPE_LABEL[p.type].label}</span></td>
+          <td style="color:#6b7280; font-size:13px;">
+            週${p.weekdays.map(w => WEEKDAY_CN[w]).join('、')}<br>
+            <span style="color:#9ca3af;">${p.start_time} ~ ${p.end_time}</span>
+          </td>
+          <td style="color:#6b7280; font-size:13px;">${p.items.join('、')}</td>
+          <td>
+            ${p.status === 'active'
+              ? '<span class="admin-badge admin-badge-success">啟用中</span>'
+              : '<span class="admin-badge admin-badge-default">已停用</span>'}
+          </td>
+          <td>
+            <div class="admin-table-actions">
+              <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="editPlan(${p.id})">編輯</button>
+              <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="deletePlan(${p.id})">刪除</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('typeFilter').addEventListener('change', renderTable);
+
+    document.getElementById('addBtn').addEventListener('click', () => {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = '新增方案';
+      document.getElementById('f_name').value = '';
+      document.getElementById('f_type').value = 'hourly';
+      document.getElementById('f_start_time').value = '09:00';
+      document.getElementById('f_end_time').value = '18:00';
+      document.getElementById('f_status').value = 'active';
+      document.getElementById('f_sort').value = plans.length + 1;
+      document.getElementById('f_description').value = '';
+      document.querySelectorAll('.weekday-cb').forEach(cb => cb.checked = ['MON','TUE','WED','THU','FRI'].includes(cb.value));
+      document.getElementById('planModal').classList.add('show');
+    });
+
+    function editPlan(id) {
+      const p = plans.find(x => x.id === id);
+      if (!p) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent = '編輯方案';
+      document.getElementById('f_name').value = p.name;
+      document.getElementById('f_type').value = p.type;
+      document.getElementById('f_start_time').value = p.start_time;
+      document.getElementById('f_end_time').value = p.end_time;
+      document.getElementById('f_status').value = p.status;
+      document.getElementById('f_sort').value = p.sort;
+      document.querySelectorAll('.weekday-cb').forEach(cb => cb.checked = p.weekdays.includes(cb.value));
+      document.getElementById('planModal').classList.add('show');
+    }
+
+    function deletePlan(id) {
+      const p = plans.find(x => x.id === id);
+      if (confirm(`確定要刪除「${p.name}」嗎？\n（此操作為 demo，不會真的存進資料庫）`)) {
+        plans = plans.filter(x => x.id !== id);
+        renderTable();
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('planModal').classList.remove('show');
+    }
+
+    function savePlan() {
+      const name = document.getElementById('f_name').value.trim();
+      if (!name) { alert('請輸入方案名稱'); return; }
+
+      const weekdays = Array.from(document.querySelectorAll('.weekday-cb:checked')).map(cb => cb.value);
+      if (weekdays.length === 0) { alert('請至少選擇一個星期'); return; }
+
+      const data = {
+        name,
+        type: document.getElementById('f_type').value,
+        weekdays,
+        start_time: document.getElementById('f_start_time').value,
+        end_time: document.getElementById('f_end_time').value,
+        items: ['基本租金'],  // 簡化：實際應從 modal 讀
+        status: document.getElementById('f_status').value,
+        sort: parseInt(document.getElementById('f_sort').value) || 1
+      };
+
+      if (editingId) {
+        const idx = plans.findIndex(p => p.id === editingId);
+        plans[idx] = { ...plans[idx], ...data };
+      } else {
+        const newId = Math.max(...plans.map(p => p.id), 0) + 1;
+        plans.push({ id: newId, ...data });
+      }
+
+      closeModal();
+      renderTable();
+    }
+
+    renderTable();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>註冊 / 登入｜沃茲新創空間</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ========== Navbar ========== -->
+  <header class="navbar">
+    <div class="navbar-container">
+      <a href="index.html" class="logo">
+        <img src="images/LOGO.png" alt="沃茲新創空間 WORDS" class="logo-img">
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">場地租借</a></li>
+          <li class="has-dropdown">
+            <a href="member.html">會員優惠 ▾</a>
+            <ul class="dropdown">
+              <li><a href="member.html?tab=tier">會員分級優惠</a></li>
+              <li><a href="member.html?tab=stored-value">儲值方案優惠</a></li>
+              <li><a href="member.html?tab=points">消費紅利折抵</a></li>
+            </ul>
+          </li>
+          <li><a href="cart.html">購物車</a></li>
+          <li><a href="login.html">註冊 / 登入</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== Main ========== -->
+  <main class="auth-container">
+    <div class="auth-card">
+
+      <!-- Tab Navigation -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">登入</button>
+        <button class="auth-tab" data-tab="register">註冊</button>
+      </div>
+
+      <!-- ===== 登入 Tab ===== -->
+      <div class="auth-tab-content active" data-tab-content="login">
+
+        <button type="button" class="line-btn">
+          <span class="line-icon">L</span>
+          LINE 登入
+        </button>
+
+        <div class="auth-divider"><span>或</span></div>
+
+        <form class="auth-form">
+          <label class="auth-field">
+            <span class="auth-label">電子郵件 <span class="required">*</span></span>
+            <input type="email" name="email" required>
+          </label>
+
+          <label class="auth-field">
+            <span class="auth-label">密碼 <span class="required">*</span></span>
+            <input type="password" name="password" required>
+          </label>
+
+          <button type="submit" class="auth-submit-btn">登入</button>
+
+          <a href="#" class="auth-forgot-link">忘記您的密碼？</a>
+        </form>
+      </div>
+
+      <!-- ===== 註冊 Tab ===== -->
+      <div class="auth-tab-content" data-tab-content="register">
+
+        <button type="button" class="line-btn">
+          <span class="line-icon">L</span>
+          LINE 註冊
+        </button>
+
+        <div class="auth-divider"><span>或</span></div>
+
+        <form class="auth-form">
+          <label class="auth-field">
+            <span class="auth-label">電子郵件 <span class="required">*</span></span>
+            <input type="email" name="email" required>
+          </label>
+
+          <label class="auth-field">
+            <span class="auth-label">密碼 <span class="auth-label-hint">(密碼長度至少 8 碼)</span> <span class="required">*</span></span>
+            <input type="password" name="password" minlength="8" required>
+          </label>
+
+          <label class="auth-field">
+            <span class="auth-label">名字 <span class="required">*</span></span>
+            <input type="text" name="name" required>
+          </label>
+
+          <button type="submit" class="auth-submit-btn">註冊</button>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ========== Footer ========== -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h4>沃茲新創空間｜WordsLive</h4>
+        <p>營業人名稱：沃茲有限公司</p>
+        <p>統一編號：82981038</p>
+        <p class="footer-links">
+          <a href="index.html">首頁</a> ｜ <a href="#">訂單查詢</a> ｜ <a href="#">購物車</a> ｜ <a href="#">聯絡表單</a>
+        </p>
+        <div class="social-icons">
+          <a href="#" title="Facebook">F</a>
+          <a href="#" title="Instagram">IG</a>
+          <a href="#" title="LINE">L</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>聯絡方式</h4>
+        <p>服務時間：週一 至 週日 - 09:00～18:00</p>
+        <p>電話：04-3705-5005 #1 場地租借 #2 商辦空間</p>
+        <p>E-mail：wordsspace@wordslive.com.tw</p>
+        <p>地址：臺中市東區自由二街 91 號</p>
+      </div>
+      <div class="footer-col footer-fb">
+        <div class="fb-placeholder">
+          [Facebook Page 嵌入區]<br>
+          <small>Words Live 沃茲新創空間</small>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========== Floating Buttons ========== -->
+  <div class="floating-buttons">
+    <a href="tel:04-3705-5005" class="floating-btn phone" title="電話">📞</a>
+    <a href="#" class="floating-btn line" title="LINE">L</a>
+  </div>
+
+  <!-- ========== Script ========== -->
+  <script>
+    // Tab 切換
+    document.querySelectorAll('.auth-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.auth-tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector('[data-tab-content="' + tab + '"]').classList.add('active');
+      });
+    });
+
+    // URL 參數讀取 tab（從別處進來時自動切到對應 tab）
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+      const btn = document.querySelector('.auth-tab[data-tab="' + tabParam + '"]');
+      if (btn) btn.click();
+    }
+
+    // 表單送出（demo：登入按鈕跳轉到我的帳戶頁）
+    document.querySelectorAll('.auth-form').forEach(form => {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // demo：直接跳到帳戶頁
+        window.location.href = 'account.html';
+      });
+    });
+
+    // LINE 按鈕也跳到 account
+    document.querySelectorAll('.line-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.location.href = 'account.html';
+      });
+    });
+  </script>
+
+</body>
+</html>

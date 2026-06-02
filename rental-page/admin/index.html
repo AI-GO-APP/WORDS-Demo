@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard｜沃茲後台</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- 登入檢查 -->
+  <script>
+    if (localStorage.getItem('admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <div class="admin-layout">
+
+    <!-- ===== 左側 Sidebar ===== -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-logo">
+        <img src="../images/LOGO.png" alt="WORDS LIVE" class="admin-sidebar-logo-img">
+        <p>後台管理系統</p>
+      </div>
+
+      <nav class="admin-sidebar-nav">
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">總覽</div>
+          <a href="index.html" class="admin-nav-item active">
+            <span class="admin-nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </div>
+
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">場館設定</div>
+          <a href="venues.html" class="admin-nav-item">
+            <span class="admin-nav-icon">🏛️</span>
+            <span>場館管理</span>
+          </a>
+          <a href="plans.html" class="admin-nav-item">
+            <span class="admin-nav-icon">📦</span>
+            <span>方案管理</span>
+          </a>
+          <a href="pricing.html" class="admin-nav-item">
+            <span class="admin-nav-icon">💰</span>
+            <span>價格管理</span>
+          </a>
+        </div>
+
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">營運管理</div>
+          <a href="orders.html" class="admin-nav-item">
+            <span class="admin-nav-icon">🛍️</span>
+            <span>訂單管理</span>
+          </a>
+          <a href="customers.html" class="admin-nav-item">
+            <span class="admin-nav-icon">👥</span>
+            <span>客戶管理</span>
+          </a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">🎟️</span>
+            <span>優惠券</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">帳款管理</div>
+          <a href="payments.html" class="admin-nav-item">
+            <span class="admin-nav-icon">💸</span>
+            <span>匯款比對</span>
+          </a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">📄</span>
+            <span>發票管理</span>
+          </a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">系統</div>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
+            <span class="admin-nav-icon">👤</span>
+            <span>員工管理</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        v0.1 Demo
+      </div>
+    </aside>
+
+    <!-- ===== 右側 Main ===== -->
+    <main class="admin-main">
+
+      <header class="admin-header">
+        <div class="admin-header-title">Dashboard 總覽</div>
+        <div class="admin-header-user">
+          <span class="admin-header-user-name">👤 <span id="adminName">admin</span></span>
+          <button class="admin-header-logout" id="logoutBtn">登出</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+
+        <!-- 統計卡片 -->
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <div class="admin-stat-card-label">場館總數</div>
+            <div class="admin-stat-card-value">20</div>
+            <div class="admin-stat-card-trend">+2 本月新增</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-card-label">本月訂單數</div>
+            <div class="admin-stat-card-value">128</div>
+            <div class="admin-stat-card-trend">+15.2% vs 上月</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-card-label">本月營收</div>
+            <div class="admin-stat-card-value">$ 386,400</div>
+            <div class="admin-stat-card-trend">+22.8% vs 上月</div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-card-label">會員總數</div>
+            <div class="admin-stat-card-value">1,432</div>
+            <div class="admin-stat-card-trend">+48 本週新增</div>
+          </div>
+        </div>
+
+        <!-- 快速入口 -->
+        <div class="admin-panel">
+          <div class="admin-panel-header">
+            <div class="admin-panel-title">快速操作</div>
+          </div>
+          <div class="admin-panel-body">
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+              <a href="venues.html" style="display:block; padding:20px; border:1px solid #e5e7eb; border-radius:8px; text-align:center;">
+                <div style="font-size:32px;">🏛️</div>
+                <div style="font-weight:600; margin-top:8px;">場館管理</div>
+                <div style="font-size:12px; color:#6b7280; margin-top:4px;">新增、編輯場館資料</div>
+              </a>
+              <a href="plans.html" style="display:block; padding:20px; border:1px solid #e5e7eb; border-radius:8px; text-align:center;">
+                <div style="font-size:32px;">📦</div>
+                <div style="font-weight:600; margin-top:8px;">方案管理</div>
+                <div style="font-size:12px; color:#6b7280; margin-top:4px;">設定租借方案範本</div>
+              </a>
+              <a href="pricing.html" style="display:block; padding:20px; border:1px solid #e5e7eb; border-radius:8px; text-align:center;">
+                <div style="font-size:32px;">💰</div>
+                <div style="font-weight:600; margin-top:8px;">價格管理</div>
+                <div style="font-size:12px; color:#6b7280; margin-top:4px;">調整各方案價格</div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 最近訂單（demo 表格） -->
+        <div class="admin-panel">
+          <div class="admin-panel-header">
+            <div class="admin-panel-title">最近訂單</div>
+            <a href="#" style="font-size:13px; color:#6b7280;">查看全部 →</a>
+          </div>
+          <div class="admin-panel-body" style="padding:0;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>訂單編號</th>
+                  <th>會員</th>
+                  <th>場館</th>
+                  <th>租借日期</th>
+                  <th>金額</th>
+                  <th>狀態</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>#WL26001234</td>
+                  <td>Joanna</td>
+                  <td>勤美館</td>
+                  <td>2026/05/28</td>
+                  <td>$ 3,300</td>
+                  <td><span class="admin-badge admin-badge-success">已確認</span></td>
+                </tr>
+                <tr>
+                  <td>#WL26001233</td>
+                  <td>陳大文</td>
+                  <td>美術館</td>
+                  <td>2026/05/27</td>
+                  <td>$ 2,600</td>
+                  <td><span class="admin-badge admin-badge-success">已確認</span></td>
+                </tr>
+                <tr>
+                  <td>#WL26001232</td>
+                  <td>林小美</td>
+                  <td>科博館</td>
+                  <td>2026/05/26</td>
+                  <td>$ 5,200</td>
+                  <td><span class="admin-badge admin-badge-warning">待確認</span></td>
+                </tr>
+                <tr>
+                  <td>#WL26001231</td>
+                  <td>王志明</td>
+                  <td>市政館</td>
+                  <td>2026/05/25</td>
+                  <td>$ 1,700</td>
+                  <td><span class="admin-badge admin-badge-success">已確認</span></td>
+                </tr>
+                <tr>
+                  <td>#WL26001230</td>
+                  <td>張雅婷</td>
+                  <td>逢甲館</td>
+                  <td>2026/05/24</td>
+                  <td>$ 4,800</td>
+                  <td><span class="admin-badge admin-badge-danger">已取消</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.getElementById('adminName').textContent = localStorage.getItem('admin_username') || 'admin';
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (confirm('確定要登出嗎？')) {
+        localStorage.removeItem('admin_logged_in');
+        localStorage.removeItem('admin_username');
+        window.location.href = 'login.html';
+      }
+    });
+  </script>
+
+</body>
+</html>

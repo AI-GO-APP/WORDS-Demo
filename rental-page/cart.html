@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>購物車｜沃茲新創空間</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ========== Navbar ========== -->
+  <header class="navbar">
+    <div class="navbar-container">
+      <a href="index.html" class="logo">
+        <img src="images/LOGO.png" alt="沃茲新創空間 WORDS" class="logo-img">
+      </a>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html">場地租借</a></li>
+          <li class="has-dropdown">
+            <a href="member.html">會員優惠 ▾</a>
+            <ul class="dropdown">
+              <li><a href="member.html?tab=tier">會員分級優惠</a></li>
+              <li><a href="member.html?tab=stored-value">儲值方案優惠</a></li>
+              <li><a href="member.html?tab=points">消費紅利折抵</a></li>
+            </ul>
+          </li>
+          <li><a href="cart.html">購物車</a></li>
+          <li><a href="login.html">註冊 / 登入</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== Breadcrumb ========== -->
+  <div class="breadcrumb-container">
+    <div class="breadcrumb">
+      <a href="index.html">首頁</a>
+      <span class="separator">›</span>
+      <span>購物車</span>
+    </div>
+  </div>
+
+  <!-- ========== Main ========== -->
+  <main class="cart-container" id="cartContainer">
+    <!-- 由 JS 動態渲染 -->
+  </main>
+
+  <!-- ========== Footer ========== -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h4>沃茲新創空間｜WordsLive</h4>
+        <p>營業人名稱：沃茲有限公司</p>
+        <p>統一編號：82981038</p>
+        <p class="footer-links">
+          <a href="index.html">首頁</a> ｜ <a href="#">訂單查詢</a> ｜ <a href="cart.html">購物車</a> ｜ <a href="#">聯絡表單</a>
+        </p>
+        <div class="social-icons">
+          <a href="#" title="Facebook">F</a>
+          <a href="#" title="Instagram">IG</a>
+          <a href="#" title="LINE">L</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>聯絡方式</h4>
+        <p>服務時間：週一 至 週日 - 09:00～18:00</p>
+        <p>電話：04-3705-5005 #1 場地租借 #2 商辦空間</p>
+        <p>E-mail：wordsspace@wordslive.com.tw</p>
+        <p>地址：臺中市東區自由二街 91 號</p>
+      </div>
+      <div class="footer-col footer-fb">
+        <div class="fb-placeholder">
+          [Facebook Page 嵌入區]<br>
+          <small>Words Live 沃茲新創空間</small>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========== Floating Buttons ========== -->
+  <div class="floating-buttons">
+    <a href="tel:04-3705-5005" class="floating-btn phone" title="電話">📞</a>
+    <a href="#" class="floating-btn line" title="LINE">L</a>
+  </div>
+
+  <!-- ========== Script ========== -->
+  <script src="admin/data.js"></script>
+  <script>
+    function fmtMoney(n) {
+      return 'NT$ ' + (n || 0).toLocaleString();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cartContainer');
+      const items = CartStore.getAll();
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:80px 20px; background:#fff; border-radius:8px;">
+            <div style="font-size:64px; margin-bottom:16px; opacity:.4;">🛒</div>
+            <h2 style="color:#374151; margin-bottom:8px;">購物車是空的</h2>
+            <p style="color:#9ca3af; margin-bottom:24px;">快去挑選喜歡的場館吧！</p>
+            <a href="index.html" style="display:inline-block; padding:12px 32px; background:#1a1f36; color:#fff; border-radius:6px; text-decoration:none; font-weight:600;">前往場館列表</a>
+          </div>
+        `;
+        return;
+      }
+
+      // 計算紅利點數（demo：subtotal × 2%）
+      const subtotal = CartStore.getSubtotal();
+      const deposit = CartStore.getDepositTotal();
+      const total = subtotal + deposit;
+      const points = Math.floor(subtotal * 0.02);
+
+      let html = `
+        <div class="cart-notice">
+          <span class="cart-notice-icon">📅</span>
+          <span>本次購物將會獲得 <strong>${points}</strong>【沃茲紅利點數】，可以在下次使用。</span>
+        </div>
+
+        <div class="cart-table">
+          <div class="cart-table-header">
+            <div class="col-product">商品</div>
+            <div class="col-price">價格</div>
+            <div class="col-qty">數量</div>
+            <div class="col-total">總計</div>
+          </div>
+      `;
+
+      items.forEach(item => {
+        const imgHtml = item.image
+          ? `<img class="cart-thumb" src="${item.image}" alt="${item.displayName}" onerror="this.style.display='none'">`
+          : `<div class="cart-thumb" style="display:flex; align-items:center; justify-content:center; background:#f3f4f6; color:#9ca3af; font-size:32px;">🏛️</div>`;
+
+        const addonsHtml = item.addons.map(a =>
+          `<p><span class="info-label">${a.type === 'headcount' ? '人數費' : a.type === 'cleanup' ? '環境維護' : '專人服務'}：</span>${a.label}（+ NT$ ${a.price.toLocaleString()}）</p>`
+        ).join('');
+
+        html += `
+          <div class="cart-item" data-item-id="${item.id}">
+            <div class="cart-item-product">
+              <button class="cart-remove" title="移除" aria-label="移除" onclick="removeItem(${item.id})">×</button>
+              ${imgHtml}
+              <div class="cart-info">
+                <h3 class="cart-item-name">${item.displayName}</h3>
+                <p><span class="info-label">日期：</span>${item.date}（${item.isHoliday ? '🌟 假日' : '☀️ 平日'}）</p>
+                <p><span class="info-label">時間：</span>${item.startTime} - ${item.endTime}（${item.hours} 小時）</p>
+                <p><span class="info-label">租借方案：</span>${item.planName}</p>
+                <p><span class="info-label">方案說明：</span>${item.planDetail}</p>
+                ${addonsHtml}
+                <p><span class="info-label">押金：</span>NT$ ${item.deposit.toLocaleString()}（先收後退）</p>
+                <p style="color:#9ca3af; font-size:12px;">加入時間：${item.createdAt}</p>
+              </div>
+            </div>
+            <div class="col-price"><span class="mobile-label">小計：</span>NT$ ${item.subtotal.toLocaleString()}</div>
+            <div class="col-qty">
+              <span class="mobile-label">數量：</span>
+              <input type="number" class="qty-input" value="1" min="1" max="1" disabled title="場地租借每筆唯一">
+            </div>
+            <div class="col-total"><span class="mobile-label">總計：</span>NT$ ${item.total.toLocaleString()}</div>
+          </div>
+        `;
+      });
+
+      html += `
+          <div class="cart-actions">
+            <div class="cart-coupon">
+              <input type="text" class="cart-coupon-input" placeholder="輸入折價券">
+              <button class="cart-coupon-btn" type="button">使用折價券</button>
+            </div>
+            <button class="cart-update-btn" type="button" onclick="clearCart()">清空購物車</button>
+          </div>
+        </div>
+
+        <div class="cart-summary">
+          <h2 class="summary-title">購物車總計</h2>
+          <div class="summary-row">
+            <span>小計（${items.length} 筆預訂）</span>
+            <span>NT$ ${subtotal.toLocaleString()}</span>
+          </div>
+          <div class="summary-row">
+            <span>押金（先收後退）</span>
+            <span>NT$ ${deposit.toLocaleString()}</span>
+          </div>
+          <div class="summary-row summary-total">
+            <span>總計</span>
+            <span>NT$ ${total.toLocaleString()}</span>
+          </div>
+          <button class="cart-checkout-btn" type="button" onclick="checkout()">前往結帳</button>
+        </div>
+      `;
+
+      container.innerHTML = html;
+
+      // 折價券按鈕
+      const couponBtn = document.querySelector('.cart-coupon-btn');
+      if (couponBtn) {
+        couponBtn.addEventListener('click', () => {
+          const code = document.querySelector('.cart-coupon-input').value.trim();
+          if (!code) { alert('請輸入折價券代碼'); return; }
+          alert('（demo）折價券「' + code + '」驗證中...實際串接後會套用折扣。');
+        });
+      }
+    }
+
+    function removeItem(id) {
+      if (confirm('確定要移除這筆預訂嗎？')) {
+        CartStore.remove(id);
+        renderCart();
+      }
+    }
+
+    function clearCart() {
+      if (confirm('確定要清空購物車嗎？')) {
+        CartStore.clear();
+        renderCart();
+      }
+    }
+
+    function checkout() {
+      alert('（demo）即將前往結帳頁面。\n\n實際串接後會：\n1. 寫入訂單表\n2. 跳轉付款頁面\n3. 付款成功後從購物車移除');
+    }
+
+    renderCart();
+  </script>
+
+</body>
+</html>

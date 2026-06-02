@@ -30,7 +30,7 @@
             </ul>
           </li>
           <li><a href="cart.html">購物車</a></li>
-          <li><a href="account.html" id="navUserName">Joanna ▾</a></li>
+          <li><a href="account.html" id="navUserName">我的帳戶 ▾</a></li>
         </ul>
       </nav>
     </div>
@@ -551,75 +551,8 @@
         <div class="acc-card-header" style="border:none; margin-bottom:14px;">
           <div class="acc-card-title">📅 預約管理</div>
         </div>
-
-        <!-- 即將到來 -->
-        <h3 style="font-size:15px; color:#1f2937; margin:14px 0 10px;">🔜 即將到來（2 筆）</h3>
-
-        <div class="order-item" style="border-left:4px solid #f97316;">
-          <div class="order-thumb">🏛️</div>
-          <div class="order-info-main">
-            <span class="o-id">#WL26001245</span>
-            <div class="o-venue">勤美館</div>
-            <div class="o-meta">📅 2026/06/15（六）· 14:00 ~ 17:00 · 3 小時</div>
-            <div style="margin-top:6px; font-size:12px; color:#ea580c;">📌 還有 14 天</div>
-          </div>
-          <div class="order-info-side">
-            <div class="order-actions">
-              <button class="btn-small primary" onclick="alert('（demo）改期：選新時段')">📅 改期</button>
-              <button class="btn-small danger" onclick="cancelOrder('WL26001245')">取消預約</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="order-item" style="border-left:4px solid #f97316;">
-          <div class="order-thumb">🏛️</div>
-          <div class="order-info-main">
-            <span class="o-id">#WL26002001</span>
-            <div class="o-venue">勤美館</div>
-            <div class="o-meta">📅 2026/06/02（一）· 10:00 ~ 13:00 · 3 小時</div>
-            <div style="margin-top:6px; font-size:12px; color:#ea580c;">📌 1 天後（請盡快付款）</div>
-          </div>
-          <div class="order-info-side">
-            <div class="order-actions">
-              <button class="btn-small primary" onclick="payOrder('WL26002001')">立即付款</button>
-              <button class="btn-small danger" onclick="cancelOrder('WL26002001')">取消</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 已完成 -->
-        <h3 style="font-size:15px; color:#1f2937; margin:24px 0 10px;">✓ 已完成（5 筆）</h3>
-
-        <div class="order-item" style="opacity:.85;">
-          <div class="order-thumb">🏛️</div>
-          <div class="order-info-main">
-            <span class="o-id">#WL26001235</span>
-            <div class="o-venue">站前館 - 洽談室</div>
-            <div class="o-meta">📅 2026/05/27 · 15:00 ~ 18:00</div>
-          </div>
-          <div class="order-info-side">
-            <div class="order-actions">
-              <button class="btn-small primary" onclick="reorder('WL26001235')">再次預訂</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="order-item" style="opacity:.85;">
-          <div class="order-thumb">🏛️</div>
-          <div class="order-info-main">
-            <span class="o-id">#WL26001210</span>
-            <div class="o-venue">勤美館</div>
-            <div class="o-meta">📅 2026/04/20 · 13:00 ~ 17:00</div>
-          </div>
-          <div class="order-info-side">
-            <div class="order-actions">
-              <button class="btn-small primary" onclick="reorder('WL26001210')">再次預訂</button>
-            </div>
-          </div>
-        </div>
-
-        <div style="text-align:center; padding:14px; color:#9ca3af; font-size:12px;">
-          <a href="#" onclick="document.querySelector('[data-tab=orders]').click(); return false;" style="color:#ea580c;">查看全部訂單 →</a>
+        <div id="bookingsContent">
+          <div style="padding:40px;text-align:center;color:#9ca3af">載入中...</div>
         </div>
       </div>
 
@@ -629,20 +562,21 @@
       <div class="account-tab-content" data-content="coupons">
         <div class="acc-card-header" style="border:none;">
           <div class="acc-card-title">🎟️ 我的優惠券</div>
-          <div style="font-size:13px;">
-            <span style="color:#ea580c; font-weight:700;">3</span> 張可用 ·
-            <span style="color:#9ca3af;">1 張已用</span> ·
-            <span style="color:#9ca3af;">2 張已過期</span>
+          <div style="font-size:13px;" id="couponSummary">
+            <span style="color:#9ca3af;">載入中...</span>
           </div>
         </div>
 
         <div class="sub-tabs">
-          <button class="sub-tab active" data-coupon-filter="available">可使用 (3)</button>
-          <button class="sub-tab" data-coupon-filter="used">已使用 (1)</button>
-          <button class="sub-tab" data-coupon-filter="expired">已過期 (2)</button>
+          <button class="sub-tab active" data-coupon-filter="available">可使用 (<span id="cntAvailable">0</span>)</button>
+          <button class="sub-tab" data-coupon-filter="used">已使用 (<span id="cntUsed">0</span>)</button>
+          <button class="sub-tab" data-coupon-filter="expired">已過期 (<span id="cntExpired">0</span>)</button>
         </div>
 
         <div id="couponsList">
+          <div style="padding:40px;text-align:center;color:#9ca3af">載入中...</div>
+        </div>
+        <div id="couponsListMockBackup" style="display:none;">
 
           <!-- 可使用 -->
           <div class="coupon-card" data-coupon-status="available">
@@ -755,11 +689,10 @@
               <span style="font-size:12px; color:#9ca3af;">⚠️ 已過期</span>
             </div>
           </div>
-
         </div>
 
         <div style="margin-top:14px; padding:14px; background:#fef3c7; border-radius:8px; font-size:13px; color:#92400e;">
-          💡 想要更多優惠券？升級到「商務會員」可享月月專屬好禮！
+          💡 想要更多優惠券？升級可享月月專屬好禮！
           <a href="#" onclick="document.querySelector('[data-tab=membership]').click(); return false;" style="color:#92400e; text-decoration:underline;">看升等說明 →</a>
         </div>
       </div>
@@ -776,13 +709,13 @@
         <div class="balance-grid">
           <div class="balance-card points">
             <div class="balance-label">⭐ 紅利點數餘額</div>
-            <div class="balance-value">312</div>
+            <div class="balance-value" id="pointsBalance">—</div>
             <div class="balance-unit">點（1 點 = NT$ 1）</div>
             <button class="balance-action" onclick="alert('（demo）使用點數：下次結帳時自動帶入折抵')">使用點數結帳</button>
           </div>
           <div class="balance-card stored">
             <div class="balance-label">💳 儲值金額餘額</div>
-            <div class="balance-value">$ 2,000</div>
+            <div class="balance-value" id="storedBalance">—</div>
             <div class="balance-unit">可於下次預訂直接扣抵</div>
             <button class="balance-action" onclick="alert('（demo）儲值方案：3000/5000/10000 三種')">儲值加值</button>
           </div>
@@ -799,13 +732,8 @@
             <thead>
               <tr><th>日期</th><th>類型</th><th>說明</th><th>對應訂單</th><th style="text-align:right;">點數</th><th style="text-align:right;">餘額</th></tr>
             </thead>
-            <tbody>
-              <tr><td>2026/05/27</td><td>消費獲得</td><td>消費滿 NT$ 1,680，1% 回饋</td><td>#WL26001235</td><td style="text-align:right;" class="tx-amount-add">+ 17</td><td style="text-align:right;">312</td></tr>
-              <tr><td>2026/04/20</td><td>消費獲得</td><td>消費滿 NT$ 5,200</td><td>#WL26001210</td><td style="text-align:right;" class="tx-amount-add">+ 52</td><td style="text-align:right;">295</td></tr>
-              <tr><td>2026/03/15</td><td>消費獲得</td><td>消費滿 NT$ 9,250</td><td>#WL26001102</td><td style="text-align:right;" class="tx-amount-add">+ 93</td><td style="text-align:right;">243</td></tr>
-              <tr><td>2026/02/14</td><td>生日禮</td><td>會員生日專屬點數</td><td>—</td><td style="text-align:right;" class="tx-amount-add">+ 100</td><td style="text-align:right;">150</td></tr>
-              <tr><td>2026/01/20</td><td>消費獲得</td><td>消費滿 NT$ 3,300</td><td>#WL26000891</td><td style="text-align:right;" class="tx-amount-add">+ 33</td><td style="text-align:right;">50</td></tr>
-              <tr><td>2025/12/30</td><td>消費獲得</td><td>消費滿 NT$ 1,700</td><td>#WL25001520</td><td style="text-align:right;" class="tx-amount-add">+ 17</td><td style="text-align:right;">17</td></tr>
+            <tbody id="pointsTxBody">
+              <tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px">載入中...</td></tr>
             </tbody>
           </table>
         </div>
@@ -815,10 +743,8 @@
             <thead>
               <tr><th>日期</th><th>類型</th><th>說明</th><th>對應訂單</th><th style="text-align:right;">金額</th><th style="text-align:right;">餘額</th></tr>
             </thead>
-            <tbody>
-              <tr><td>2026/02/01</td><td>儲值</td><td>商務儲值方案 $5,000（贈 $500）</td><td>—</td><td style="text-align:right;" class="tx-amount-add">+ $ 5,500</td><td style="text-align:right;">$ 5,500</td></tr>
-              <tr><td>2026/03/15</td><td>消費扣抵</td><td>勤美館租借</td><td>#WL26001102</td><td style="text-align:right;" class="tx-amount-sub">- $ 2,000</td><td style="text-align:right;">$ 3,500</td></tr>
-              <tr><td>2026/04/20</td><td>消費扣抵</td><td>勤美館租借</td><td>#WL26001210</td><td style="text-align:right;" class="tx-amount-sub">- $ 1,500</td><td style="text-align:right;">$ 2,000</td></tr>
+            <tbody id="storedTxBody">
+              <tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px">載入中...</td></tr>
             </tbody>
           </table>
         </div>
@@ -833,23 +759,23 @@
         </div>
 
         <!-- 大會員卡 -->
-        <div class="tier-card-big">
+        <div class="tier-card-big" id="tierCardBig">
           <div class="tier-current">您目前的等級</div>
-          <div class="tier-name">經濟會員</div>
-          <div class="tier-discount">享 92 折優惠</div>
+          <div class="tier-name" id="tierName">—</div>
+          <div class="tier-discount" id="tierDiscount">—</div>
 
           <div class="tier-progress">
-            <div class="tier-progress-fill" style="width: 45.7%;"></div>
+            <div class="tier-progress-fill" id="tierProgressFill" style="width: 0%;"></div>
           </div>
           <div class="tier-progress-label">
-            <span>累積消費 NT$ 45,680</span>
-            <span>下一級 NT$ 100,000</span>
+            <span id="tierSpent">累積消費 NT$ 0</span>
+            <span id="tierNextThreshold">下一級 —</span>
           </div>
-          <div style="margin-top:8px; font-size:13px;">距離「<strong>商務會員</strong>」還差 <strong>NT$ 54,320</strong></div>
+          <div style="margin-top:8px; font-size:13px;" id="tierToNext">—</div>
         </div>
 
         <!-- 5 等級對照 -->
-        <div class="tier-compare">
+        <div class="tier-compare" id="tierCompare">
           <div class="tier-mini">
             <div class="tier-mini-name">一般會員</div>
             <div class="tier-mini-threshold">$0 ~ $5,999</div>
@@ -910,27 +836,28 @@
           <div class="form-grid">
             <div class="form-field">
               <label>姓名</label>
-              <input type="text" value="Joanna" disabled class="profile-input">
+              <input type="text" value="" placeholder="—" disabled class="profile-input">
             </div>
             <div class="form-field">
               <label>電子郵件</label>
-              <input type="email" value="joanna@urfit.com.tw" disabled class="profile-input">
+              <input type="email" value="" placeholder="—" disabled class="profile-input">
             </div>
             <div class="form-field">
               <label>手機</label>
-              <input type="tel" value="0912-345-678" disabled class="profile-input">
+              <input type="tel" value="" placeholder="尚未填寫" disabled class="profile-input">
             </div>
             <div class="form-field">
               <label>生日 <span style="font-size:11px; color:#9ca3af;">（會員生日禮用）</span></label>
-              <input type="date" value="1990-08-15" disabled class="profile-input">
+              <input type="date" value="" disabled class="profile-input">
             </div>
             <div class="form-field">
               <label>LINE ID 綁定</label>
-              <input type="text" value="joanna_w" disabled class="profile-input">
+              <input type="text" value="" placeholder="尚未綁定" disabled class="profile-input">
             </div>
             <div class="form-field">
               <label>性別</label>
               <select disabled class="profile-input">
+                <option value="">未選擇</option>
                 <option>女</option>
                 <option>男</option>
                 <option>不透露</option>
@@ -988,58 +915,15 @@
       <div class="account-tab-content" data-content="address">
         <div class="acc-card-header" style="border:none;">
           <div class="acc-card-title">🏠 收件地址</div>
-          <button class="btn-small primary" onclick="alert('（demo）開啟新增地址表單')">＋ 新增地址</button>
+          <button class="btn-small primary" onclick="openAddressForm()">＋ 新增地址</button>
         </div>
 
         <p style="font-size:13px; color:#6b7280; margin-bottom:14px;">
           地址用於：實體優惠券郵寄、節日禮品配送、發票寄送（如選擇紙本三聯式）
         </p>
 
-        <!-- 預設地址 -->
-        <div class="address-card is-default">
-          <div>
-            <span class="addr-label-tag">⭐ 預設地址</span>
-            <span class="addr-name">Joanna　0912-345-678</span>
-          </div>
-          <div class="addr-detail">
-            台中市西區公益路一段 100 號 12 樓<br>
-            <span style="color:#9ca3af; font-size:12px;">收件人：Joanna　郵遞區號：403</span>
-          </div>
-          <div class="addr-actions">
-            <button class="btn-small" onclick="alert('（demo）編輯地址')">編輯</button>
-            <button class="btn-small danger" onclick="alert('（demo）預設地址不能刪除')">刪除</button>
-          </div>
-        </div>
-
-        <!-- 其他地址 -->
-        <div class="address-card">
-          <div>
-            <span class="addr-name">Joanna　0912-345-678</span>
-          </div>
-          <div class="addr-detail">
-            台中市北區英才路 396 號 11 樓-2（公司）<br>
-            <span style="color:#9ca3af; font-size:12px;">收件人：Joanna　郵遞區號：404</span>
-          </div>
-          <div class="addr-actions">
-            <button class="btn-small primary" onclick="alert('（demo）設為預設')">⭐ 設為預設</button>
-            <button class="btn-small" onclick="alert('（demo）編輯地址')">編輯</button>
-            <button class="btn-small danger" onclick="confirm('確定刪除？') && alert('（demo）已刪除')">刪除</button>
-          </div>
-        </div>
-
-        <div class="address-card">
-          <div>
-            <span class="addr-name">林媽媽　0922-111-333</span>
-          </div>
-          <div class="addr-detail">
-            台中市南屯區公益路二段 88 號（媽媽家）<br>
-            <span style="color:#9ca3af; font-size:12px;">收件人：林媽媽　郵遞區號：408</span>
-          </div>
-          <div class="addr-actions">
-            <button class="btn-small primary" onclick="alert('（demo）設為預設')">⭐ 設為預設</button>
-            <button class="btn-small" onclick="alert('（demo）編輯地址')">編輯</button>
-            <button class="btn-small danger" onclick="confirm('確定刪除？') && alert('（demo）已刪除')">刪除</button>
-          </div>
+        <div id="addressList">
+          <div style="padding:40px;text-align:center;color:#9ca3af">載入中...</div>
         </div>
       </div>
 
@@ -1159,7 +1043,406 @@
 
       // 4. 渲染訂單
       renderOrdersList(orders || []);
+
+      // 5. 載入其他 tab 的資料（並行抓）
+      loadBookings(customer.id, orders || []);
+      loadPointsAndStored(customer.id, customer);
+      loadMembership(customer);
+      loadCoupons(customer.id);
+      loadProfile(customer);
+      loadAddresses(customer.id);
     })();
+
+    // ============================================================
+    // 預約管理 tab
+    // ============================================================
+    function loadBookings(customerId, orders) {
+      const today = new Date().toISOString().slice(0,10);
+      const upcoming = orders.filter(o =>
+        (o.status === 'pending' || o.status === 'paid' || o.status === 'confirmed') &&
+        o.booking_date >= today
+      ).sort((a,b) => a.booking_date.localeCompare(b.booking_date));
+
+      const completed = orders.filter(o => o.status === 'completed')
+        .sort((a,b) => b.booking_date.localeCompare(a.booking_date)).slice(0,5);
+
+      const STATUS_LABEL = { pending: '待付款', paid: '已付款', confirmed: '已確認', completed: '已完成' };
+      function renderItem(o, isUpcoming) {
+        const venue = o.space?.venue?.name || '';
+        const space = o.space?.name || '';
+        const displayName = space === venue ? venue : `${venue} - ${space}`;
+        const dt = (o.booking_date || '').replace(/-/g, '/');
+        const st = (o.start_time || '').slice(0,5);
+        const et = (o.end_time || '').slice(0,5);
+        const hr = o.duration_hours ? Math.round(o.duration_hours * 10) / 10 : '';
+
+        const daysUntil = isUpcoming ?
+          Math.ceil((new Date(o.booking_date) - new Date()) / (1000*60*60*24)) : null;
+        const noteText = isUpcoming ?
+          (o.status === 'pending' ? `📌 ${daysUntil} 天後（請盡快付款）` : `📌 還有 ${daysUntil} 天`) : '';
+
+        let actions = '';
+        if (o.status === 'pending') {
+          actions = `<button class="btn-small primary" onclick="payOrder('${o.order_number}')">立即付款</button>
+            <button class="btn-small danger" onclick="cancelOrder('${o.id}')">取消</button>`;
+        } else if (o.status === 'confirmed') {
+          actions = `<button class="btn-small primary" onclick="alert('（demo）改期：選新時段')">📅 改期</button>
+            <button class="btn-small danger" onclick="cancelOrder('${o.id}')">取消預約</button>`;
+        } else if (o.status === 'completed') {
+          actions = `<button class="btn-small primary" onclick="reorder('${o.id}')">再次預訂</button>`;
+        }
+
+        return `
+          <div class="order-item" ${isUpcoming ? 'style="border-left:4px solid #f97316;"' : 'style="opacity:.85;"'}>
+            <div class="order-thumb">🏛️</div>
+            <div class="order-info-main">
+              <span class="o-id">#${o.order_number}</span>
+              <div class="o-venue">${displayName}</div>
+              <div class="o-meta">📅 ${dt} · ${st} ~ ${et}${hr ? ' · ' + hr + ' 小時' : ''}</div>
+              ${noteText ? `<div style="margin-top:6px; font-size:12px; color:#ea580c;">${noteText}</div>` : ''}
+            </div>
+            <div class="order-info-side">
+              <div class="order-actions">${actions}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      let html = '';
+      if (upcoming.length === 0 && completed.length === 0) {
+        html = '<div style="padding:40px;text-align:center;color:#9ca3af">尚無預約</div>';
+      } else {
+        if (upcoming.length > 0) {
+          html += `<h3 style="font-size:15px; color:#1f2937; margin:14px 0 10px;">🔜 即將到來（${upcoming.length} 筆）</h3>`;
+          html += upcoming.map(o => renderItem(o, true)).join('');
+        }
+        if (completed.length > 0) {
+          html += `<h3 style="font-size:15px; color:#1f2937; margin:24px 0 10px;">✓ 已完成（${completed.length} 筆）</h3>`;
+          html += completed.map(o => renderItem(o, false)).join('');
+          html += `<div style="text-align:center; padding:14px; color:#9ca3af; font-size:12px;">
+            <a href="#" onclick="document.querySelector('[data-tab=orders]').click(); return false;" style="color:#ea580c;">查看全部訂單 →</a>
+          </div>`;
+        }
+      }
+      document.getElementById('bookingsContent').innerHTML = html;
+    }
+
+    // ============================================================
+    // 我的點數 + 儲值 tab
+    // ============================================================
+    async function loadPointsAndStored(customerId, customer) {
+      // 餘額直接從 customer 取
+      document.getElementById('pointsBalance').textContent = customer.loyalty_points || 0;
+      document.getElementById('storedBalance').textContent = '$ ' + Number(customer.stored_value_balance || 0).toLocaleString();
+
+      // 點數異動
+      const { data: ptx } = await supabaseClient
+        .from('point_transactions')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      const TYPE_LABEL = { earn: '消費獲得', spend: '消費扣抵', expire: '點數到期', adjustment: '調整', birthday: '生日禮' };
+      const ptxBody = document.getElementById('pointsTxBody');
+      if (!ptx || ptx.length === 0) {
+        ptxBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px">尚無紅利點數紀錄</td></tr>';
+      } else {
+        ptxBody.innerHTML = ptx.map(t => {
+          const d = new Date(t.created_at).toLocaleDateString('zh-TW').replace(/\//g, '/');
+          const sign = t.amount >= 0 ? '+' : '';
+          const cls = t.amount >= 0 ? 'tx-amount-add' : 'tx-amount-sub';
+          return `<tr>
+            <td>${d}</td>
+            <td>${TYPE_LABEL[t.type] || t.type}</td>
+            <td>${t.description || '—'}</td>
+            <td>${t.order_id ? '—' : '—'}</td>
+            <td style="text-align:right;" class="${cls}">${sign} ${t.amount}</td>
+            <td style="text-align:right;">${t.balance_after}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      // 儲值異動
+      const { data: svtx } = await supabaseClient
+        .from('stored_value_transactions')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      const SV_LABEL = { deposit: '儲值', spend: '消費扣抵', refund: '退款', adjustment: '調整' };
+      const svBody = document.getElementById('storedTxBody');
+      if (!svtx || svtx.length === 0) {
+        svBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px">尚無儲值紀錄</td></tr>';
+      } else {
+        svBody.innerHTML = svtx.map(t => {
+          const d = new Date(t.created_at).toLocaleDateString('zh-TW');
+          const sign = t.amount >= 0 ? '+' : '';
+          const cls = t.amount >= 0 ? 'tx-amount-add' : 'tx-amount-sub';
+          return `<tr>
+            <td>${d}</td>
+            <td>${SV_LABEL[t.type] || t.type}</td>
+            <td>${t.description || '—'}</td>
+            <td>—</td>
+            <td style="text-align:right;" class="${cls}">${sign} $ ${Number(Math.abs(t.amount)).toLocaleString()}</td>
+            <td style="text-align:right;">$ ${Number(t.balance_after).toLocaleString()}</td>
+          </tr>`;
+        }).join('');
+      }
+    }
+
+    // ============================================================
+    // 會員籍 tab
+    // ============================================================
+    async function loadMembership(customer) {
+      const { data: tiers } = await supabaseClient
+        .from('membership_tiers')
+        .select('*')
+        .order('threshold_amount', { ascending: true });
+
+      if (!tiers || tiers.length === 0) return;
+
+      const currentTier = customer.tier;  // 已 join membership_tiers
+      const spent = Number(customer.total_spent || 0);
+
+      // 找下一級
+      const nextTier = tiers.find(t => t.threshold_amount > spent);
+      const progressPct = nextTier ?
+        Math.min(100, (spent / nextTier.threshold_amount) * 100) : 100;
+      const toNext = nextTier ? nextTier.threshold_amount - spent : 0;
+
+      // 中文折扣表達：0.92 → "92 折"、0.9 → "9 折"、0.85 → "85 折"
+      function formatDiscount(rate, withPrefix) {
+        if (!rate || rate >= 1) return '無折扣';
+        const pct = Math.round(rate * 100);
+        const str = (pct % 10 === 0) ? `${pct / 10} 折` : `${pct} 折`;
+        return withPrefix ? `享 ${str}優惠` : str;
+      }
+
+      // 渲染大卡
+      document.getElementById('tierName').textContent = currentTier?.name || '一般會員';
+      document.getElementById('tierDiscount').textContent = formatDiscount(currentTier?.discount_rate, true);
+      document.getElementById('tierProgressFill').style.width = progressPct + '%';
+      document.getElementById('tierSpent').textContent = `累積消費 NT$ ${spent.toLocaleString()}`;
+      document.getElementById('tierNextThreshold').textContent =
+        nextTier ? `下一級 NT$ ${nextTier.threshold_amount.toLocaleString()}` : '已達最高等級';
+      document.getElementById('tierToNext').innerHTML =
+        nextTier ? `距離「<strong>${nextTier.name}</strong>」還差 <strong>NT$ ${toNext.toLocaleString()}</strong>` : '🏆 您已是最高等級會員！';
+
+      // 渲染 5 等級對照
+      const tierCompareEl = document.getElementById('tierCompare');
+      tierCompareEl.innerHTML = tiers.map(t => {
+        const isCurrent = currentTier && t.id === currentTier.id;
+        return `
+          <div class="tier-mini ${isCurrent ? 'current' : ''}">
+            ${isCurrent ? '<div style="font-size:10px; color:#92400e; margin-bottom:2px;">當前</div>' : ''}
+            <div class="tier-mini-name">${t.name}</div>
+            <div class="tier-mini-threshold">$${Number(t.threshold_amount).toLocaleString()}+</div>
+            <div class="tier-mini-discount">${formatDiscount(t.discount_rate)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============================================================
+    // 優惠券 tab
+    // ============================================================
+    async function loadCoupons(customerId) {
+      // 撈所有 active coupons（全系統共用）+ 過期的
+      const { data: allCoupons } = await supabaseClient
+        .from('coupons')
+        .select('*')
+        .order('valid_until', { ascending: false });
+
+      // 撈該客戶已用優惠券
+      const { data: usage } = await supabaseClient
+        .from('coupon_usage')
+        .select('*, coupon:coupons(*)')
+        .eq('customer_id', customerId)
+        .order('used_at', { ascending: false });
+
+      const usedCouponIds = new Set((usage || []).map(u => u.coupon_id));
+      const now = new Date();
+
+      const available = (allCoupons || []).filter(c =>
+        c.status === 'active' &&
+        !usedCouponIds.has(c.id) &&
+        (!c.valid_until || new Date(c.valid_until) > now)
+      );
+      const used = usage || [];
+      const expired = (allCoupons || []).filter(c =>
+        c.status === 'expired' ||
+        (c.valid_until && new Date(c.valid_until) < now && !usedCouponIds.has(c.id))
+      );
+
+      // 更新計數
+      document.getElementById('cntAvailable').textContent = available.length;
+      document.getElementById('cntUsed').textContent = used.length;
+      document.getElementById('cntExpired').textContent = expired.length;
+      document.getElementById('couponSummary').innerHTML =
+        `<span style="color:#ea580c; font-weight:700;">${available.length}</span> 張可用 ·
+         <span style="color:#9ca3af;">${used.length} 張已用</span> ·
+         <span style="color:#9ca3af;">${expired.length} 張已過期</span>`;
+
+      // 渲染卡片
+      function couponCard(c, status, usageInfo) {
+        const isAmount = c.discount_type === 'amount';
+        const discountText = isAmount ?
+          `$${Number(c.discount_value).toLocaleString()}` :
+          `${Math.round(c.discount_value * 10) / 10}<span style="font-size:14px;">折</span>`;
+        const labelText = isAmount ? '折抵' : '全館';
+
+        const colors = ['#f97316', '#8b5cf6', '#10b981', '#3b82f6'];
+        const bgColor = status === 'available'
+          ? `background:linear-gradient(135deg, ${colors[Math.abs(c.id.charCodeAt(0)) % 4]}, #555);`
+          : 'background:#9ca3af;';
+
+        let metaHtml = '';
+        if (status === 'available') {
+          const validUntil = c.valid_until ? new Date(c.valid_until).toLocaleDateString('zh-TW') : '長期';
+          const daysLeft = c.valid_until ?
+            Math.ceil((new Date(c.valid_until) - now) / (1000*60*60*24)) : 999;
+          metaHtml = `
+            ${c.min_order_amount ? `· 最低消費 NT$ ${Number(c.min_order_amount).toLocaleString()}<br>` : ''}
+            ${c.max_discount_amount ? `· 折扣上限 NT$ ${Number(c.max_discount_amount).toLocaleString()}<br>` : ''}
+            · 適用全部場館<br>
+            · 有效期：~ ${validUntil}（剩 ${daysLeft} 天）
+          `;
+        } else if (status === 'used') {
+          const usedDate = new Date(usageInfo.used_at).toLocaleDateString('zh-TW');
+          metaHtml = `· 已使用<br>· 使用時間：${usedDate}<br>· 折扣金額：NT$ ${Number(usageInfo.discount_applied).toLocaleString()}`;
+        } else {
+          const expDate = c.valid_until ? new Date(c.valid_until).toLocaleDateString('zh-TW') : '—';
+          metaHtml = `· 過期日：${expDate}<br>· 未使用`;
+        }
+
+        const action = status === 'available' ?
+          `<button class="btn-small primary" onclick="alert('（demo）下次預訂自動套用')">立即使用</button>
+           <button class="btn-small" onclick="alert('券代碼：${c.code}')">詳情</button>` :
+          (status === 'used' ?
+           `<span style="font-size:12px; color:#9ca3af;">✓ 已使用</span>` :
+           `<span style="font-size:12px; color:#9ca3af;">⚠️ 已過期</span>`);
+
+        return `
+          <div class="coupon-card ${status === 'used' ? 'used' : (status === 'expired' ? 'expired' : '')}" data-coupon-status="${status}">
+            <div class="coupon-discount-area" style="${bgColor}">
+              <div class="coupon-discount-value">${discountText}</div>
+              <div class="coupon-discount-label">${labelText}</div>
+            </div>
+            <div class="coupon-info">
+              <div class="coupon-name">${c.name}</div>
+              <div class="coupon-meta">${metaHtml}</div>
+            </div>
+            <div class="coupon-action">${action}</div>
+          </div>
+        `;
+      }
+
+      const list = document.getElementById('couponsList');
+      let html = '';
+      available.forEach(c => html += couponCard(c, 'available'));
+      used.forEach(u => html += couponCard(u.coupon, 'used', u));
+      expired.forEach(c => html += couponCard(c, 'expired'));
+
+      if (!html) {
+        html = '<div style="padding:40px;text-align:center;color:#9ca3af">目前沒有優惠券</div>';
+      }
+      list.innerHTML = html;
+
+      // 預設只顯示可用
+      list.querySelectorAll('.coupon-card').forEach(card => {
+        if (card.dataset.couponStatus !== 'available') card.style.display = 'none';
+      });
+    }
+
+    // ============================================================
+    // 帳戶管理 tab：把 profile inputs 填入真實資料
+    // ============================================================
+    function loadProfile(customer) {
+      const inputs = document.querySelectorAll('.profile-input');
+      inputs.forEach(inp => {
+        if (inp.type === 'email') {
+          inp.value = customer.email || '';
+        } else if (inp.type === 'tel') {
+          inp.value = customer.phone || '';
+        } else if (inp.type === 'date') {
+          inp.value = customer.birthday || '';
+        } else if (inp.tagName === 'SELECT') {
+          const map = { female: '女', male: '男', other: '不透露' };
+          if (customer.gender && map[customer.gender]) {
+            const target = map[customer.gender];
+            [...inp.options].forEach(opt => { if (opt.text === target) opt.selected = true; });
+          }
+          // 若 gender 為 null，保留「未選擇」預設狀態
+        } else if (inp.type === 'text') {
+          // 姓名或 LINE ID（用 label 區分）
+          const label = inp.closest('.form-field')?.querySelector('label')?.textContent || '';
+          if (label.includes('LINE')) inp.value = customer.line_id || '';
+          else inp.value = customer.name || '';
+        }
+      });
+    }
+
+    // ============================================================
+    // 編輯地址 tab
+    // ============================================================
+    async function loadAddresses(customerId) {
+      const { data: addresses, error } = await supabaseClient
+        .from('addresses')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('is_default', { ascending: false });
+
+      const list = document.getElementById('addressList');
+      if (error) {
+        list.innerHTML = `<div style="padding:40px;text-align:center;color:#dc2626">讀取失敗：${error.message}</div>`;
+        return;
+      }
+      if (!addresses || addresses.length === 0) {
+        list.innerHTML = `
+          <div style="padding:60px 20px;text-align:center;background:#fff;border-radius:8px;">
+            <div style="font-size:48px;margin-bottom:12px;opacity:.4">🏠</div>
+            <h3 style="color:#374151;margin-bottom:8px;">尚未新增地址</h3>
+            <p style="color:#9ca3af;margin-bottom:16px">新增地址以接收實體優惠券、節日禮品</p>
+            <button class="btn-small primary" onclick="openAddressForm()">＋ 新增地址</button>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = addresses.map(a => `
+        <div class="address-card ${a.is_default ? 'is-default' : ''}">
+          <div>
+            ${a.is_default ? '<span class="addr-label-tag">⭐ 預設地址</span>' : ''}
+            <span class="addr-name">${a.recipient_name}　${a.phone}</span>
+          </div>
+          <div class="addr-detail">
+            ${a.address}${a.label ? '（' + a.label + '）' : ''}<br>
+            <span style="color:#9ca3af; font-size:12px;">收件人：${a.recipient_name}　郵遞區號：${a.zip_code || '—'}</span>
+          </div>
+          <div class="addr-actions">
+            ${!a.is_default ? `<button class="btn-small primary" onclick="setDefaultAddress('${a.id}')">⭐ 設為預設</button>` : ''}
+            <button class="btn-small" onclick="alert('（demo）編輯地址：Phase 3 開放')">編輯</button>
+            <button class="btn-small danger" onclick="deleteAddress('${a.id}')">刪除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 地址操作（demo 用）
+    function openAddressForm() {
+      alert('（demo）新增地址表單將在 Phase 3 開放');
+    }
+    async function setDefaultAddress(id) {
+      if (!currentCustomer) return;
+      await supabaseClient.from('addresses').update({ is_default: false }).eq('customer_id', currentCustomer.id);
+      await supabaseClient.from('addresses').update({ is_default: true }).eq('id', id);
+      loadAddresses(currentCustomer.id);
+    }
+    async function deleteAddress(id) {
+      if (!confirm('確定刪除此地址？')) return;
+      const { error } = await supabaseClient.from('addresses').delete().eq('id', id);
+      if (error) { alert('刪除失敗：' + error.message); return; }
+      if (currentCustomer) loadAddresses(currentCustomer.id);
+    }
 
     function renderOrdersList(orders) {
       const list = document.getElementById('ordersList');

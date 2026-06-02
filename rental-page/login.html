@@ -237,7 +237,7 @@
       }
 
       // Step 2: 建立 customers row（如果 trigger 沒幫忙的話，手動建）
-      // 註：理想做法是用 DB trigger 自動建，但這裡保險也做一次
+      // 註：customers 表沒有 status 欄位（schema 已用 deleted_at 做軟刪除）
       if (signUpData.user) {
         const { error: customerError } = await supabaseClient
           .from('customers')
@@ -245,7 +245,6 @@
             auth_user_id: signUpData.user.id,
             email,
             name,
-            status: 'active',
           });
 
         if (customerError && customerError.code !== '23505') {  // 23505 = unique violation (trigger 已建)

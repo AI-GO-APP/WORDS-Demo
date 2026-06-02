@@ -33,8 +33,9 @@ begin
   );
 
   -- 建立 customer row（如果已存在則跳過）
-  insert into public.customers (auth_user_id, email, name, status)
-  values (new.id, new.email, v_name, 'active')
+  -- 注意：customers 表沒有 status 欄位，schema 用 deleted_at 做軟刪除
+  insert into public.customers (auth_user_id, email, name)
+  values (new.id, new.email, v_name)
   on conflict (auth_user_id) do nothing;
 
   return new;

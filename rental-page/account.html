@@ -567,6 +567,21 @@
           </div>
         </div>
 
+        <!-- 兌換優惠碼 -->
+        <div style="background:#fff7ed; border:1px dashed #fdba74; border-radius:8px; padding:14px 16px; margin:14px 0;">
+          <div style="font-size:13px; color:#9a3412; margin-bottom:8px; font-weight:600;">🎁 兌換優惠券</div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="couponCodeInput" placeholder="輸入優惠碼（不分大小寫）"
+                   style="flex:1; padding:8px 12px; border:1px solid #fdba74; border-radius:6px; font-size:14px; text-transform:uppercase;"
+                   onkeypress="if(event.key==='Enter')claimCoupon()">
+            <button onclick="claimCoupon()" id="claimCouponBtn"
+                    style="padding:8px 18px; background:#f97316; color:#fff; border:none; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer;">
+              兌換
+            </button>
+          </div>
+          <div id="couponClaimMsg" style="font-size:12px; margin-top:8px; display:none;"></div>
+        </div>
+
         <div class="sub-tabs">
           <button class="sub-tab active" data-coupon-filter="available">可使用 (<span id="cntAvailable">0</span>)</button>
           <button class="sub-tab" data-coupon-filter="used">已使用 (<span id="cntUsed">0</span>)</button>
@@ -1244,35 +1259,37 @@
     }
 
     // ============================================================
-    // 優惠券 tab
+    // 優惠券 tab：只顯示已兌換的（customer_coupons）
     // ============================================================
     async function loadCoupons(customerId) {
-      // 撈所有 active coupons（全系統共用）+ 過期的
-      const { data: allCoupons } = await supabaseClient
-        .from('coupons')
-        .select('*')
-        .order('valid_until', { ascending: false });
-
-      // 撈該客戶已用優惠券
-      const { data: usage } = await supabaseClient
-        .from('coupon_usage')
+      // 撈該客戶已兌換的優惠券（包含未用 + 已用）
+      const { data: myCoupons, error } = await supabaseClient
+        .from('customer_coupons')
         .select('*, coupon:coupons(*)')
         .eq('customer_id', customerId)
-        .order('used_at', { ascending: false });
+        .order('claimed_at', { ascending: false });
 
-      const usedCouponIds = new Set((usage || []).map(u => u.coupon_id));
+      if (error) {
+        document.getElementById('couponsList').innerHTML =
+          `<div style="padding:40px;text-align:center;color:#dc2626">讀取失敗：${error.message}</div>`;
+        return;
+      }
+
       const now = new Date();
-
-      const available = (allCoupons || []).filter(c =>
-        c.status === 'active' &&
-        !usedCouponIds.has(c.id) &&
-        (!c.valid_until || new Date(c.valid_until) > now)
-      );
-      const used = usage || [];
-      const expired = (allCoupons || []).filter(c =>
-        c.status === 'expired' ||
-        (c.valid_until && new Date(c.valid_until) < now && !usedCouponIds.has(c.id))
-      );
+      const available = [], used = [], expired = [];
+      (myCoupons || []).forEach(cc => {
+        const c = cc.coupon;
+        if (!c) return;
+        if (cc.used_at) {
+          used.push(cc);
+        } else if (c.valid_until && new Date(c.valid_until) < now) {
+          expired.push(cc);
+        } else if (c.status !== 'active') {
+          expired.push(cc);
+        } else {
+          available.push(cc);
+        }
+      });
 
       // 更新計數
       document.getElementById('cntAvailable').textContent = available.length;
@@ -1284,11 +1301,12 @@
          <span style="color:#9ca3af;">${expired.length} 張已過期</span>`;
 
       // 渲染卡片
-      function couponCard(c, status, usageInfo) {
+      function couponCard(cc, status) {
+        const c = cc.coupon;
         const isAmount = c.discount_type === 'amount';
         const discountText = isAmount ?
           `$${Number(c.discount_value).toLocaleString()}` :
-          `${Math.round(c.discount_value * 10) / 10}<span style="font-size:14px;">折</span>`;
+          `${Math.round(c.discount_value * 100)}<span style="font-size:14px;">折</span>`;
         const labelText = isAmount ? '折抵' : '全館';
 
         const colors = ['#f97316', '#8b5cf6', '#10b981', '#3b82f6'];
@@ -1300,16 +1318,19 @@
         if (status === 'available') {
           const validUntil = c.valid_until ? new Date(c.valid_until).toLocaleDateString('zh-TW') : '長期';
           const daysLeft = c.valid_until ?
-            Math.ceil((new Date(c.valid_until) - now) / (1000*60*60*24)) : 999;
+            Math.ceil((new Date(c.valid_until) - now) / (1000*60*60*24)) : null;
+          const venueText = (c.applicable_venue_ids && c.applicable_venue_ids.length > 0)
+            ? `· 適用 ${c.applicable_venue_ids.length} 個指定場館` : `· 適用全部場館`;
           metaHtml = `
+            ${c.description ? `· ${c.description}<br>` : ''}
             ${c.min_order_amount ? `· 最低消費 NT$ ${Number(c.min_order_amount).toLocaleString()}<br>` : ''}
             ${c.max_discount_amount ? `· 折扣上限 NT$ ${Number(c.max_discount_amount).toLocaleString()}<br>` : ''}
-            · 適用全部場館<br>
-            · 有效期：~ ${validUntil}（剩 ${daysLeft} 天）
+            ${venueText}<br>
+            · 有效期：~ ${validUntil}${daysLeft !== null ? `（剩 ${daysLeft} 天）` : ''}
           `;
         } else if (status === 'used') {
-          const usedDate = new Date(usageInfo.used_at).toLocaleDateString('zh-TW');
-          metaHtml = `· 已使用<br>· 使用時間：${usedDate}<br>· 折扣金額：NT$ ${Number(usageInfo.discount_applied).toLocaleString()}`;
+          const usedDate = new Date(cc.used_at).toLocaleDateString('zh-TW');
+          metaHtml = `· 已使用<br>· 使用時間：${usedDate}`;
         } else {
           const expDate = c.valid_until ? new Date(c.valid_until).toLocaleDateString('zh-TW') : '—';
           metaHtml = `· 過期日：${expDate}<br>· 未使用`;
@@ -1339,12 +1360,17 @@
 
       const list = document.getElementById('couponsList');
       let html = '';
-      available.forEach(c => html += couponCard(c, 'available'));
-      used.forEach(u => html += couponCard(u.coupon, 'used', u));
-      expired.forEach(c => html += couponCard(c, 'expired'));
+      available.forEach(cc => html += couponCard(cc, 'available'));
+      used.forEach(cc => html += couponCard(cc, 'used'));
+      expired.forEach(cc => html += couponCard(cc, 'expired'));
 
       if (!html) {
-        html = '<div style="padding:40px;text-align:center;color:#9ca3af">目前沒有優惠券</div>';
+        html = `
+          <div style="padding:60px 20px;text-align:center;background:#fff;border-radius:8px;">
+            <div style="font-size:64px;margin-bottom:12px;opacity:.4">🎟️</div>
+            <h3 style="color:#374151;margin-bottom:8px;">還沒有優惠券</h3>
+            <p style="color:#9ca3af;margin-bottom:16px">輸入優惠碼來兌換您的第一張優惠券</p>
+          </div>`;
       }
       list.innerHTML = html;
 
@@ -1352,6 +1378,42 @@
       list.querySelectorAll('.coupon-card').forEach(card => {
         if (card.dataset.couponStatus !== 'available') card.style.display = 'none';
       });
+    }
+
+    // ============================================================
+    // 兌換優惠碼
+    // ============================================================
+    async function claimCoupon() {
+      const input = document.getElementById('couponCodeInput');
+      const code = input.value.trim().toUpperCase();
+      const msgEl = document.getElementById('couponClaimMsg');
+      const btn = document.getElementById('claimCouponBtn');
+
+      function showMsg(type, text) {
+        msgEl.style.display = 'block';
+        msgEl.textContent = text;
+        if (type === 'error') { msgEl.style.color = '#991b1b'; }
+        else if (type === 'success') { msgEl.style.color = '#166534'; }
+        else { msgEl.style.color = '#6b7280'; }
+      }
+
+      if (!code) { showMsg('error', '請輸入優惠碼'); return; }
+      if (!currentCustomer) { showMsg('error', '請先登入'); return; }
+
+      btn.disabled = true; btn.textContent = '兌換中...';
+      showMsg('info', '驗證中...');
+
+      const { data, error } = await supabaseClient.rpc('claim_coupon_by_code', { p_code: code });
+
+      btn.disabled = false; btn.textContent = '兌換';
+
+      if (error) { showMsg('error', '兌換失敗：' + error.message); return; }
+      if (!data || !data.success) { showMsg('error', '❌ ' + (data?.error || '兌換失敗')); return; }
+
+      showMsg('success', '✅ 兌換成功！「' + data.coupon.name + '」已加入您的優惠券');
+      input.value = '';
+      // 重新載入優惠券列表
+      loadCoupons(currentCustomer.id);
     }
 
     // ============================================================

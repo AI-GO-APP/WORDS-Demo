@@ -243,10 +243,12 @@ a {
    =========================================== */
 .admin-main {
   flex: 1;
+  min-width: 0;          /* 讓 flex item 可以縮，避免被寬表格撐爆 */
   margin-left: 240px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow-x: hidden;    /* 多餘的橫向滑動由內部 wrapper 自己處理 */
 }
 
 /* 頂部 header bar */
@@ -427,7 +429,8 @@ a {
   background: #fff;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
-  overflow: hidden;
+  overflow-x: auto;       /* 寬表格允許橫向滑動 */
+  overflow-y: hidden;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 

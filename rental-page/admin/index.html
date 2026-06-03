@@ -5,6 +5,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard｜沃茲後台</title>
   <link rel="stylesheet" href="admin.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+
+  <style>
+    /* ===== 儀表板專屬樣式 ===== */
+    .dash-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+    }
+    .dash-title { font-size: 22px; font-weight: 700; color: #1f2937; }
+
+    .dash-daterange {
+      display: flex; align-items: center; gap: 8px;
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+      padding: 8px 14px;
+    }
+    .dash-daterange input[type=date] {
+      border: none; outline: none; font-size: 13px;
+      padding: 4px; background: transparent;
+    }
+    .dash-daterange .dr-sep { color: #9ca3af; font-size: 13px; }
+    .dash-daterange .dr-icon { color: #6b7280; }
+    .dash-query-btn {
+      padding: 7px 18px; background: #6ba8c9;
+      color: #fff; border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .dash-query-btn:hover { background: #5b97b8; }
+
+    /* 頂部 4 個 stat 卡 */
+    .dash-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 14px; margin-bottom: 28px;
+    }
+    @media (max-width: 1100px) { .dash-stats { grid-template-columns: repeat(2, 1fr); } }
+    .dash-stat-card {
+      background: #fff; border-radius: 12px;
+      padding: 18px 20px; position: relative;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .dash-stat-card .lbl { font-size: 13px; color: #6b7280; margin-bottom: 6px; }
+    .dash-stat-card .val { font-size: 28px; font-weight: 700; color: #1f2937; line-height: 1.2; }
+    .dash-stat-card .sub { font-size: 12px; color: #9ca3af; margin-top: 6px; }
+    .dash-stat-card .icon {
+      position: absolute; top: 16px; right: 18px;
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .dash-stat-card.tone-blue   .icon { background: #e5f3fb; color: #6ba8c9; }
+    .dash-stat-card.tone-yellow .icon { background: #fef5e3; color: #c19a55; }
+    .dash-stat-card.tone-gray   .icon { background: #f1f3f5; color: #6b7280; }
+    .dash-stat-card.tone-green  .icon { background: #e6f3ec; color: #6b9d7e; }
+
+    /* 分館 grid */
+    .dash-venue-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 1200px) { .dash-venue-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px) { .dash-venue-grid { grid-template-columns: 1fr; } }
+
+    .venue-card {
+      background: #fff; border-radius: 12px;
+      padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .venue-card-title {
+      font-size: 16px; font-weight: 700; color: #1f2937;
+      margin-bottom: 14px;
+    }
+    .venue-row-2col {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .venue-mini-stat {
+      background: #f6fafd; border-radius: 8px; padding: 10px 12px;
+    }
+    .venue-mini-stat .lbl { font-size: 11px; color: #6b7280; margin-bottom: 2px; }
+    .venue-mini-stat .val { font-size: 18px; font-weight: 700; color: #6ba8c9; }
+
+    .venue-progress {
+      margin-bottom: 6px;
+    }
+    .venue-progress .line {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: #4b5563; margin-bottom: 4px;
+    }
+    .venue-progress .line .amt { color: #6ba8c9; font-weight: 600; }
+    .venue-progress.unpaid .line .amt { color: #c19a55; }
+    .venue-progress .bar {
+      height: 6px; background: #f1f5f9; border-radius: 4px; overflow: hidden;
+    }
+    .venue-progress .bar > div {
+      height: 100%; background: #a4d3eb; border-radius: 4px;
+    }
+    .venue-progress.unpaid .bar > div { background: #f0c876; }
+
+    .venue-deposit-box {
+      background: #fdf2eb; border-radius: 8px; padding: 12px;
+      margin: 12px 0;
+    }
+    .venue-deposit-box .top-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: #4b5563; margin-bottom: 6px;
+    }
+    .venue-deposit-box .bar {
+      height: 5px; background: #f8e0cc; border-radius: 4px; overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .venue-deposit-box .bar > div {
+      height: 100%; background: #ddb89a; border-radius: 4px;
+    }
+    .venue-deposit-box .breakdown {
+      font-size: 11px; color: #6b7280;
+      display: flex; justify-content: flex-end; gap: 12px;
+    }
+
+    .venue-cost-box {
+      background: #fef7e6; border-radius: 8px; padding: 10px 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; margin-bottom: 12px;
+    }
+    .venue-cost-box .lbl { font-size: 12px; color: #4b5563; }
+    .venue-cost-box .val { font-size: 14px; font-weight: 600; color: #c19a55; }
+
+    .venue-profit-box {
+      background: #f6fafd; border-radius: 8px; padding: 12px;
+    }
+    .venue-profit-box .row {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .venue-profit-box .lbl { font-size: 12px; color: #4b5563; }
+    .venue-profit-box .val { font-size: 20px; font-weight: 700; color: #6ba8c9; }
+    .venue-profit-box .rate-row {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: #6b7280; margin-top: 4px;
+    }
+
+    .dash-loading {
+      text-align: center; padding: 60px;
+      color: #9ca3af; font-size: 14px;
+    }
+  </style>
 </head>
 <body>
 
@@ -90,7 +235,7 @@
     <main class="admin-main">
 
       <header class="admin-header">
-        <div class="admin-header-title">Dashboard 總覽</div>
+        <div class="admin-header-title">營運儀表板</div>
         <div class="admin-header-user">
           <span class="admin-header-user-name">👤 <span id="adminName">admin</span></span>
           <button class="admin-header-logout" id="logoutBtn">登出</button>
@@ -99,118 +244,50 @@
 
       <div class="admin-content">
 
-        <!-- 統計卡片 -->
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-card-label">場館總數</div>
-            <div class="admin-stat-card-value">20</div>
-            <div class="admin-stat-card-trend">+2 本月新增</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-card-label">本月訂單數</div>
-            <div class="admin-stat-card-value">128</div>
-            <div class="admin-stat-card-trend">+15.2% vs 上月</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-card-label">本月營收</div>
-            <div class="admin-stat-card-value">$ 386,400</div>
-            <div class="admin-stat-card-trend">+22.8% vs 上月</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-card-label">會員總數</div>
-            <div class="admin-stat-card-value">1,432</div>
-            <div class="admin-stat-card-trend">+48 本週新增</div>
+        <!-- 頁面標題 + 日期區間 -->
+        <div class="dash-header">
+          <h1 class="dash-title">營運儀表板</h1>
+          <div class="dash-daterange">
+            <span class="dr-icon">📅</span>
+            <input type="date" id="dateFrom">
+            <span class="dr-sep">至</span>
+            <input type="date" id="dateTo">
+            <button class="dash-query-btn" onclick="refreshDashboard()">查詢</button>
           </div>
         </div>
 
-        <!-- 快速入口 -->
-        <div class="admin-panel">
-          <div class="admin-panel-header">
-            <div class="admin-panel-title">快速操作</div>
+        <!-- 頂部 4 個 stat -->
+        <div class="dash-stats" id="dashStats">
+          <div class="dash-stat-card tone-blue">
+            <div class="lbl">已收款金額</div>
+            <div class="val" id="statPaidAmount">$0</div>
+            <div class="sub" id="statPaidCount">— 筆訂單</div>
+            <div class="icon">$</div>
           </div>
-          <div class="admin-panel-body">
-            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
-              <a href="venues.html" style="display:block; padding:20px; border:1px solid #e5e7eb; border-radius:8px; text-align:center;">
-                <div style="font-size:32px;">🏛️</div>
-                <div style="font-weight:600; margin-top:8px;">場館管理</div>
-                <div style="font-size:12px; color:#6b7280; margin-top:4px;">新增、編輯場館資料</div>
-              </a>
-              <a href="plans.html" style="display:block; padding:20px; border:1px solid #e5e7eb; border-radius:8px; text-align:center;">
-                <div style="font-size:32px;">📦</div>
-                <div style="font-weight:600; margin-top:8px;">方案管理</div>
-                <div style="font-size:12px; color:#6b7280; margin-top:4px;">設定租借方案範本</div>
-              </a>
-              <a href="pricing.html" style="display:block; padding:20px; border:1px solid #e5e7eb; border-radius:8px; text-align:center;">
-                <div style="font-size:32px;">💰</div>
-                <div style="font-weight:600; margin-top:8px;">價格管理</div>
-                <div style="font-size:12px; color:#6b7280; margin-top:4px;">調整各方案價格</div>
-              </a>
-            </div>
+          <div class="dash-stat-card tone-yellow">
+            <div class="lbl">未收款金額</div>
+            <div class="val" id="statUnpaidAmount">$0</div>
+            <div class="sub" id="statUnpaidCount">— 筆訂單</div>
+            <div class="icon">📦</div>
+          </div>
+          <div class="dash-stat-card tone-gray">
+            <div class="lbl">總訂單數</div>
+            <div class="val" id="statTotalOrders">—</div>
+            <div class="sub">本期總計</div>
+            <div class="icon">📈</div>
+          </div>
+          <div class="dash-stat-card tone-green">
+            <div class="lbl">總淨利潤</div>
+            <div class="val" id="statNetProfit">$0</div>
+            <div class="sub" id="statProfitRate">利潤率 —</div>
+            <div class="icon">📈</div>
           </div>
         </div>
 
-        <!-- 最近訂單（demo 表格） -->
-        <div class="admin-panel">
-          <div class="admin-panel-header">
-            <div class="admin-panel-title">最近訂單</div>
-            <a href="#" style="font-size:13px; color:#6b7280;">查看全部 →</a>
-          </div>
-          <div class="admin-panel-body" style="padding:0;">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>訂單編號</th>
-                  <th>會員</th>
-                  <th>場館</th>
-                  <th>租借日期</th>
-                  <th>金額</th>
-                  <th>狀態</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>#WL26001234</td>
-                  <td>Joanna</td>
-                  <td>勤美館</td>
-                  <td>2026/05/28</td>
-                  <td>$ 3,300</td>
-                  <td><span class="admin-badge admin-badge-success">已確認</span></td>
-                </tr>
-                <tr>
-                  <td>#WL26001233</td>
-                  <td>陳大文</td>
-                  <td>美術館</td>
-                  <td>2026/05/27</td>
-                  <td>$ 2,600</td>
-                  <td><span class="admin-badge admin-badge-success">已確認</span></td>
-                </tr>
-                <tr>
-                  <td>#WL26001232</td>
-                  <td>林小美</td>
-                  <td>科博館</td>
-                  <td>2026/05/26</td>
-                  <td>$ 5,200</td>
-                  <td><span class="admin-badge admin-badge-warning">待確認</span></td>
-                </tr>
-                <tr>
-                  <td>#WL26001231</td>
-                  <td>王志明</td>
-                  <td>市政館</td>
-                  <td>2026/05/25</td>
-                  <td>$ 1,700</td>
-                  <td><span class="admin-badge admin-badge-success">已確認</span></td>
-                </tr>
-                <tr>
-                  <td>#WL26001230</td>
-                  <td>張雅婷</td>
-                  <td>逢甲館</td>
-                  <td>2026/05/24</td>
-                  <td>$ 4,800</td>
-                  <td><span class="admin-badge admin-badge-danger">已取消</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <!-- 分館營運統計 -->
+        <h2 style="font-size:18px; font-weight:700; color:#1f2937; margin-bottom:14px;">分館營運統計</h2>
+        <div class="dash-venue-grid" id="venueGrid">
+          <div class="dash-loading" style="grid-column:1/-1;">載入中...</div>
         </div>
 
       </div>
@@ -226,6 +303,203 @@
         window.location.href = 'login.html';
       }
     });
+
+    // ============================================================
+    // 預設日期區間：本月第 1 天 → 今天
+    // ============================================================
+    function setDefaultDates() {
+      const now = new Date();
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const fmt = d => d.toISOString().slice(0, 10);
+      document.getElementById('dateFrom').value = fmt(first);
+      document.getElementById('dateTo').value = fmt(now);
+    }
+
+    // ============================================================
+    // 載入分館 + 訂單 + 計算統計
+    // ============================================================
+    let VENUES_CACHE = [];
+    let SPACES_CACHE = [];
+
+    async function loadVenuesAndSpaces() {
+      if (VENUES_CACHE.length > 0) return;
+      const [{ data: venues }, { data: spaces }] = await Promise.all([
+        supabaseClient.from('venues').select('id, name').eq('status', 'active'),
+        supabaseClient.from('spaces').select('id, name, venue_id'),
+      ]);
+      VENUES_CACHE = venues || [];
+      SPACES_CACHE = spaces || [];
+    }
+
+    async function refreshDashboard() {
+      await loadVenuesAndSpaces();
+      const from = document.getElementById('dateFrom').value;
+      const to = document.getElementById('dateTo').value;
+      if (!from || !to) { alert('請選擇日期區間'); return; }
+
+      // 撈該區間內所有訂單（用 created_at 篩選）
+      const { data: orders, error } = await supabaseClient
+        .from('orders')
+        .select(`
+          id, space_id, subtotal, deposit, total_amount, status, payment_status, paid_amount,
+          created_at, booking_date
+        `)
+        .gte('created_at', from + 'T00:00:00')
+        .lte('created_at', to + 'T23:59:59');
+
+      if (error) {
+        document.getElementById('venueGrid').innerHTML =
+          `<div class="dash-loading" style="grid-column:1/-1;color:#dc2626;">讀取失敗：${error.message}</div>`;
+        return;
+      }
+
+      renderStats(orders || []);
+      renderVenueCards(orders || []);
+    }
+
+    function renderStats(orders) {
+      // 排除已取消 / 退款的不算
+      const valid = orders.filter(o => !['cancelled', 'refunded'].includes(o.status));
+
+      const paidOrders = valid.filter(o => o.payment_status === 'paid');
+      const unpaidOrders = valid.filter(o => o.payment_status !== 'paid');
+
+      const paidAmount = paidOrders.reduce((s, o) => s + Number(o.subtotal || 0), 0);
+      const unpaidAmount = unpaidOrders.reduce((s, o) => s + Number(o.subtotal || 0), 0);
+      const totalAmount = paidAmount + unpaidAmount;
+      const totalOrders = valid.length;
+      const paidRate = totalAmount > 0 ? (paidAmount / totalAmount * 100) : 0;
+
+      // 淨利潤 = 已收款 - 營運成本（demo: 0）
+      // 之後可以從另一張 costs 表撈
+      const totalCost = 0;
+      const netProfit = paidAmount - totalCost;
+      const profitRate = paidAmount > 0 ? (netProfit / paidAmount * 100) : 0;
+
+      document.getElementById('statPaidAmount').textContent = '$' + paidAmount.toLocaleString();
+      document.getElementById('statPaidCount').textContent =
+        `${paidOrders.length} 筆訂單 (${paidRate.toFixed(1)}%)`;
+      document.getElementById('statUnpaidAmount').textContent = '$' + unpaidAmount.toLocaleString();
+      document.getElementById('statUnpaidCount').textContent = `${unpaidOrders.length} 筆訂單`;
+      document.getElementById('statTotalOrders').textContent = totalOrders;
+      document.getElementById('statNetProfit').textContent = '$' + netProfit.toLocaleString();
+      document.getElementById('statProfitRate').textContent =
+        `利潤率 ${profitRate.toFixed(1)}%`;
+    }
+
+    function renderVenueCards(orders) {
+      // 按 space 分組（每個 space 一張卡）
+      const bySpace = {};
+      orders.forEach(o => {
+        if (!o.space_id) return;
+        if (!bySpace[o.space_id]) bySpace[o.space_id] = [];
+        bySpace[o.space_id].push(o);
+      });
+
+      // 過濾有訂單的 space
+      const activeSpaces = SPACES_CACHE.filter(s => bySpace[s.id] && bySpace[s.id].length > 0);
+
+      if (activeSpaces.length === 0) {
+        document.getElementById('venueGrid').innerHTML =
+          '<div class="dash-loading" style="grid-column:1/-1;">此區間內沒有訂單</div>';
+        return;
+      }
+
+      // 按總銷售額排序
+      activeSpaces.sort((a, b) => {
+        const sumA = bySpace[a.id].reduce((s, o) => s + Number(o.subtotal || 0), 0);
+        const sumB = bySpace[b.id].reduce((s, o) => s + Number(o.subtotal || 0), 0);
+        return sumB - sumA;
+      });
+
+      document.getElementById('venueGrid').innerHTML = activeSpaces.map(s => {
+        const ords = bySpace[s.id].filter(o => !['cancelled', 'refunded'].includes(o.status));
+        const venue = VENUES_CACHE.find(v => v.id === s.venue_id);
+        const venueName = venue ? venue.name : '';
+        const spaceName = s.name;
+        const displayName = (venueName === spaceName) ? venueName : `${venueName}-${spaceName}`;
+
+        const totalOrders = ords.length;
+        const totalSales = ords.reduce((s, o) => s + Number(o.subtotal || 0), 0);
+        const paidAmount = ords.filter(o => o.payment_status === 'paid')
+          .reduce((s, o) => s + Number(o.subtotal || 0), 0);
+        const unpaidAmount = ords.filter(o => o.payment_status !== 'paid')
+          .reduce((s, o) => s + Number(o.subtotal || 0), 0);
+
+        const totalDeposit = ords.reduce((s, o) => s + Number(o.deposit || 0), 0);
+        // 押金已退 = 已完成或退款訂單的押金
+        const refundedDeposit = ords.filter(o => ['completed', 'refunded'].includes(o.status))
+          .reduce((s, o) => s + Number(o.deposit || 0), 0);
+        const pendingDeposit = totalDeposit - refundedDeposit;
+
+        const cost = 0; // demo: 0
+        const netProfit = paidAmount - cost;
+        const profitRate = paidAmount > 0 ? (netProfit / paidAmount * 100) : 0;
+
+        const paidPct = totalSales > 0 ? (paidAmount / totalSales * 100) : 0;
+        const unpaidPct = totalSales > 0 ? (unpaidAmount / totalSales * 100) : 0;
+        const depositRefundedPct = totalDeposit > 0 ? (refundedDeposit / totalDeposit * 100) : 0;
+
+        return `
+          <div class="venue-card">
+            <div class="venue-card-title">${displayName}</div>
+            <div class="venue-row-2col">
+              <div class="venue-mini-stat">
+                <div class="lbl">總訂單數</div>
+                <div class="val">${totalOrders}</div>
+              </div>
+              <div class="venue-mini-stat">
+                <div class="lbl">總銷售額</div>
+                <div class="val">$${totalSales.toLocaleString()}</div>
+              </div>
+            </div>
+
+            <div class="venue-progress">
+              <div class="line"><span>已收款</span><span class="amt">$${paidAmount.toLocaleString()}</span></div>
+              <div class="bar"><div style="width:${paidPct}%"></div></div>
+            </div>
+            <div class="venue-progress unpaid">
+              <div class="line"><span>未收款</span><span class="amt">$${unpaidAmount.toLocaleString()}</span></div>
+              <div class="bar"><div style="width:${unpaidPct}%"></div></div>
+            </div>
+
+            <div class="venue-deposit-box">
+              <div class="top-row">
+                <span>押金</span>
+                <span>總計 $${totalDeposit.toLocaleString()}</span>
+              </div>
+              <div class="bar"><div style="width:${depositRefundedPct}%"></div></div>
+              <div class="breakdown">
+                <span>已退 $${refundedDeposit.toLocaleString()}</span>
+                <span>待退 $${pendingDeposit.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div class="venue-cost-box" onclick="alert('營運成本可在後續設定中編輯（Phase 6）')">
+              <span class="lbl">營運成本</span>
+              <span class="val">$${cost.toLocaleString()} ▾</span>
+            </div>
+
+            <div class="venue-profit-box">
+              <div class="row">
+                <span class="lbl">淨利潤</span>
+                <span class="val">$${netProfit.toLocaleString()}</span>
+              </div>
+              <div class="rate-row">
+                <span>利潤率</span>
+                <span>${profitRate.toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============ 啟動 ============
+    (async () => {
+      setDefaultDates();
+      await refreshDashboard();
+    })();
   </script>
 
 </body>

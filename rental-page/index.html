@@ -463,27 +463,31 @@
 
     // === 從 Supabase 載入場館 + 空間 + 價格，渲染卡片 ===
     async function renderVenueCards() {
-      // 一次撈 venues → spaces → prices（embedded relations）
-      const { data: venues, error } = await supabaseClient
-        .from('venues')
-        .select(`
-          id, name, code, district, status,
-          spaces ( id, name, capacity, status, prices(*) )
-        `)
-        .eq('status', 'active');
+      // 分 2 次 query：因為 PostgREST embedded one-to-one (prices) 偶爾不穩
+      const [{ data: venues, error: vErr }, { data: prices, error: pErr }] = await Promise.all([
+        supabaseClient.from('venues')
+          .select('id, name, code, district, status, spaces(id, name, capacity, status)')
+          .eq('status', 'active'),
+        supabaseClient.from('prices').select('*'),
+      ]);
 
-      if (error) {
-        console.error('❌ 讀取場館失敗:', error);
+      if (vErr) {
+        console.error('❌ 讀取場館失敗:', vErr);
         document.getElementById('venueGrid').innerHTML =
-          '<p style="grid-column:1/-1;text-align:center;color:#dc2626;padding:40px">資料讀取失敗：' + error.message + '</p>';
+          '<p style="grid-column:1/-1;text-align:center;color:#dc2626;padding:40px">資料讀取失敗：' + vErr.message + '</p>';
         return;
       }
+      if (pErr) console.warn('讀取 prices 失敗:', pErr);
+
+      // 建立 price 索引：space_id → price
+      const priceMap = {};
+      (prices || []).forEach(p => { priceMap[p.space_id] = p; });
 
       // 攤平 spaces，並轉換欄位名稱（snake_case → camelCase）
       const allSpaces = [];
       venues.forEach(v => {
         (v.spaces || []).filter(s => s.status === 'active').forEach(s => {
-          const p = (s.prices && s.prices[0]) || null;
+          const p = priceMap[s.id] || null;
           const price = p ? {
             weekday: Number(p.weekday_hourly),
             weekend: Number(p.weekend_hourly),
@@ -500,7 +504,7 @@
           allSpaces.push({ ...s, venue: v, price });
         });
       });
-      console.log('[index] 從 Supabase 撈到', venues.length, '個場館，', allSpaces.length, '個空間');
+      console.log('[index] 從 Supabase 撈到', venues.length, '個場館，', allSpaces.length, '個空間，', (prices||[]).length, '筆 price');
 
       // 渲染篩選清單（依目前的場館動態算出）
       const districtCounts = {};

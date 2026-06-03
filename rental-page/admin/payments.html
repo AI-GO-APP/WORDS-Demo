@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="admin.css">
   <style>
     /* ===== 欄位篩選 icon + popover ===== */
-    .admin-table thead th { position: relative; }
+    .admin-table thead th { position: relative; white-space: nowrap; }
     .col-filter-icon {
       display: inline-flex; align-items: center; justify-content: center;
       margin-left: 6px; cursor: pointer; font-size: 11px; color: #9ca3af;
@@ -124,22 +124,23 @@
     }
     .gradient-btn {
       padding: 10px 18px;
-      background: linear-gradient(135deg, #3b82f6, #1a1f36);
+      background: #1a1f36;
       color: #fff;
       border: none;
       border-radius: 6px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 2px 4px rgba(26,31,54,0.2);
     }
-    .gradient-btn:hover { opacity: .9; }
+    .gradient-btn:hover { background: #2d3554; }
     .gradient-btn.is-secondary {
-      background: linear-gradient(135deg, #60a5fa, #3b82f6);
+      background: #3b82f6;
     }
+    .gradient-btn.is-secondary:hover { background: #2563eb; }
     .gradient-btn.is-tertiary {
-      background: linear-gradient(135deg, #34d399, #10b981);
+      background: #10b981;
     }
+    .gradient-btn.is-tertiary:hover { background: #059669; }
 
     /* 金額正/負顏色 */
     .amount-positive { color: #10b981; font-weight: 700; }

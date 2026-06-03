@@ -227,8 +227,8 @@
           position: relative;
           overflow: hidden;
         }
-        .balance-card.points { background: linear-gradient(135deg, #f97316, #ea580c); }
-        .balance-card.stored { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .balance-card.points { background: #ea580c; }
+        .balance-card.stored { background: #7c3aed; }
         .balance-label { font-size: 13px; opacity: .9; }
         .balance-value { font-size: 36px; font-weight: 800; margin-top: 4px; }
         .balance-unit { font-size: 14px; opacity: .85; margin-top: 2px; }
@@ -254,7 +254,7 @@
         /* 會員等級 */
         .tier-card-big {
           padding: 28px;
-          background: linear-gradient(135deg, #FEF3C7, #FBBF24);
+          background: #FBBF24;
           border-radius: 14px;
           color: #92400e;
           position: relative;
@@ -341,7 +341,7 @@
         .coupon-card.used   { opacity: .5; filter: grayscale(.4); }
         .coupon-card.expired{ opacity: .4; }
         .coupon-discount-area {
-          background: linear-gradient(135deg, #f97316, #ea580c);
+          background: #ea580c;
           color: #fff;
           border-radius: 6px;
           padding: 12px;
@@ -614,7 +614,7 @@
           </div>
 
           <div class="coupon-card" data-coupon-status="available">
-            <div class="coupon-discount-area" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+            <div class="coupon-discount-area" style="background:#7c3aed;">
               <div class="coupon-discount-value">85<span style="font-size:14px;">折</span></div>
               <div class="coupon-discount-label">全館</div>
             </div>
@@ -634,7 +634,7 @@
           </div>
 
           <div class="coupon-card" data-coupon-status="available">
-            <div class="coupon-discount-area" style="background:linear-gradient(135deg,#10b981,#059669);">
+            <div class="coupon-discount-area" style="background:#059669;">
               <div class="coupon-discount-value">$500</div>
               <div class="coupon-discount-label">折抵</div>
             </div>
@@ -1309,9 +1309,9 @@
           `${Math.round(c.discount_value * 100)}<span style="font-size:14px;">折</span>`;
         const labelText = isAmount ? '折抵' : '全館';
 
-        const colors = ['#f97316', '#8b5cf6', '#10b981', '#3b82f6'];
+        const colors = ['#ea580c', '#7c3aed', '#059669', '#2563eb'];
         const bgColor = status === 'available'
-          ? `background:linear-gradient(135deg, ${colors[Math.abs(c.id.charCodeAt(0)) % 4]}, #555);`
+          ? `background:${colors[Math.abs(c.id.charCodeAt(0)) % 4]};`
           : 'background:#9ca3af;';
 
         let metaHtml = '';

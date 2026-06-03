@@ -816,6 +816,9 @@
         cleanup: Object.keys(CLEANUP_FEES)[0] || 'none',
         service: 'none'
       };
+      // 提升到 outer scope，給 btnConfirm.click 用
+      let hours = 0;
+      let isHoliday = false;
 
       const form = document.getElementById('bookingForm');
       const result = document.getElementById('plansResult');
@@ -830,7 +833,8 @@
         const startTime = form.startTime.value;
         const endTime = form.endTime.value;
 
-        const hours = calcHours(startTime, endTime);
+        // 用 outer scope 變數（讓 btnConfirm.click 也能讀到）
+        hours = calcHours(startTime, endTime);
         if (hours <= 0) {
           alert('結束時間需大於開始時間');
           return;
@@ -840,7 +844,7 @@
           return;
         }
 
-        const isHoliday = isHolidayDateTime(date, startTime);
+        isHoliday = isHolidayDateTime(date, startTime);
         const priceKey = isHoliday ? 'weekend' : 'weekday';
         const hourlyBase = PRICING.hourly[priceKey];
 

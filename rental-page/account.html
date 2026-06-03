@@ -341,7 +341,7 @@
         .coupon-card.used   { opacity: .5; filter: grayscale(.4); }
         .coupon-card.expired{ opacity: .4; }
         .coupon-discount-area {
-          background: #ea580c;
+          background: #c19a7d;  /* 莫蘭迪 陶土橘 */
           color: #fff;
           border-radius: 6px;
           padding: 12px;
@@ -568,14 +568,14 @@
         </div>
 
         <!-- 兌換優惠碼 -->
-        <div style="background:#fff7ed; border:1px dashed #fdba74; border-radius:8px; padding:14px 16px; margin:14px 0;">
-          <div style="font-size:13px; color:#9a3412; margin-bottom:8px; font-weight:600;">🎁 兌換優惠券</div>
+        <div style="background:#f5ede4; border:1px dashed #c19a7d; border-radius:8px; padding:14px 16px; margin:14px 0;">
+          <div style="font-size:13px; color:#7d5d44; margin-bottom:8px; font-weight:600;">🎁 兌換優惠券</div>
           <div style="display:flex; gap:8px;">
             <input type="text" id="couponCodeInput" placeholder="輸入優惠碼（不分大小寫）"
-                   style="flex:1; padding:8px 12px; border:1px solid #fdba74; border-radius:6px; font-size:14px; text-transform:uppercase;"
+                   style="flex:1; padding:8px 12px; border:1px solid #c19a7d; border-radius:6px; font-size:14px; text-transform:uppercase;"
                    onkeypress="if(event.key==='Enter')claimCoupon()">
             <button onclick="claimCoupon()" id="claimCouponBtn"
-                    style="padding:8px 18px; background:#f97316; color:#fff; border:none; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer;">
+                    style="padding:8px 18px; background:#a08570; color:#fff; border:none; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer;">
               兌換
             </button>
           </div>
@@ -614,7 +614,7 @@
           </div>
 
           <div class="coupon-card" data-coupon-status="available">
-            <div class="coupon-discount-area" style="background:#7c3aed;">
+            <div class="coupon-discount-area" style="background:#a89aa0;">
               <div class="coupon-discount-value">85<span style="font-size:14px;">折</span></div>
               <div class="coupon-discount-label">全館</div>
             </div>
@@ -634,7 +634,7 @@
           </div>
 
           <div class="coupon-card" data-coupon-status="available">
-            <div class="coupon-discount-area" style="background:#059669;">
+            <div class="coupon-discount-area" style="background:#a3b0a0;">
               <div class="coupon-discount-value">$500</div>
               <div class="coupon-discount-label">折抵</div>
             </div>
@@ -1309,10 +1309,11 @@
           `${Math.round(c.discount_value * 100)}<span style="font-size:14px;">折</span>`;
         const labelText = isAmount ? '折抵' : '全館';
 
-        const colors = ['#ea580c', '#7c3aed', '#059669', '#2563eb'];
+        // 莫蘭迪色盤：陶土橘 / 灰紫 / 鼠尾草綠 / 灰藍
+        const colors = ['#c19a7d', '#a89aa0', '#a3b0a0', '#94a5a8'];
         const bgColor = status === 'available'
           ? `background:${colors[Math.abs(c.id.charCodeAt(0)) % 4]};`
-          : 'background:#9ca3af;';
+          : 'background:#b5b0a8;';  /* 莫蘭迪 石灰 */
 
         let metaHtml = '';
         if (status === 'available') {

@@ -6,6 +6,32 @@
   <title>匯款比對｜沃茲後台</title>
   <link rel="stylesheet" href="admin.css">
   <style>
+    /* ===== 欄位篩選 icon + popover ===== */
+    .admin-table thead th { position: relative; }
+    .col-filter-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-left: 6px; cursor: pointer; font-size: 11px; color: #9ca3af;
+      padding: 2px 5px; border-radius: 4px; user-select: none; vertical-align: middle;
+    }
+    .col-filter-icon:hover { background: #f3f4f6; color: #1a1f36; }
+    .col-filter-icon.has-value { color: #fff; background: #f97316; font-weight: 700; }
+    .col-filter-popover {
+      position: fixed; z-index: 1000;
+      background: #fff; border: 1px solid #d1d5db; border-radius: 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.12);
+      padding: 10px; min-width: 200px; display: none;
+    }
+    .col-filter-popover.show { display: block; }
+    .col-filter-popover .filter-input, .col-filter-popover input[type="date"] {
+      width: 100%; padding: 6px 8px; font-size: 13px;
+      border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;
+    }
+    .col-filter-popover .filter-date-range { display: flex; gap: 6px; align-items: center; }
+    .col-filter-popover .filter-date-range input { flex: 1; }
+    .col-filter-popover-title {
+      font-size: 11px; color: #6b7280; margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
     /* ===== 表頭內篩選器（複用） ===== */
     .filter-row th {
       background: #f9fafb;
@@ -280,72 +306,90 @@
         <div class="admin-table-wrapper" style="overflow-x:auto;">
           <table class="admin-table" style="min-width:1400px;">
             <thead>
-              <!-- Row 1: 欄位名 + 排序 -->
               <tr>
                 <th style="width:60px;">操作</th>
                 <th class="sortable" onclick="toggleSort('id')">
                   ID <span class="sort-icon" id="sort_id"></span>
+                  <span class="col-filter-icon" id="fi_id" onclick="event.stopPropagation();toggleFilterPopover(event, 'fp_id')" title="搜尋 ID">🔍</span>
+                  <div class="col-filter-popover" id="fp_id" onclick="event.stopPropagation()">
+                    <div class="col-filter-popover-title">搜尋 ID</div>
+                    <input type="text" class="filter-input" id="f_id" placeholder="輸入 ID">
+                  </div>
                 </th>
                 <th class="sortable" onclick="toggleSort('transaction_date')">
                   帳務日期 <span class="sort-icon" id="sort_transaction_date"></span>
+                  <span class="col-filter-icon" id="fi_tx_date" onclick="event.stopPropagation();toggleFilterPopover(event, 'fp_tx_date')" title="帳務日期區間">📅</span>
+                  <div class="col-filter-popover" id="fp_tx_date" onclick="event.stopPropagation()" style="min-width:280px;">
+                    <div class="col-filter-popover-title">帳務日期區間</div>
+                    <div class="filter-date-range">
+                      <input type="date" id="f_tx_date_from">
+                      <span style="font-size:11px; color:#9ca3af;">~</span>
+                      <input type="date" id="f_tx_date_to">
+                    </div>
+                  </div>
                 </th>
-                <th>摘要</th>
-                <th>銀行資訊</th>
+                <th>
+                  摘要
+                  <span class="col-filter-icon" id="fi_summary" onclick="toggleFilterPopover(event, 'fp_summary')" title="篩選摘要">▾</span>
+                  <div class="col-filter-popover" id="fp_summary" onclick="event.stopPropagation()" style="padding:0;">
+                    <div id="summaryPanel" style="max-height:280px; overflow-y:auto;"></div>
+                  </div>
+                </th>
+                <th>
+                  銀行資訊
+                  <span class="col-filter-icon" id="fi_last5" onclick="toggleFilterPopover(event, 'fp_last5')" title="搜尋末五碼/銀行">🔍</span>
+                  <div class="col-filter-popover" id="fp_last5" onclick="event.stopPropagation()">
+                    <div class="col-filter-popover-title">末五碼 / 銀行名</div>
+                    <input type="text" class="filter-input" id="f_last5" placeholder="輸入末五碼或銀行">
+                  </div>
+                </th>
                 <th class="sortable" style="text-align:right;" onclick="toggleSort('amount')">
                   交易金額 <span class="sort-icon" id="sort_amount"></span>
                 </th>
-                <th>比對狀態</th>
-                <th>比對原因</th>
-                <th>對應訂單</th>
-                <th>匯入批次</th>
+                <th>
+                  比對狀態
+                  <span class="col-filter-icon" id="fi_status" onclick="toggleFilterPopover(event, 'fp_status')" title="篩選狀態">▾</span>
+                  <div class="col-filter-popover" id="fp_status" onclick="event.stopPropagation()" style="padding:0;">
+                    <div id="statusPanel" style="max-height:240px; overflow-y:auto;"></div>
+                  </div>
+                </th>
+                <th>
+                  比對原因
+                  <span class="col-filter-icon" id="fi_reason" onclick="toggleFilterPopover(event, 'fp_reason')" title="搜尋原因">🔍</span>
+                  <div class="col-filter-popover" id="fp_reason" onclick="event.stopPropagation()">
+                    <div class="col-filter-popover-title">搜尋原因</div>
+                    <input type="text" class="filter-input" id="f_reason" placeholder="輸入關鍵字">
+                  </div>
+                </th>
+                <th>
+                  對應訂單
+                  <span class="col-filter-icon" id="fi_order" onclick="toggleFilterPopover(event, 'fp_order')" title="搜尋訂單">🔍</span>
+                  <div class="col-filter-popover" id="fp_order" onclick="event.stopPropagation()">
+                    <div class="col-filter-popover-title">訂單編號</div>
+                    <input type="text" class="filter-input" id="f_order" placeholder="輸入訂單編號">
+                  </div>
+                </th>
+                <th>
+                  匯入批次
+                  <span class="col-filter-icon" id="fi_batch" onclick="toggleFilterPopover(event, 'fp_batch')" title="搜尋批次">🔍</span>
+                  <div class="col-filter-popover" id="fp_batch" onclick="event.stopPropagation()">
+                    <div class="col-filter-popover-title">批次編號</div>
+                    <input type="text" class="filter-input" id="f_batch" placeholder="輸入批次編號">
+                  </div>
+                </th>
                 <th class="sortable" onclick="toggleSort('created_at')">
                   建立時間 <span class="sort-icon" id="sort_created_at"></span>
+                  <span class="col-filter-icon" id="fi_created" onclick="event.stopPropagation();toggleFilterPopover(event, 'fp_created')" title="建立時間區間">📅</span>
+                  <div class="col-filter-popover" id="fp_created" onclick="event.stopPropagation()" style="min-width:280px;">
+                    <div class="col-filter-popover-title">建立時間區間</div>
+                    <div class="filter-date-range">
+                      <input type="date" id="f_created_from">
+                      <span style="font-size:11px; color:#9ca3af;">~</span>
+                      <input type="date" id="f_created_to">
+                    </div>
+                  </div>
                 </th>
                 <th>更新時間</th>
-              </tr>
-
-              <!-- Row 2: 篩選器 -->
-              <tr class="filter-row">
-                <th></th>
-                <th><input type="text" class="filter-input" id="f_id" placeholder="搜尋 ID"></th>
-                <th>
-                  <div class="filter-date-range">
-                    <input type="date" id="f_tx_date_from">
-                    <span style="font-size:10px; color:#9ca3af;">~</span>
-                    <input type="date" id="f_tx_date_to">
-                  </div>
-                </th>
-                <th>
-                  <div class="multi-select" id="summaryMultiSelect">
-                    <button class="multi-select-trigger" type="button" onclick="toggleMultiPanel(event, 'summaryMultiSelect')">
-                      <span id="summaryTriggerLabel">全部摘要</span>
-                      <span>▾</span>
-                    </button>
-                    <div class="multi-select-panel" id="summaryPanel"></div>
-                  </div>
-                </th>
-                <th><input type="text" class="filter-input" id="f_last5" placeholder="末五碼 / 銀行名"></th>
-                <th></th>
-                <th>
-                  <div class="multi-select" id="statusMultiSelect">
-                    <button class="multi-select-trigger" type="button" onclick="toggleMultiPanel(event, 'statusMultiSelect')">
-                      <span id="statusTriggerLabel">全部狀態</span>
-                      <span>▾</span>
-                    </button>
-                    <div class="multi-select-panel" id="statusPanel"></div>
-                  </div>
-                </th>
-                <th><input type="text" class="filter-input" id="f_reason" placeholder="搜尋原因"></th>
-                <th><input type="text" class="filter-input" id="f_order" placeholder="訂單編號"></th>
-                <th><input type="text" class="filter-input" id="f_batch" placeholder="批次編號"></th>
-                <th>
-                  <div class="filter-date-range">
-                    <input type="date" id="f_created_from">
-                    <span style="font-size:10px; color:#9ca3af;">~</span>
-                    <input type="date" id="f_created_to">
-                  </div>
-                </th>
-                <th></th>
               </tr>
             </thead>
             <tbody id="paymentsTable"></tbody>
@@ -504,15 +548,52 @@
     }
 
     function updateMultiLabel(name, selected, all, defaultLabel, formatFn) {
-      const label = document.getElementById(name + 'TriggerLabel');
-      if (selected.length === 0 || selected.length === all.length) {
-        label.innerHTML = defaultLabel;
-      } else if (selected.length === 1) {
-        label.innerHTML = formatFn(selected[0]);
-      } else {
-        label.innerHTML = `已選 <span class="filter-count">${selected.length}</span>`;
+      // 改用 icon 數字
+      const icon = document.getElementById('fi_' + name);
+      if (icon) {
+        if (selected.length === 0 || selected.length === all.length) {
+          icon.textContent = '▾';
+          icon.classList.remove('has-value');
+        } else {
+          icon.textContent = selected.length;
+          icon.classList.add('has-value');
+        }
       }
     }
+
+    // ===== Popover icon 控制 =====
+    function toggleFilterPopover(e, id) {
+      e.stopPropagation();
+      document.querySelectorAll('.col-filter-popover').forEach(p => {
+        if (p.id !== id) p.classList.remove('show');
+      });
+      const pop = document.getElementById(id);
+      if (pop.classList.contains('show')) { pop.classList.remove('show'); return; }
+      const rect = e.currentTarget.getBoundingClientRect();
+      const popWidth = pop.offsetWidth || 200;
+      let left = rect.left;
+      if (left + popWidth > window.innerWidth - 16) {
+        left = Math.max(8, window.innerWidth - popWidth - 16);
+      }
+      pop.style.top = (rect.bottom + 4) + 'px';
+      pop.style.left = left + 'px';
+      pop.classList.add('show');
+      setTimeout(() => {
+        const firstInput = pop.querySelector('input, select');
+        if (firstInput) firstInput.focus();
+      }, 30);
+    }
+
+    function updateFilterIconState(iconId, hasValue) {
+      const icon = document.getElementById(iconId);
+      if (!icon) return;
+      if (hasValue) icon.classList.add('has-value');
+      else icon.classList.remove('has-value');
+    }
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.col-filter-popover').forEach(p => p.classList.remove('show'));
+    });
 
     // ===== 排序 =====
     function toggleSort(column) {
@@ -542,15 +623,15 @@
 
     // ===== 文字輸入篩選 =====
     function bindFilterInputs() {
-      document.getElementById('f_id').addEventListener('input',  e => { filters.id = e.target.value; renderTable(); });
-      document.getElementById('f_last5').addEventListener('input',e => { filters.last5 = e.target.value.toLowerCase(); renderTable(); });
-      document.getElementById('f_reason').addEventListener('input',e=> { filters.reason = e.target.value; renderTable(); });
-      document.getElementById('f_order').addEventListener('input',e => { filters.order = e.target.value.toLowerCase(); renderTable(); });
-      document.getElementById('f_batch').addEventListener('input',e => { filters.batch = e.target.value; renderTable(); });
-      document.getElementById('f_tx_date_from').addEventListener('change', e => { filters.txDateFrom = e.target.value; renderTable(); });
-      document.getElementById('f_tx_date_to').addEventListener('change', e => { filters.txDateTo = e.target.value; renderTable(); });
-      document.getElementById('f_created_from').addEventListener('change', e => { filters.createdFrom = e.target.value; renderTable(); });
-      document.getElementById('f_created_to').addEventListener('change', e => { filters.createdTo = e.target.value; renderTable(); });
+      document.getElementById('f_id').addEventListener('input',  e => { filters.id = e.target.value; updateFilterIconState('fi_id', !!e.target.value); renderTable(); });
+      document.getElementById('f_last5').addEventListener('input',e => { filters.last5 = e.target.value.toLowerCase(); updateFilterIconState('fi_last5', !!e.target.value); renderTable(); });
+      document.getElementById('f_reason').addEventListener('input',e=> { filters.reason = e.target.value; updateFilterIconState('fi_reason', !!e.target.value); renderTable(); });
+      document.getElementById('f_order').addEventListener('input',e => { filters.order = e.target.value.toLowerCase(); updateFilterIconState('fi_order', !!e.target.value); renderTable(); });
+      document.getElementById('f_batch').addEventListener('input',e => { filters.batch = e.target.value; updateFilterIconState('fi_batch', !!e.target.value); renderTable(); });
+      document.getElementById('f_tx_date_from').addEventListener('change', e => { filters.txDateFrom = e.target.value; updateFilterIconState('fi_tx_date', !!(filters.txDateFrom || filters.txDateTo)); renderTable(); });
+      document.getElementById('f_tx_date_to').addEventListener('change', e => { filters.txDateTo = e.target.value; updateFilterIconState('fi_tx_date', !!(filters.txDateFrom || filters.txDateTo)); renderTable(); });
+      document.getElementById('f_created_from').addEventListener('change', e => { filters.createdFrom = e.target.value; updateFilterIconState('fi_created', !!(filters.createdFrom || filters.createdTo)); renderTable(); });
+      document.getElementById('f_created_to').addEventListener('change', e => { filters.createdTo = e.target.value; updateFilterIconState('fi_created', !!(filters.createdFrom || filters.createdTo)); renderTable(); });
     }
 
     function clearAllFilters() {

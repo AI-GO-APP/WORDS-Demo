@@ -250,6 +250,63 @@
     .sortable.is-asc .sort-icon::before  { content: '▲'; color: #1a1f36; }
     .sortable.is-desc .sort-icon::before { content: '▼'; color: #1a1f36; }
     .sortable:not(.is-asc):not(.is-desc) .sort-icon::before { content: '⇅'; }
+
+    /* ===== 欄位篩選 icon + popover (fixed positioning) ===== */
+    .admin-table thead th { position: relative; }
+    .col-filter-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      color: #9ca3af;
+      padding: 2px 5px;
+      border-radius: 4px;
+      user-select: none;
+      vertical-align: middle;
+    }
+    .col-filter-icon:hover { background: #f3f4f6; color: #1a1f36; }
+    .col-filter-icon.has-value {
+      color: #fff;
+      background: #f97316;
+      font-weight: 700;
+    }
+    .col-filter-popover {
+      position: fixed;
+      z-index: 1000;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.12);
+      padding: 10px;
+      min-width: 200px;
+      display: none;
+    }
+    .col-filter-popover.show { display: block; }
+    .col-filter-popover .filter-input,
+    .col-filter-popover input[type="date"],
+    .col-filter-popover select {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 13px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .col-filter-popover .filter-date-range {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .col-filter-popover .filter-date-range input { flex: 1; }
+    .col-filter-popover-title {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
     .multi-select {
       position: relative;
       width: 100%;
@@ -454,75 +511,87 @@
           <div class="admin-table-wrapper">
             <table class="admin-table">
               <thead>
-                <!-- Row 1: 欄位名 + 排序圖示 -->
                 <tr>
-                  <th>訂單編號</th>
-                  <th>客戶</th>
-                  <th>場館 / 空間</th>
+                  <th>
+                    訂單編號
+                    <span class="col-filter-icon" id="fi_id" onclick="toggleFilterPopover(event, 'fp_id')" title="搜尋編號">🔍</span>
+                    <div class="col-filter-popover" id="fp_id" onclick="event.stopPropagation()">
+                      <div class="col-filter-popover-title">搜尋訂單編號</div>
+                      <input type="text" class="filter-input" id="f_id" placeholder="輸入編號">
+                    </div>
+                  </th>
+                  <th>
+                    客戶
+                    <span class="col-filter-icon" id="fi_customer" onclick="toggleFilterPopover(event, 'fp_customer')" title="搜尋客戶">🔍</span>
+                    <div class="col-filter-popover" id="fp_customer" onclick="event.stopPropagation()">
+                      <div class="col-filter-popover-title">搜尋客戶</div>
+                      <input type="text" class="filter-input" id="f_customer" placeholder="輸入客戶名">
+                    </div>
+                  </th>
+                  <th>
+                    場館 / 空間
+                    <span class="col-filter-icon" id="fi_venue" onclick="toggleFilterPopover(event, 'fp_venue')" title="篩選場館">▾</span>
+                    <div class="col-filter-popover" id="fp_venue" onclick="event.stopPropagation()" style="padding:0;">
+                      <div id="venuePanel" style="max-height:280px; overflow-y:auto;"></div>
+                    </div>
+                  </th>
                   <th class="sortable" onclick="toggleSort('date')">
                     預訂日期 <span class="sort-icon" id="sort_date"></span>
+                    <span class="col-filter-icon" id="fi_date" onclick="event.stopPropagation();toggleFilterPopover(event, 'fp_date')" title="預訂日期區間">📅</span>
+                    <div class="col-filter-popover" id="fp_date" onclick="event.stopPropagation()" style="min-width:280px;">
+                      <div class="col-filter-popover-title">預訂日期區間</div>
+                      <div class="filter-date-range">
+                        <input type="date" id="f_date_from" title="起始日">
+                        <span style="font-size:11px; color:#9ca3af;">~</span>
+                        <input type="date" id="f_date_to" title="結束日">
+                      </div>
+                    </div>
                   </th>
                   <th>時段</th>
-                  <th>方案</th>
+                  <th>
+                    方案
+                    <span class="col-filter-icon" id="fi_plan" onclick="toggleFilterPopover(event, 'fp_plan')" title="搜尋方案">🔍</span>
+                    <div class="col-filter-popover" id="fp_plan" onclick="event.stopPropagation()">
+                      <div class="col-filter-popover-title">搜尋方案</div>
+                      <input type="text" class="filter-input" id="f_plan" placeholder="輸入方案名">
+                    </div>
+                  </th>
                   <th class="sortable" style="text-align:right;" onclick="toggleSort('amount')">
                     金額 <span class="sort-icon" id="sort_amount"></span>
                   </th>
-                  <th>狀態</th>
-                  <th>💸 匯款狀態</th>
+                  <th>
+                    狀態
+                    <span class="col-filter-icon" id="fi_status" onclick="toggleFilterPopover(event, 'fp_status')" title="篩選狀態">▾</span>
+                    <div class="col-filter-popover" id="fp_status" onclick="event.stopPropagation()" style="padding:0;">
+                      <div id="statusPanel" style="max-height:240px; overflow-y:auto;"></div>
+                    </div>
+                  </th>
+                  <th>
+                    💸 匯款狀態
+                    <span class="col-filter-icon" id="fi_payment" onclick="toggleFilterPopover(event, 'fp_payment')" title="篩選匯款狀態">▾</span>
+                    <div class="col-filter-popover" id="fp_payment" onclick="event.stopPropagation()">
+                      <div class="col-filter-popover-title">匯款狀態</div>
+                      <select class="filter-input" id="f_payment" onchange="onPaymentFilterChange(this.value)">
+                        <option value="">全部</option>
+                        <option value="paid">已匯款</option>
+                        <option value="unpaid">未匯款</option>
+                        <option value="not_required">不適用</option>
+                      </select>
+                    </div>
+                  </th>
                   <th class="sortable" onclick="toggleSort('createdAt')">
                     建立時間 <span class="sort-icon" id="sort_createdAt"></span>
+                    <span class="col-filter-icon" id="fi_created" onclick="event.stopPropagation();toggleFilterPopover(event, 'fp_created')" title="建立時間區間">📅</span>
+                    <div class="col-filter-popover" id="fp_created" onclick="event.stopPropagation()" style="min-width:280px;">
+                      <div class="col-filter-popover-title">建立時間區間</div>
+                      <div class="filter-date-range">
+                        <input type="date" id="f_created_from" title="起始日">
+                        <span style="font-size:11px; color:#9ca3af;">~</span>
+                        <input type="date" id="f_created_to" title="結束日">
+                      </div>
+                    </div>
                   </th>
                   <th style="width:90px;">操作</th>
-                </tr>
-
-                <!-- Row 2: 篩選器 -->
-                <tr class="filter-row">
-                  <th><input type="text" class="filter-input" id="f_id" placeholder="搜尋編號"></th>
-                  <th><input type="text" class="filter-input" id="f_customer" placeholder="搜尋客戶"></th>
-                  <th>
-                    <div class="multi-select" id="venueMultiSelect">
-                      <button class="multi-select-trigger" type="button" onclick="toggleMultiPanel(event, 'venueMultiSelect')">
-                        <span id="venueTriggerLabel">全部場館</span>
-                        <span>▾</span>
-                      </button>
-                      <div class="multi-select-panel" id="venuePanel"></div>
-                    </div>
-                  </th>
-                  <th>
-                    <div class="filter-date-range">
-                      <input type="date" id="f_date_from" title="預訂起始日">
-                      <span style="font-size:10px; color:#9ca3af;">~</span>
-                      <input type="date" id="f_date_to" title="預訂結束日">
-                    </div>
-                  </th>
-                  <th></th>
-                  <th><input type="text" class="filter-input" id="f_plan" placeholder="搜尋方案"></th>
-                  <th></th>
-                  <th>
-                    <div class="multi-select" id="statusMultiSelect">
-                      <button class="multi-select-trigger" type="button" onclick="toggleMultiPanel(event, 'statusMultiSelect')">
-                        <span id="statusTriggerLabel">全部狀態</span>
-                        <span>▾</span>
-                      </button>
-                      <div class="multi-select-panel" id="statusPanel"></div>
-                    </div>
-                  </th>
-                  <th>
-                    <select class="filter-input" id="f_payment" onchange="onPaymentFilterChange(this.value)">
-                      <option value="">全部</option>
-                      <option value="paid">已匯款</option>
-                      <option value="unpaid">未匯款</option>
-                      <option value="not_required">不適用</option>
-                    </select>
-                  </th>
-                  <th>
-                    <div class="filter-date-range">
-                      <input type="date" id="f_created_from" title="建立起始日">
-                      <span style="font-size:10px; color:#9ca3af;">~</span>
-                      <input type="date" id="f_created_to" title="建立結束日">
-                    </div>
-                  </th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody id="ordersTable"></tbody>
@@ -719,6 +788,7 @@
 
     function onPaymentFilterChange(v) {
       filters.payment = v;
+      updateFilterIconState('fi_payment', !!v);
       renderTable();
     }
 
@@ -760,7 +830,39 @@
       document.querySelectorAll('.multi-select').forEach(ms => {
         if (!ms.contains(e.target)) ms.classList.remove('open');
       });
+      // 也收所有 col-filter-popover
+      document.querySelectorAll('.col-filter-popover').forEach(p => p.classList.remove('show'));
     });
+
+    // ===== Popover icon 控制 =====
+    function toggleFilterPopover(e, id) {
+      e.stopPropagation();
+      document.querySelectorAll('.col-filter-popover').forEach(p => {
+        if (p.id !== id) p.classList.remove('show');
+      });
+      const pop = document.getElementById(id);
+      if (pop.classList.contains('show')) { pop.classList.remove('show'); return; }
+      const rect = e.currentTarget.getBoundingClientRect();
+      const popWidth = pop.offsetWidth || 200;
+      let left = rect.left;
+      if (left + popWidth > window.innerWidth - 16) {
+        left = Math.max(8, window.innerWidth - popWidth - 16);
+      }
+      pop.style.top = (rect.bottom + 4) + 'px';
+      pop.style.left = left + 'px';
+      pop.classList.add('show');
+      setTimeout(() => {
+        const firstInput = pop.querySelector('input, select');
+        if (firstInput) firstInput.focus();
+      }, 30);
+    }
+
+    function updateFilterIconState(iconId, hasValue) {
+      const icon = document.getElementById(iconId);
+      if (!icon) return;
+      if (hasValue) icon.classList.add('has-value');
+      else icon.classList.remove('has-value');
+    }
 
     function onVenueCheck(cb) {
       if (cb.checked) {
@@ -783,13 +885,16 @@
     }
 
     function updateMultiLabel(name, selected, all, defaultLabel, formatFn) {
-      const label = document.getElementById(name + 'TriggerLabel');
-      if (selected.length === 0 || selected.length === all.length) {
-        label.innerHTML = defaultLabel;
-      } else if (selected.length === 1) {
-        label.innerHTML = formatFn(selected[0]);
-      } else {
-        label.innerHTML = `已選 <span class="filter-count">${selected.length}</span>`;
+      // 舊的 trigger label 元素已經移除，改用 icon 數字
+      const icon = document.getElementById('fi_' + name);
+      if (icon) {
+        if (selected.length === 0 || selected.length === all.length) {
+          icon.textContent = '▾';
+          icon.classList.remove('has-value');
+        } else {
+          icon.textContent = selected.length;
+          icon.classList.add('has-value');
+        }
       }
     }
 
@@ -822,13 +927,41 @@
 
     // ===== 篩選欄位事件 =====
     function bindFilterInputs() {
-      document.getElementById('f_id').addEventListener('input', e => { filters.id = e.target.value.toLowerCase(); renderTable(); });
-      document.getElementById('f_customer').addEventListener('input', e => { filters.customer = e.target.value.toLowerCase(); renderTable(); });
-      document.getElementById('f_plan').addEventListener('input', e => { filters.plan = e.target.value.toLowerCase(); renderTable(); });
-      document.getElementById('f_date_from').addEventListener('change', e => { filters.dateFrom = e.target.value; renderTable(); });
-      document.getElementById('f_date_to').addEventListener('change', e => { filters.dateTo = e.target.value; renderTable(); });
-      document.getElementById('f_created_from').addEventListener('change', e => { filters.createdFrom = e.target.value; renderTable(); });
-      document.getElementById('f_created_to').addEventListener('change', e => { filters.createdTo = e.target.value; renderTable(); });
+      document.getElementById('f_id').addEventListener('input', e => {
+        filters.id = e.target.value.toLowerCase();
+        updateFilterIconState('fi_id', !!e.target.value);
+        renderTable();
+      });
+      document.getElementById('f_customer').addEventListener('input', e => {
+        filters.customer = e.target.value.toLowerCase();
+        updateFilterIconState('fi_customer', !!e.target.value);
+        renderTable();
+      });
+      document.getElementById('f_plan').addEventListener('input', e => {
+        filters.plan = e.target.value.toLowerCase();
+        updateFilterIconState('fi_plan', !!e.target.value);
+        renderTable();
+      });
+      document.getElementById('f_date_from').addEventListener('change', e => {
+        filters.dateFrom = e.target.value;
+        updateFilterIconState('fi_date', !!(filters.dateFrom || filters.dateTo));
+        renderTable();
+      });
+      document.getElementById('f_date_to').addEventListener('change', e => {
+        filters.dateTo = e.target.value;
+        updateFilterIconState('fi_date', !!(filters.dateFrom || filters.dateTo));
+        renderTable();
+      });
+      document.getElementById('f_created_from').addEventListener('change', e => {
+        filters.createdFrom = e.target.value;
+        updateFilterIconState('fi_created', !!(filters.createdFrom || filters.createdTo));
+        renderTable();
+      });
+      document.getElementById('f_created_to').addEventListener('change', e => {
+        filters.createdTo = e.target.value;
+        updateFilterIconState('fi_created', !!(filters.createdFrom || filters.createdTo));
+        renderTable();
+      });
     }
 
     function clearAllFilters() {
@@ -843,6 +976,7 @@
       document.querySelectorAll('.multi-select-panel input').forEach(cb => cb.checked = false);
       updateMultiLabel('venue', [], VENUE_LIST, '全部場館', v => v);
       updateMultiLabel('status', [], Object.keys(STATUS_CONFIG), '全部狀態', k => STATUS_CONFIG[k].label);
+      ['fi_id','fi_customer','fi_plan','fi_date','fi_created','fi_payment'].forEach(id => updateFilterIconState(id, false));
       updateSortIndicators();
       renderTable();
     }

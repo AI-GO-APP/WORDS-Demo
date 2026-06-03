@@ -157,10 +157,8 @@
       font-weight: 700;
     }
     .col-filter-popover {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      z-index: 30;
+      position: fixed;  /* 改 fixed 避免被 table 截斷 */
+      z-index: 1000;
       background: #fff;
       border: 1px solid #d1d5db;
       border-radius: 6px;
@@ -483,7 +481,27 @@
       document.querySelectorAll('.col-filter-popover').forEach(p => {
         if (p.id !== id) p.classList.remove('show');
       });
-      document.getElementById(id).classList.toggle('show');
+      const pop = document.getElementById(id);
+      if (pop.classList.contains('show')) {
+        pop.classList.remove('show');
+        return;
+      }
+      // 用 fixed positioning 算位置（避開被 table 截斷）
+      const rect = e.target.getBoundingClientRect();
+      const popWidth = pop.offsetWidth || 200;
+      // 向右展開，超出螢幕就改成靠右對齊
+      let left = rect.left;
+      if (left + popWidth > window.innerWidth - 16) {
+        left = Math.max(8, window.innerWidth - popWidth - 16);
+      }
+      pop.style.top = (rect.bottom + 4) + 'px';
+      pop.style.left = left + 'px';
+      pop.classList.add('show');
+      // 把焦點移到第一個 input（方便直接打字）
+      setTimeout(() => {
+        const firstInput = pop.querySelector('input, select');
+        if (firstInput) firstInput.focus();
+      }, 30);
     }
 
     // 點外面關掉所有 popover

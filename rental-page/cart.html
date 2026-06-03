@@ -191,7 +191,10 @@
             <span>總計</span>
             <span>NT$ ${total.toLocaleString()}</span>
           </div>
-          <button class="cart-checkout-btn" type="button" onclick="checkout()">前往結帳</button>
+          <button class="cart-checkout-btn" type="button" onclick="checkout()">📨 送出預約申請</button>
+          <p style="font-size:12px; color:#6b7280; text-align:center; margin-top:8px;">
+            ⓘ 送出申請後將進入「待確認」狀態，客服 1 個工作日內審核並通知付款
+          </p>
         </div>
       `;
 
@@ -287,7 +290,7 @@
           subtotal: it.subtotal || 0,
           deposit: it.deposit || 0,
           total_amount: it.total || (it.subtotal + (it.deposit || 0)),
-          status: 'pending',
+          status: 'pending_review',  // 待客服確認
           payment_status: 'unpaid',
           // order_number / payment_account_last5 / queue_position 由 DB trigger 產生
         };
@@ -315,21 +318,22 @@
 
       // 組訊息
       let msgHtml = '<div style="max-width:600px">';
-      msgHtml += '<h2 style="color:#16a34a;margin-bottom:16px">✅ 訂單建立成功</h2>';
+      msgHtml += '<h2 style="color:#6b9d7e;margin-bottom:16px">📨 預約申請已送出</h2>';
+      msgHtml += '<p style="color:#4b5563;margin-bottom:16px">客服將於 <strong>1 個工作日</strong>內審核您的預約申請，並透過 Email / LINE 通知您付款資訊</p>';
       newOrders.forEach((o, idx) => {
         const qStatus = o.queue_status === 'waiting'
-          ? `<span style="color:#f59e0b">候補第 ${o.queue_position} 順位</span>`
-          : `<span style="color:#16a34a">第 1 順位（請於 3 天內付款）</span>`;
+          ? `<span style="color:#c19a55">候補第 ${o.queue_position} 順位</span>`
+          : `<span style="color:#6b9d7e">第 1 順位（優先審核）</span>`;
         msgHtml += `
-          <div style="background:#f9fafb;padding:16px;border-radius:8px;margin-bottom:12px;border-left:4px solid #3b82f6">
-            <p style="margin:4px 0"><strong>訂單編號：</strong>${o.order_number}</p>
-            <p style="margin:4px 0"><strong>應付金額：</strong>NT$ ${Number(o.total_amount).toLocaleString()}</p>
-            <p style="margin:4px 0"><strong>付款帳號末五碼：</strong><span style="font-family:monospace;background:#fef3c7;padding:2px 8px;border-radius:4px">${o.payment_account_last5}</span></p>
-            <p style="margin:4px 0"><strong>狀態：</strong>${qStatus}</p>
+          <div style="background:#f9fafb;padding:16px;border-radius:8px;margin-bottom:12px;border-left:4px solid #6ba8c9">
+            <p style="margin:4px 0"><strong>申請編號：</strong>${o.order_number}</p>
+            <p style="margin:4px 0"><strong>預估金額：</strong>NT$ ${Number(o.total_amount).toLocaleString()}</p>
+            <p style="margin:4px 0"><strong>狀態：</strong><span style="background:#fef5e3;color:#c19a55;padding:2px 8px;border-radius:4px;font-size:13px">⏳ 待客服確認</span></p>
+            <p style="margin:4px 0;font-size:13px;color:#6b7280">${qStatus}</p>
           </div>
         `;
       });
-      msgHtml += '<p style="color:#6b7280;font-size:14px">⚠️ 請以「分行代碼 700」匯款到指定帳號，並在帳號末五碼填入上方數字，以便系統自動比對。</p>';
+      msgHtml += '<p style="color:#6b7280;font-size:13px;margin-top:8px">ℹ️ 客服確認後您會收到付款帳號末五碼，可至「我的訂單」查看進度</p>';
       msgHtml += '<p style="margin-top:20px"><a href="account.html" style="display:inline-block;padding:10px 24px;background:#1a1f36;color:#fff;border-radius:6px;text-decoration:none">前往我的訂單</a></p>';
       msgHtml += '</div>';
 

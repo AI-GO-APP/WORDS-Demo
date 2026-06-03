@@ -702,6 +702,7 @@
     ];
 
     const STATUS_CONFIG = {
+      pending_review: { label: '待確認', color: 'admin-badge-warning' },  // 新增：等客服審核
       pending:   { label: '待付款',  color: 'admin-badge-warning' },
       paid:      { label: '已付款',  color: 'admin-badge-info' },
       confirmed: { label: '已確認',  color: 'admin-badge-success' },
@@ -1037,11 +1038,43 @@
             <td>${paymentCell}</td>
             <td style="color:#9ca3af; font-size:12px;">${o.createdAt}</td>
             <td onclick="event.stopPropagation();">
-              <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="viewOrder('${o.id}')">查看</button>
+              ${o.status === 'pending_review' ? `
+                <button class="admin-btn admin-btn-sm" style="background:#6b9d7e;color:#fff;" onclick="quickApprove('${o.id}')">✓ 通過</button>
+                <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="quickReject('${o.id}')">✗ 拒絕</button>
+              ` : `
+                <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="viewOrder('${o.id}')">查看</button>
+              `}
             </td>
           </tr>
         `;
       }).join('');
+    }
+
+    // 快捷通過：pending_review → pending
+    async function quickApprove(orderId) {
+      const o = ORDERS.find(x => x.id === orderId);
+      if (!o || !o.db_id) return;
+      if (!confirm(`確定通過訂單 #${o.id}？\n通過後客戶會看到付款資訊（末五碼）`)) return;
+      const { error } = await supabaseClient.from('orders')
+        .update({ status: 'pending' })
+        .eq('id', o.db_id);
+      if (error) { alert('失敗：' + error.message); return; }
+      alert(`✅ 已通過 #${o.id}\n客戶端現在會看到「待付款」狀態`);
+      loadOrdersFromSupabase();
+    }
+
+    // 快捷拒絕：pending_review → cancelled
+    async function quickReject(orderId) {
+      const o = ORDERS.find(x => x.id === orderId);
+      if (!o || !o.db_id) return;
+      const reason = prompt(`拒絕原因（會傳達給客戶）：`, '時段已滿 / 不符合活動規範');
+      if (reason === null) return;
+      const { error } = await supabaseClient.from('orders')
+        .update({ status: 'cancelled', cancel_reason: reason, cancelled_at: new Date().toISOString() })
+        .eq('id', o.db_id);
+      if (error) { alert('失敗：' + error.message); return; }
+      alert(`✅ 已拒絕 #${o.id}`);
+      loadOrdersFromSupabase();
     }
 
     function viewOrder(id) {

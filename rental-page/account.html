@@ -1074,14 +1074,14 @@
     function loadBookings(customerId, orders) {
       const today = new Date().toISOString().slice(0,10);
       const upcoming = orders.filter(o =>
-        (o.status === 'pending' || o.status === 'paid' || o.status === 'confirmed') &&
+        (o.status === 'pending_review' || o.status === 'pending' || o.status === 'paid' || o.status === 'confirmed') &&
         o.booking_date >= today
       ).sort((a,b) => a.booking_date.localeCompare(b.booking_date));
 
       const completed = orders.filter(o => o.status === 'completed')
         .sort((a,b) => b.booking_date.localeCompare(a.booking_date)).slice(0,5);
 
-      const STATUS_LABEL = { pending: '待付款', paid: '已付款', confirmed: '已確認', completed: '已完成' };
+      const STATUS_LABEL = { pending_review: '待確認', pending: '待付款', paid: '已付款', confirmed: '已確認', completed: '已完成' };
       function renderItem(o, isUpcoming) {
         const venue = o.space?.venue?.name || '';
         const space = o.space?.name || '';
@@ -1094,10 +1094,15 @@
         const daysUntil = isUpcoming ?
           Math.ceil((new Date(o.booking_date) - new Date()) / (1000*60*60*24)) : null;
         const noteText = isUpcoming ?
-          (o.status === 'pending' ? `📌 ${daysUntil} 天後（請盡快付款）` : `📌 還有 ${daysUntil} 天`) : '';
+          (o.status === 'pending_review' ? `⏳ 客服審核中` :
+           o.status === 'pending' ? `📌 ${daysUntil} 天後（請盡快付款）` :
+           `📌 還有 ${daysUntil} 天`) : '';
 
         let actions = '';
-        if (o.status === 'pending') {
+        if (o.status === 'pending_review') {
+          actions = `<span style="font-size:12px;color:#c19a55">⏳ 待客服確認</span>
+            <button class="btn-small danger" onclick="cancelOrder('${o.id}')">取消申請</button>`;
+        } else if (o.status === 'pending') {
           actions = `<button class="btn-small primary" onclick="payOrder('${o.order_number}')">立即付款</button>
             <button class="btn-small danger" onclick="cancelOrder('${o.id}')">取消</button>`;
         } else if (o.status === 'confirmed') {
@@ -1527,11 +1532,11 @@
 
       // 狀態中文
       const STATUS_LABEL = {
-        pending: '待付款', paid: '已付款', confirmed: '已確認',
+        pending_review: '待確認', pending: '待付款', paid: '已付款', confirmed: '已確認',
         completed: '已完成', cancelled: '已取消', refunded: '已退款',
       };
       const STATUS_CLASS = {
-        pending: 's-pending', paid: 's-confirmed', confirmed: 's-confirmed',
+        pending_review: 's-pending', pending: 's-pending', paid: 's-confirmed', confirmed: 's-confirmed',
         completed: 's-completed', cancelled: 's-cancelled', refunded: 's-cancelled',
       };
 
@@ -1556,7 +1561,11 @@
 
         // 動作按鈕
         let actions = '';
-        if (o.status === 'pending') {
+        if (o.status === 'pending_review') {
+          actions = `
+            <span style="font-size:11px;color:#c19a55;display:block;margin-bottom:4px">⏳ 待客服確認</span>
+            <button class="btn-small danger" onclick="cancelOrder('${o.id}')">取消申請</button>`;
+        } else if (o.status === 'pending') {
           actions = `
             <button class="btn-small primary" onclick="payOrder('${o.order_number}')">立即付款</button>
             <button class="btn-small danger" onclick="cancelOrder('${o.id}')">取消</button>`;

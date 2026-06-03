@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>場館管理｜沃茲後台</title>
   <link rel="stylesheet" href="admin.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+
   <style>
     /* ===== Tab strip ===== */
     .admin-tabs-bar {
@@ -286,6 +291,7 @@
           <div class="admin-nav-title">營運管理</div>
           <a href="orders.html" class="admin-nav-item"><span class="admin-nav-icon">🛍️</span><span>訂單管理</span></a>
           <a href="customers.html" class="admin-nav-item"><span class="admin-nav-icon">👥</span><span>客戶管理</span></a>
+          <a href="tiers.html" class="admin-nav-item"><span class="admin-nav-icon">💎</span><span>會員等級</span></a>
           <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;"><span class="admin-nav-icon">🎟️</span><span>優惠券</span></a>
         </div>
         <div class="admin-nav-section">
@@ -770,23 +776,47 @@
       }
     });
 
-    function resetData() {
-      if (confirm('確定要重置所有 demo 資料？\n（會清空您新增/修改的內容，回到原始 5 個場館）')) {
-        DataStore.reset();
-        location.reload();
-      }
-    }
-
+    // ============================================================
+    // Supabase 版本：從 Supabase 直接讀寫，不再用 DataStore
+    // ============================================================
     let editingVenueId = null;
     let currentVenueIdForSpaces = null;
     let editingSpaceId = null;
 
-    function renderTable() {
+    // Cache：避免每次都重撈
+    let VENUES_CACHE = [];
+    let SPACES_CACHE = {};   // venue_id -> [spaces]
+    let PRICES_CACHE = {};   // space_id -> price
+
+    async function loadAllVenues() {
+      const { data: venues, error } = await supabaseClient
+        .from('venues')
+        .select('id, name, code, district, address, status, spaces(id, name, capacity, status, prices(space_id))')
+        .order('code', { ascending: true, nullsFirst: false });
+      if (error) {
+        console.error('讀取場館失敗:', error);
+        document.getElementById('venuesTable').innerHTML =
+          `<tr><td colspan="8"><div class="admin-empty" style="color:#dc2626">讀取失敗：${error.message}</div></td></tr>`;
+        return;
+      }
+      VENUES_CACHE = venues || [];
+      // 順便建空間 cache
+      SPACES_CACHE = {};
+      PRICES_CACHE = {};
+      VENUES_CACHE.forEach(v => {
+        SPACES_CACHE[v.id] = v.spaces || [];
+        (v.spaces || []).forEach(s => {
+          if (s.prices && s.prices.length > 0) PRICES_CACHE[s.id] = true;
+        });
+      });
+    }
+
+    async function renderTable() {
       const search = document.getElementById('searchInput').value.toLowerCase();
       const district = document.getElementById('districtFilter').value;
       const status = document.getElementById('statusFilter').value;
 
-      const venues = DataStore.getVenues().filter(v => {
+      const venues = VENUES_CACHE.filter(v => {
         if (search && !v.name.toLowerCase().includes(search)) return false;
         if (district && v.district !== district) return false;
         if (status && v.status !== status) return false;
@@ -800,21 +830,21 @@
       }
 
       tbody.innerHTML = venues.map(v => {
-        const spacesCount = DataStore.getSpacesByVenue(v.id).length;
+        const spacesCount = (SPACES_CACHE[v.id] || []).length;
         return `
         <tr>
           <td><div class="admin-table-thumb" style="display:flex; align-items:center; justify-content:center; color:#9ca3af;">🏛️</div></td>
           <td><strong>${v.name}</strong></td>
           <td><span style="font-family:monospace; color:#6b7280;">${v.code || '—'}</span></td>
           <td>${v.district}</td>
-          <td style="color:#6b7280;">${v.address}</td>
+          <td style="color:#6b7280;">${v.address || '—'}</td>
           <td><strong>${spacesCount}</strong> 個空間</td>
           <td>${v.status === 'active' ? '<span class="admin-badge admin-badge-success">上架中</span>' : '<span class="admin-badge admin-badge-default">已下架</span>'}</td>
           <td>
             <div class="admin-table-actions">
-              <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="openSpaces(${v.id})">空間</button>
-              <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="editVenue(${v.id})">編輯</button>
-              <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="deleteVenue(${v.id})">刪除</button>
+              <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="openSpaces('${v.id}')">空間</button>
+              <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="editVenue('${v.id}')">編輯</button>
+              <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="deleteVenue('${v.id}')">刪除</button>
             </div>
           </td>
         </tr>
@@ -839,57 +869,65 @@
     });
 
     function editVenue(id) {
-      const v = DataStore.getVenue(id);
+      const v = VENUES_CACHE.find(v => v.id === id);
       if (!v) return;
       editingVenueId = id;
       document.getElementById('modalTitle').textContent = '編輯場館';
       document.getElementById('f_name').value = v.name;
       document.getElementById('f_code').value = v.code || '';
       document.getElementById('f_district').value = v.district;
-      document.getElementById('f_address').value = v.address;
+      document.getElementById('f_address').value = v.address || '';
       document.getElementById('f_status').value = v.status;
       document.getElementById('venueModal').classList.add('show');
     }
 
-    function deleteVenue(id) {
-      const v = DataStore.getVenue(id);
-      const spacesCount = DataStore.getSpacesByVenue(id).length;
-      if (confirm(`確定要刪除「${v.name}」嗎？\n會一起刪除底下 ${spacesCount} 個空間和對應價格！`)) {
-        DataStore.deleteVenue(id);
-        renderTable();
-      }
+    async function deleteVenue(id) {
+      const v = VENUES_CACHE.find(v => v.id === id);
+      const spacesCount = (SPACES_CACHE[id] || []).length;
+      if (!confirm(`確定要刪除「${v.name}」嗎？\n會一起刪除底下 ${spacesCount} 個空間和對應價格！`)) return;
+
+      const { error } = await supabaseClient.from('venues').delete().eq('id', id);
+      if (error) { alert('刪除失敗：' + error.message); return; }
+      await loadAllVenues();
+      renderTable();
+      toast('已刪除「' + v.name + '」');
     }
 
     function closeVenueModal() {
       document.getElementById('venueModal').classList.remove('show');
     }
 
-    function saveVenue() {
+    async function saveVenue() {
       const name = document.getElementById('f_name').value.trim();
       if (!name) { alert('請輸入場館名稱'); return; }
 
       const data = {
         name,
-        code: document.getElementById('f_code').value.trim(),
+        code: document.getElementById('f_code').value.trim() || null,
         district: document.getElementById('f_district').value,
         address: document.getElementById('f_address').value.trim(),
         status: document.getElementById('f_status').value
       };
 
+      let error;
       if (editingVenueId) {
-        DataStore.updateVenue(editingVenueId, data);
+        ({ error } = await supabaseClient.from('venues').update(data).eq('id', editingVenueId));
       } else {
-        DataStore.addVenue(data);
+        ({ error } = await supabaseClient.from('venues').insert(data));
       }
+      if (error) { alert('儲存失敗：' + error.message); return; }
+
       closeVenueModal();
+      await loadAllVenues();
       renderTable();
+      toast(editingVenueId ? '已更新場館' : '已新增場館');
     }
 
     // ===== 空間管理 =====
-    function openSpaces(venueId) {
+    async function openSpaces(venueId) {
       currentVenueIdForSpaces = venueId;
-      const v = DataStore.getVenue(venueId);
-      const spaces = DataStore.getSpacesByVenue(venueId);
+      const v = VENUES_CACHE.find(v => v.id === venueId);
+      const spaces = SPACES_CACHE[venueId] || [];
 
       document.getElementById('spacesModalTitle').textContent = `${v.name}｜空間管理`;
 
@@ -913,7 +951,7 @@
           </thead>
           <tbody>
             ${spaces.map((s, i) => {
-              const hasPrice = !!DataStore.getPrice(s.id);
+              const hasPrice = !!PRICES_CACHE[s.id];
               return `
                 <tr>
                   <td>${i+1}</td>
@@ -922,8 +960,8 @@
                   <td>${hasPrice ? '<span class="admin-badge admin-badge-success">已設定</span>' : '<span class="admin-badge admin-badge-warning">未設定</span>'}</td>
                   <td>${s.status === 'active' ? '<span class="admin-badge admin-badge-success">啟用</span>' : '<span class="admin-badge admin-badge-default">停用</span>'}</td>
                   <td>
-                    <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="editSpace(${s.id})">編輯</button>
-                    <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="deleteSpace(${s.id})">刪除</button>
+                    <button class="admin-btn admin-btn-secondary admin-btn-sm" onclick="editSpace('${s.id}')">編輯</button>
+                    <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="deleteSpace('${s.id}')">刪除</button>
                   </td>
                 </tr>
               `;
@@ -933,7 +971,7 @@
       `;
 
       document.getElementById('spacesModalBody').innerHTML = `
-        <p style="font-size:13px; color:#6b7280; margin-bottom:12px;">📍 ${v.address}</p>
+        <p style="font-size:13px; color:#6b7280; margin-bottom:12px;">📍 ${v.address || '—'}</p>
         ${list}
         <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center;">
           <button class="admin-btn admin-btn-primary admin-btn-sm" onclick="openSpaceForm()">＋ 新增空間</button>
@@ -944,14 +982,16 @@
       document.getElementById('spacesModal').classList.add('show');
     }
 
-    function closeSpacesModal() {
+    async function closeSpacesModal() {
       document.getElementById('spacesModal').classList.remove('show');
-      renderTable(); // 重新計算空間數
+      await loadAllVenues();
+      renderTable();
     }
 
     function openSpaceForm(spaceId) {
       if (spaceId) {
-        const s = DataStore.getSpace(spaceId);
+        const allSpaces = Object.values(SPACES_CACHE).flat();
+        const s = allSpaces.find(s => s.id === spaceId);
         if (!s) return;
         editingSpaceId = spaceId;
         document.getElementById('spaceFormTitle').textContent = '編輯空間';
@@ -970,19 +1010,22 @@
 
     function editSpace(id) { openSpaceForm(id); }
 
-    function deleteSpace(id) {
-      const s = DataStore.getSpace(id);
-      if (confirm(`確定要刪除空間「${s.name}」？\n會一起刪除此空間的價格設定！`)) {
-        DataStore.deleteSpace(id);
-        openSpaces(currentVenueIdForSpaces); // 重新渲染空間列表
-      }
+    async function deleteSpace(id) {
+      const allSpaces = Object.values(SPACES_CACHE).flat();
+      const s = allSpaces.find(s => s.id === id);
+      if (!confirm(`確定要刪除空間「${s.name}」？\n會一起刪除此空間的價格設定！`)) return;
+      const { error } = await supabaseClient.from('spaces').delete().eq('id', id);
+      if (error) { alert('刪除失敗：' + error.message); return; }
+      await loadAllVenues();
+      openSpaces(currentVenueIdForSpaces);
+      toast('已刪除空間');
     }
 
     function closeSpaceFormModal() {
       document.getElementById('spaceFormModal').classList.remove('show');
     }
 
-    function saveSpace() {
+    async function saveSpace() {
       const name = document.getElementById('sf_name').value.trim();
       const capacity = parseInt(document.getElementById('sf_capacity').value);
       if (!name) { alert('請輸入空間名稱'); return; }
@@ -994,16 +1037,34 @@
         status: document.getElementById('sf_status').value
       };
 
+      let error;
       if (editingSpaceId) {
-        DataStore.updateSpace(editingSpaceId, data);
+        ({ error } = await supabaseClient.from('spaces').update(data).eq('id', editingSpaceId));
       } else {
-        DataStore.addSpace(data);
+        ({ error } = await supabaseClient.from('spaces').insert(data));
       }
+      if (error) { alert('儲存失敗：' + error.message); return; }
+
       closeSpaceFormModal();
-      openSpaces(currentVenueIdForSpaces); // 重新渲染
+      await loadAllVenues();
+      openSpaces(currentVenueIdForSpaces);
+      toast(editingSpaceId ? '已更新空間' : '已新增空間');
     }
 
-    renderTable();
+    // Toast 提示
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.style.cssText = 'position:fixed;top:20px;right:20px;background:#16a34a;color:#fff;padding:12px 20px;border-radius:6px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.15);';
+      t.textContent = '✅ ' + msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2200);
+    }
+
+    // 啟動
+    (async () => {
+      await loadAllVenues();
+      renderTable();
+    })();
 
     // ============================
     // 頁面編輯 Tab 邏輯

@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>訂單管理｜沃茲後台</title>
   <link rel="stylesheet" href="admin.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+
   <style>
     /* ===== Tab strip ===== */
     .admin-tabs-bar {
@@ -360,6 +365,9 @@
           <a href="customers.html" class="admin-nav-item">
             <span class="admin-nav-icon">👥</span><span>客戶管理</span>
           </a>
+          <a href="tiers.html" class="admin-nav-item">
+            <span class="admin-nav-icon">💎</span><span>會員等級</span>
+          </a>
           <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;">
             <span class="admin-nav-icon">🎟️</span><span>優惠券</span>
           </a>
@@ -596,8 +604,9 @@
       }
     });
 
-    // ===== Mock 訂單資料（多筆重疊以示範月曆）=====
-    const ORDERS = [
+    // ===== 訂單資料：從 Supabase 動態載入（先用 mock 當 fallback）=====
+    let ORDERS = [
+      // === 以下為 fallback mock（Supabase 載入後會被覆蓋）===
       // 本週多筆重疊（示範 side-by-side）
       { id: 'WL26002001', customer: 'Joanna', venue: '勤美館', space: '勤美館', date: '2026-06-02', startTime: '10:00', endTime: '13:00', plan: '小時計費', amount: 2040, deposit: 3000, status: 'pending', createdAt: '2026-05-29 09:00', payment: '尚未付款', headcount: '15人以內', cleanup: '無飲食' },
       { id: 'WL26002002', customer: '李美玲', venue: '勤美館', space: '勤美館', date: '2026-06-02', startTime: '11:00', endTime: '14:00', plan: '小時計費', amount: 2040, deposit: 3000, status: 'pending', createdAt: '2026-05-29 14:30', payment: '尚未付款', headcount: '15人以內', cleanup: '無飲食' },
@@ -1010,22 +1019,86 @@
       document.getElementById('orderModal').classList.remove('show');
     }
 
-    function updateOrderStatus() {
+    async function updateOrderStatus() {
       if (!currentEditingId) return;
       const newStatus = document.getElementById('newStatusSelect').value;
       const o = ORDERS.find(x => x.id === currentEditingId);
-      if (o) {
-        const oldStatus = o.status;
-        o.status = newStatus;
-        alert(`訂單 #${o.id} 狀態：${STATUS_CONFIG[oldStatus].label} → ${STATUS_CONFIG[newStatus].label}\n\n（demo：未實際存入資料庫）`);
-        closeModal();
-        renderTable();
-        updateStats();
-        // 月曆若在 active tab 也重繪
-        if (document.querySelector('[data-pane="calendar"]').classList.contains('active')) {
-          renderCalendar();
-        }
+      if (!o) return;
+      const oldStatus = o.status;
+
+      // 若為 Supabase 訂單（有 db_id），寫進 DB
+      if (o.db_id) {
+        const updates = { status: newStatus };
+        if (newStatus === 'paid')      updates.payment_status = 'paid', updates.paid_at = new Date().toISOString();
+        if (newStatus === 'confirmed') updates.confirmed_at = new Date().toISOString();
+        if (newStatus === 'cancelled') updates.cancelled_at = new Date().toISOString();
+        if (newStatus === 'completed') updates.completed_at = new Date().toISOString();
+        if (newStatus === 'refunded')  updates.refunded_at = new Date().toISOString();
+
+        const { error } = await supabaseClient.from('orders').update(updates).eq('id', o.db_id);
+        if (error) { alert('更新失敗：' + error.message); return; }
       }
+
+      o.status = newStatus;
+      alert(`訂單 #${o.id} 狀態：${STATUS_CONFIG[oldStatus].label} → ${STATUS_CONFIG[newStatus].label}\n\n✅ 已寫入資料庫`);
+      closeModal();
+      renderTable();
+      updateStats();
+      if (document.querySelector('[data-pane="calendar"]').classList.contains('active')) {
+        renderCalendar();
+      }
+      // 重新撈一次保持同步
+      loadOrdersFromSupabase();
+    }
+
+    // ============================================================
+    // 從 Supabase 載入訂單
+    // ============================================================
+    async function loadOrdersFromSupabase() {
+      const { data, error } = await supabaseClient
+        .from('orders')
+        .select(`
+          id, order_number, booking_date, start_time, end_time,
+          duration_hours, plan_type, plan_label, headcount, cleanup_choice,
+          subtotal, deposit, total_amount, status, payment_status, payment_account_last5,
+          queue_position, queue_status, created_at,
+          space:spaces ( name, venue:venues(name) ),
+          customer:customers ( name )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('讀取訂單失敗:', error);
+        return; // 保留 mock
+      }
+      if (!data || data.length === 0) {
+        console.log('Supabase 沒有訂單，保留 mock 顯示');
+        return;
+      }
+
+      // 把 Supabase 資料 map 成 mock 結構（讓現有 render 邏輯不用改）
+      ORDERS = data.map(o => ({
+        id: o.order_number,
+        db_id: o.id,
+        customer: o.customer?.name || '—',
+        venue: o.space?.venue?.name || '',
+        space: o.space?.name || '',
+        date: o.booking_date,
+        startTime: (o.start_time || '').slice(0,5),
+        endTime: (o.end_time || '').slice(0,5),
+        plan: o.plan_label || o.plan_type,
+        amount: Number(o.subtotal),
+        deposit: Number(o.deposit),
+        status: o.status,
+        createdAt: o.created_at ? new Date(o.created_at).toLocaleString('zh-TW', {hour12: false}) : '',
+        payment: o.payment_status === 'paid' ? '已匯款 (末5碼' + (o.payment_account_last5||'') + ')' :
+                 o.payment_status === 'partial' ? '部分已付' : '尚未付款',
+        headcount: o.headcount || '—',
+        cleanup: o.cleanup_choice || '—'
+      }));
+      console.log('[orders] 從 Supabase 撈到', ORDERS.length, '筆訂單');
+      renderTable();
+      updateStats();
     }
 
     function exportCSV() { alert('（demo）匯出 CSV'); }
@@ -1273,6 +1346,9 @@
     bindFilterInputs();
     updateStats();
     renderTable();
+
+    // 從 Supabase 撈訂單覆蓋 mock
+    loadOrdersFromSupabase();
   </script>
 
 </body>

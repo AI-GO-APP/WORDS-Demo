@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>會員等級管理｜沃茲後台</title>
+  <link rel="stylesheet" href="admin.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+
+  <style>
+    .tier-row {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: 50px 1.2fr 1fr 1fr 2fr 100px;
+      gap: 12px;
+      align-items: center;
+    }
+    .tier-row.editing { border-color: #f97316; background: #fff7ed; }
+    .tier-row-header {
+      background: #f9fafb;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      padding: 10px 18px;
+    }
+    .tier-code-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      font-family: monospace;
+    }
+    .tier-input {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .tier-input:disabled {
+      background: transparent;
+      border-color: transparent;
+      padding-left: 0;
+    }
+    .tier-input:focus { outline: none; border-color: #f97316; }
+    .tier-benefits {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+    .tier-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+    .info-banner {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #92400e;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== Top bar ========== -->
+  <header class="admin-topbar">
+    <div class="admin-topbar-left">
+      <a href="index.html" class="admin-brand">沃茲後台</a>
+    </div>
+    <div class="admin-topbar-right">
+      <span style="color:#9ca3af; font-size:13px;">demo 模式（無權限驗證）</span>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+    <!-- ========== Sidebar ========== -->
+    <aside class="admin-sidebar">
+      <nav class="admin-nav">
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">總覽</div>
+          <a href="index.html" class="admin-nav-item"><span class="admin-nav-icon">📊</span><span>Dashboard</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">場館設定</div>
+          <a href="venues.html" class="admin-nav-item"><span class="admin-nav-icon">🏛️</span><span>場館管理</span></a>
+          <a href="plans.html" class="admin-nav-item"><span class="admin-nav-icon">📦</span><span>方案管理</span></a>
+          <a href="pricing.html" class="admin-nav-item"><span class="admin-nav-icon">💰</span><span>價格管理</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">營運管理</div>
+          <a href="orders.html" class="admin-nav-item"><span class="admin-nav-icon">🛍️</span><span>訂單管理</span></a>
+          <a href="customers.html" class="admin-nav-item"><span class="admin-nav-icon">👥</span><span>客戶管理</span></a>
+          <a href="tiers.html" class="admin-nav-item active"><span class="admin-nav-icon">💎</span><span>會員等級</span></a>
+          <a href="#" class="admin-nav-item" style="opacity:.4; cursor:not-allowed;"><span class="admin-nav-icon">🎟️</span><span>優惠券</span></a>
+        </div>
+        <div class="admin-nav-section">
+          <div class="admin-nav-title">帳款管理</div>
+          <a href="payments.html" class="admin-nav-item"><span class="admin-nav-icon">💸</span><span>匯款比對</span></a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ========== Main ========== -->
+    <main class="admin-main">
+      <div class="admin-page-header">
+        <h1 class="admin-page-title">💎 會員等級管理</h1>
+      </div>
+
+      <div class="info-banner">
+        💡 修改任一等級的<strong>門檻、折扣、福利</strong>，前台「會員籍」頁面立刻同步。<br>
+        🔄 客戶累積消費自動升級的 trigger 也會用最新門檻來判斷。
+      </div>
+
+      <!-- Header row -->
+      <div class="tier-row tier-row-header">
+        <div>代碼</div>
+        <div>等級名稱</div>
+        <div>消費門檻</div>
+        <div>折扣率</div>
+        <div>福利清單</div>
+        <div style="text-align:right;">操作</div>
+      </div>
+
+      <!-- Tier rows（JS 動態載入）-->
+      <div id="tiersList">
+        <div style="padding:60px; text-align:center; color:#9ca3af;">載入中...</div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // ============================================================
+    // 載入所有等級
+    // ============================================================
+    let TIERS = [];
+
+    async function loadTiers() {
+      const { data, error } = await supabaseClient
+        .from('membership_tiers')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) {
+        document.getElementById('tiersList').innerHTML =
+          `<div style="padding:40px;text-align:center;color:#dc2626">讀取失敗：${error.message}</div>`;
+        return;
+      }
+      TIERS = data || [];
+      renderTiers();
+    }
+
+    function renderTiers() {
+      const list = document.getElementById('tiersList');
+      list.innerHTML = TIERS.map((t, idx) => {
+        const benefits = Array.isArray(t.benefits) ? t.benefits : [];
+        const discountPct = Math.round((t.discount_rate || 1) * 100);
+        return `
+          <div class="tier-row" id="row-${t.id}" data-id="${t.id}">
+            <div><span class="tier-code-badge">${t.code}</span></div>
+            <div>
+              <input type="text" class="tier-input" id="name-${t.id}" value="${escapeHtml(t.name)}" disabled>
+            </div>
+            <div>
+              <input type="number" class="tier-input" id="threshold-${t.id}" value="${t.threshold_amount}" disabled>
+              <div style="font-size:11px; color:#9ca3af; margin-top:2px;">NT$</div>
+            </div>
+            <div>
+              <input type="number" class="tier-input" id="discount-${t.id}" value="${discountPct}" step="1" min="0" max="100" disabled>
+              <div style="font-size:11px; color:#9ca3af; margin-top:2px;">% (100 = 無折扣)</div>
+            </div>
+            <div>
+              <textarea class="tier-input" id="benefits-${t.id}" rows="3" disabled>${benefits.join('\n')}</textarea>
+              <div style="font-size:11px; color:#9ca3af; margin-top:2px;">每行一條</div>
+            </div>
+            <div class="tier-actions" id="actions-${t.id}">
+              <button class="admin-btn admin-btn-sm" onclick="startEdit('${t.id}')">編輯</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(s) {
+      return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ============================================================
+    // 編輯 / 儲存 / 取消
+    // ============================================================
+    function startEdit(id) {
+      const row = document.getElementById('row-' + id);
+      row.classList.add('editing');
+      document.getElementById('name-' + id).disabled = false;
+      document.getElementById('threshold-' + id).disabled = false;
+      document.getElementById('discount-' + id).disabled = false;
+      document.getElementById('benefits-' + id).disabled = false;
+
+      document.getElementById('actions-' + id).innerHTML = `
+        <button class="admin-btn admin-btn-primary admin-btn-sm" onclick="saveTier('${id}')">💾 儲存</button>
+        <button class="admin-btn admin-btn-sm" onclick="cancelEdit('${id}')">取消</button>
+      `;
+    }
+
+    function cancelEdit(id) {
+      renderTiers();
+    }
+
+    async function saveTier(id) {
+      const name = document.getElementById('name-' + id).value.trim();
+      const threshold = parseFloat(document.getElementById('threshold-' + id).value) || 0;
+      const discountPct = parseFloat(document.getElementById('discount-' + id).value) || 100;
+      const benefitsText = document.getElementById('benefits-' + id).value.trim();
+      const benefits = benefitsText ? benefitsText.split('\n').map(s => s.trim()).filter(Boolean) : [];
+
+      if (!name) { alert('等級名稱不能空白'); return; }
+      if (discountPct < 0 || discountPct > 100) { alert('折扣率必須在 0-100 之間'); return; }
+
+      const updates = {
+        name,
+        threshold_amount: threshold,
+        discount_rate: discountPct / 100,
+        benefits: benefits,
+      };
+
+      const btn = document.querySelector(`#actions-${id} .admin-btn-primary`);
+      btn.disabled = true; btn.textContent = '儲存中...';
+
+      const { error } = await supabaseClient
+        .from('membership_tiers')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) {
+        alert('儲存失敗：' + error.message);
+        btn.disabled = false; btn.textContent = '💾 儲存';
+        return;
+      }
+
+      // 重新載入
+      await loadTiers();
+
+      // 簡單 toast
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#16a34a;color:#fff;padding:12px 20px;border-radius:6px;font-size:14px;z-index:9999;';
+      toast.textContent = '✅ 已儲存「' + name + '」';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
+
+    // 啟動
+    loadTiers();
+  </script>
+
+</body>
+</html>

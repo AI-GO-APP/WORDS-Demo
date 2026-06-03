@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>客戶管理｜沃茲後台</title>
   <link rel="stylesheet" href="admin.css">
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+
   <style>
     /* ===== 表頭內篩選器 ===== */
     .filter-row th {
@@ -129,6 +134,64 @@
       color: #dc2626;
       border-color: #fecaca;
     }
+
+    /* ===== 欄位篩選 icon + popover ===== */
+    .admin-table thead th { position: relative; }
+    .col-filter-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      color: #9ca3af;
+      padding: 2px 5px;
+      border-radius: 4px;
+      user-select: none;
+      vertical-align: middle;
+    }
+    .col-filter-icon:hover { background: #f3f4f6; color: #1a1f36; }
+    .col-filter-icon.has-value {
+      color: #fff;
+      background: #f97316;
+      font-weight: 700;
+    }
+    .col-filter-popover {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 30;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.12);
+      padding: 10px;
+      min-width: 200px;
+      display: none;
+    }
+    .col-filter-popover.show { display: block; }
+    .col-filter-popover .filter-input,
+    .col-filter-popover input[type="date"] {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 13px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .col-filter-popover .filter-date-range {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .col-filter-popover .filter-date-range input { flex: 1; }
+    .col-filter-popover-title {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
   </style>
 </head>
 <body>
@@ -252,12 +315,39 @@
         <div class="admin-table-wrapper">
           <table class="admin-table">
             <thead>
-              <!-- Row 1: 欄位名 + 排序圖示 -->
+              <!-- 單一表頭：欄位名 + 篩選 icon -->
               <tr>
-                <th>姓名</th>
-                <th>Email</th>
-                <th>手機</th>
-                <th>會員等級</th>
+                <th>
+                  姓名
+                  <span class="col-filter-icon" id="fi_name" onclick="toggleFilterPopover(event, 'fp_name')" title="搜尋姓名">🔍</span>
+                  <div class="col-filter-popover" id="fp_name" onclick="event.stopPropagation()">
+                    <div class="col-filter-popover-title">搜尋姓名</div>
+                    <input type="text" class="filter-input" id="f_name" placeholder="輸入姓名">
+                  </div>
+                </th>
+                <th>
+                  Email
+                  <span class="col-filter-icon" id="fi_email" onclick="toggleFilterPopover(event, 'fp_email')" title="搜尋 Email">🔍</span>
+                  <div class="col-filter-popover" id="fp_email" onclick="event.stopPropagation()">
+                    <div class="col-filter-popover-title">搜尋 Email</div>
+                    <input type="text" class="filter-input" id="f_email" placeholder="輸入 Email">
+                  </div>
+                </th>
+                <th>
+                  手機
+                  <span class="col-filter-icon" id="fi_phone" onclick="toggleFilterPopover(event, 'fp_phone')" title="搜尋手機">🔍</span>
+                  <div class="col-filter-popover" id="fp_phone" onclick="event.stopPropagation()">
+                    <div class="col-filter-popover-title">搜尋手機</div>
+                    <input type="text" class="filter-input" id="f_phone" placeholder="輸入手機">
+                  </div>
+                </th>
+                <th>
+                  會員等級
+                  <span class="col-filter-icon" id="fi_tier" onclick="toggleFilterPopover(event, 'fp_tier')" title="篩選等級">▾</span>
+                  <div class="col-filter-popover" id="fp_tier" onclick="event.stopPropagation()" style="padding:0; min-width:160px;">
+                    <div id="tierPanel" style="max-height:240px; overflow-y:auto;"></div>
+                  </div>
+                </th>
                 <th class="sortable" style="text-align:right;" onclick="toggleSort('total_spent')">
                   累積消費 <span class="sort-icon" id="sort_total_spent"></span>
                 </th>
@@ -270,36 +360,19 @@
                 <th class="sortable" style="text-align:center;" onclick="toggleSort('points')">
                   紅利點數 <span class="sort-icon" id="sort_points"></span>
                 </th>
-                <th>註冊日</th>
+                <th>
+                  註冊日
+                  <span class="col-filter-icon" id="fi_date" onclick="toggleFilterPopover(event, 'fp_date')" title="日期區間">📅</span>
+                  <div class="col-filter-popover" id="fp_date" onclick="event.stopPropagation()" style="min-width:280px;">
+                    <div class="col-filter-popover-title">註冊日期區間</div>
+                    <div class="filter-date-range">
+                      <input type="date" id="f_date_from" title="起始日">
+                      <span style="font-size:11px; color:#9ca3af;">~</span>
+                      <input type="date" id="f_date_to" title="結束日">
+                    </div>
+                  </div>
+                </th>
                 <th style="width:120px;">操作</th>
-              </tr>
-
-              <!-- Row 2: 篩選器 -->
-              <tr class="filter-row">
-                <th><input type="text" class="filter-input" id="f_name" placeholder="搜尋姓名"></th>
-                <th><input type="text" class="filter-input" id="f_email" placeholder="搜尋 Email"></th>
-                <th><input type="text" class="filter-input" id="f_phone" placeholder="搜尋手機"></th>
-                <th>
-                  <div class="multi-select" id="tierMultiSelect">
-                    <button class="multi-select-trigger" type="button" onclick="toggleTierPanel(event)">
-                      <span id="tierTriggerLabel">全部等級</span>
-                      <span>▾</span>
-                    </button>
-                    <div class="multi-select-panel" id="tierPanel"></div>
-                  </div>
-                </th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th>
-                  <div class="filter-date-range">
-                    <input type="date" id="f_date_from" title="起始日">
-                    <span style="font-size:10px; color:#9ca3af;">~</span>
-                    <input type="date" id="f_date_to" title="結束日">
-                  </div>
-                </th>
-                <th></th>
               </tr>
             </thead>
             <tbody id="customersTable"></tbody>
@@ -345,8 +418,8 @@
       premium: { label: '高級會員',  color: '#7c3aed', bg: '#EDE9FE', threshold: 300000, discount: '85 折' }
     };
 
-    // ===== Mock 客戶資料 =====
-    const CUSTOMERS = [
+    // ===== 客戶資料：載入時從 Supabase 撈，先用 mock 當 fallback =====
+    let CUSTOMERS = [
       { id: 1,  name: 'Joanna',  email: 'joanna@urfit.com.tw', phone: '0912-345-678', line_id: 'joanna_w', tier: 'gold',    total_spent: 45680,  total_orders: 8,  balance: 2000,  points: 312,  registered: '2025-08-15', last_order: '2026-05-29' },
       { id: 2,  name: '陳大文',   email: 'chenwen@gmail.com',    phone: '0922-111-222', line_id: 'cdw',     tier: 'vip',     total_spent: 128400, total_orders: 21, balance: 5000,  points: 980,  registered: '2025-03-22', last_order: '2026-05-28' },
       { id: 3,  name: '林小美',   email: 'meimei@yahoo.com.tw',  phone: '0933-456-789', line_id: 'meimei',  tier: 'gold',    total_spent: 56200,  total_orders: 11, balance: 0,     points: 425,  registered: '2025-09-01', last_order: '2026-05-28' },
@@ -402,9 +475,32 @@
       });
     }
 
+    // ===== Popover 篩選 icon =====
+    function toggleFilterPopover(e, id) {
+      e.stopPropagation();
+      // 關掉其他
+      document.querySelectorAll('.col-filter-popover').forEach(p => {
+        if (p.id !== id) p.classList.remove('show');
+      });
+      document.getElementById(id).classList.toggle('show');
+    }
+
+    // 點外面關掉所有 popover
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.col-filter-popover').forEach(p => p.classList.remove('show'));
+    });
+
+    // 更新 icon 的 has-value 狀態（橘底白字 = 有篩選）
+    function updateFilterIconState(iconId, hasValue) {
+      const icon = document.getElementById(iconId);
+      if (!icon) return;
+      if (hasValue) icon.classList.add('has-value');
+      else icon.classList.remove('has-value');
+    }
+
     function toggleTierPanel(e) {
       e.stopPropagation();
-      document.getElementById('tierMultiSelect').classList.toggle('open');
+      // 舊呼叫保留相容（沒人用了）
     }
 
     function onTierCheck(cb) {
@@ -414,17 +510,18 @@
         filters.tiers = filters.tiers.filter(t => t !== cb.value);
       }
       updateTierTriggerLabel();
+      updateFilterIconState('fi_tier', filters.tiers.length > 0);
       renderTable();
     }
 
     function updateTierTriggerLabel() {
-      const label = document.getElementById('tierTriggerLabel');
+      // 新 UX：tier icon 顯示等級數量
+      const icon = document.getElementById('fi_tier');
+      if (!icon) return;
       if (filters.tiers.length === 0) {
-        label.innerHTML = '全部等級';
-      } else if (filters.tiers.length === 1) {
-        label.innerHTML = TIERS[filters.tiers[0]].label;
+        icon.textContent = '▾';
       } else {
-        label.innerHTML = `已選 <span class="filter-count">${filters.tiers.length}</span>`;
+        icon.textContent = filters.tiers.length;
       }
     }
 
@@ -454,11 +551,31 @@
     }
 
     // ===== 篩選欄位事件 =====
-    document.getElementById('f_name').addEventListener('input', e => { filters.name = e.target.value.toLowerCase(); renderTable(); });
-    document.getElementById('f_email').addEventListener('input', e => { filters.email = e.target.value.toLowerCase(); renderTable(); });
-    document.getElementById('f_phone').addEventListener('input', e => { filters.phone = e.target.value.replace(/-/g,''); renderTable(); });
-    document.getElementById('f_date_from').addEventListener('change', e => { filters.dateFrom = e.target.value; renderTable(); });
-    document.getElementById('f_date_to').addEventListener('change', e => { filters.dateTo = e.target.value; renderTable(); });
+    document.getElementById('f_name').addEventListener('input', e => {
+      filters.name = e.target.value.toLowerCase();
+      updateFilterIconState('fi_name', !!e.target.value);
+      renderTable();
+    });
+    document.getElementById('f_email').addEventListener('input', e => {
+      filters.email = e.target.value.toLowerCase();
+      updateFilterIconState('fi_email', !!e.target.value);
+      renderTable();
+    });
+    document.getElementById('f_phone').addEventListener('input', e => {
+      filters.phone = e.target.value.replace(/-/g,'');
+      updateFilterIconState('fi_phone', !!e.target.value);
+      renderTable();
+    });
+    document.getElementById('f_date_from').addEventListener('change', e => {
+      filters.dateFrom = e.target.value;
+      updateFilterIconState('fi_date', !!(filters.dateFrom || filters.dateTo));
+      renderTable();
+    });
+    document.getElementById('f_date_to').addEventListener('change', e => {
+      filters.dateTo = e.target.value;
+      updateFilterIconState('fi_date', !!(filters.dateFrom || filters.dateTo));
+      renderTable();
+    });
 
     function clearAllFilters() {
       filters = { name:'', email:'', phone:'', tiers:[], dateFrom:'', dateTo:'' };
@@ -469,6 +586,7 @@
       document.getElementById('f_date_from').value = '';
       document.getElementById('f_date_to').value = '';
       document.querySelectorAll('#tierPanel input').forEach(cb => cb.checked = false);
+      ['fi_name','fi_email','fi_phone','fi_tier','fi_date'].forEach(id => updateFilterIconState(id, false));
       updateTierTriggerLabel();
       updateSortIndicators();
       renderTable();
@@ -617,6 +735,51 @@
     initTierPanel();
     updateStats();
     renderTable();
+
+    // ============================================================
+    // 從 Supabase 撈真實客戶資料
+    // ============================================================
+    async function loadCustomersFromSupabase() {
+      const { data, error } = await supabaseClient
+        .from('customers')
+        .select(`
+          id, name, email, phone, line_id, total_spent, total_orders,
+          stored_value_balance, loyalty_points, registered_at, last_order_at,
+          tier:membership_tiers(code)
+        `)
+        .order('registered_at', { ascending: false });
+
+      if (error) {
+        console.error('讀取客戶失敗（保留 mock）:', error);
+        return;
+      }
+      if (!data || data.length === 0) {
+        console.log('Supabase 沒有客戶，保留 mock 顯示');
+        return;
+      }
+
+      // map 成現有 mock 結構
+      CUSTOMERS = data.map((c, i) => ({
+        id: c.id,                    // UUID（取代原 int id）
+        name: c.name || '',
+        email: c.email || '',
+        phone: c.phone || '',
+        line_id: c.line_id || '',
+        tier: c.tier?.code || 'basic',
+        total_spent: Number(c.total_spent || 0),
+        total_orders: c.total_orders || 0,
+        balance: Number(c.stored_value_balance || 0),
+        points: c.loyalty_points || 0,
+        registered: c.registered_at ? c.registered_at.slice(0,10) : '',
+        last_order: c.last_order_at ? c.last_order_at.slice(0,10) : ''
+      }));
+
+      console.log('[customers] 從 Supabase 撈到', CUSTOMERS.length, '筆客戶');
+      updateStats();
+      renderTable();
+    }
+
+    loadCustomersFromSupabase();
   </script>
 
 </body>
